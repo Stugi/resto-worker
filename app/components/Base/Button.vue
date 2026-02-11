@@ -67,8 +67,8 @@ const buttonClasses = computed(() => {
       )
     } else {
       classes.push(
-        'bg-action text-white',
-        'hover:bg-action/90',
+        'bg-gray-800 text-white',
+        'hover:bg-gray-700',
         'shadow-md hover:shadow-lg'
       )
     }
@@ -80,13 +80,13 @@ const buttonClasses = computed(() => {
     )
   } else if (props.variant === 'outline') {
     classes.push(
-      'bg-transparent text-action border-2 border-action',
-      'hover:bg-action hover:text-white'
+      'bg-transparent text-gray-800 border-2 border-gray-800',
+      'hover:bg-gray-800 hover:text-white'
     )
   } else if (props.variant === 'ghost') {
     classes.push(
-      'bg-transparent text-action',
-      'hover:bg-action/10'
+      'bg-transparent text-gray-800',
+      'hover:bg-gray-100'
     )
   }
 

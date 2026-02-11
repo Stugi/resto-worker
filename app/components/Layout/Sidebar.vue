@@ -76,9 +76,48 @@
         </div>
       </nav>
 
-      <!-- Footer Info (только на десктопе) -->
-      <div class="hidden lg:block p-4 border-t border-gray-200">
-        <div class="text-xs text-text-secondary">
+      <!-- User Info and Logout -->
+      <div class="p-4 border-t border-gray-200 space-y-3">
+        <!-- User Info -->
+        <div class="flex items-center gap-3 px-3 py-2">
+          <div
+            class="w-10 h-10 bg-gradient-to-r from-action to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+          >
+            {{ userInitials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-text text-sm truncate">
+              {{ user?.name || "Пользователь" }}
+            </p>
+            <p class="text-text-secondary text-xs">
+              {{ roleLabel }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Logout Button -->
+        <button
+          @click="handleLogout"
+          class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
+          </svg>
+          <span>Выход</span>
+        </button>
+
+        <!-- Copyright (только на десктопе) -->
+        <div class="hidden lg:block text-xs text-text-secondary px-3">
           <p class="font-medium">RESTO WORKER</p>
           <p>© 2026 Все права защищены</p>
         </div>
@@ -99,7 +138,32 @@ defineEmits<{
 }>()
 
 const route = useRoute()
-const { user } = useAuth()
+const { user, logout } = useAuth()
+
+const userInitials = computed(() => {
+  if (!user.value?.name) return "U"
+  const parts = user.value.name.split(" ")
+  return parts
+    .map((p) => p[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase()
+})
+
+const roleLabel = computed(() => {
+  const roleLabels = {
+    SUPER_ADMIN: "Супер Админ",
+    OWNER: "Владелец",
+    MANAGER: "Менеджер",
+  }
+  return user.value?.role
+    ? roleLabels[user.value.role as keyof typeof roleLabels]
+    : ""
+})
+
+const handleLogout = async () => {
+  await logout()
+}
 
 // Navigation items based on role - Основное
 const mainNavigation = computed(() => {
