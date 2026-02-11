@@ -1,0 +1,109 @@
+import { hash } from 'bcrypt'
+
+export default defineEventHandler(async (event) => {
+  const user = await requireAuth(event)
+
+  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OWNER') {
+    throw createError({
+      statusCode: 403,
+      message: 'Доступ запрещен'
+    })
+  }
+
+  const body = await readBody<{
+    name: string
+    login: string
+    password: string
+    phone?: string
+    role: 'SUPER_ADMIN' | 'OWNER' | 'MANAGER'
+    organizationId?: string
+  }>(event)
+
+  // Валидация
+  if (!body.name?.trim() || !body.login?.trim() || !body.password?.trim()) {
+    throw createError({
+      statusCode: 400,
+      message: 'Имя, логин и пароль обязательны'
+    })
+  }
+
+  if (!body.role) {
+    throw createError({
+      statusCode: 400,
+      message: 'Роль обязательна'
+    })
+  }
+
+  // OWNER может создавать только MANAGER в своей организации
+  if (user.role === 'OWNER') {
+    if (body.role !== 'MANAGER') {
+      throw createError({
+        statusCode: 403,
+        message: 'Вы можете создавать только менеджеров'
+      })
+    }
+
+    if (!user.organizationId) {
+      throw createError({
+        statusCode: 400,
+        message: 'Организация не найдена'
+      })
+    }
+
+    body.organizationId = user.organizationId
+  }
+
+  // SUPER_ADMIN должен указать организацию для OWNER и MANAGER
+  if (user.role === 'SUPER_ADMIN') {
+    if ((body.role === 'OWNER' || body.role === 'MANAGER') && !body.organizationId) {
+      throw createError({
+        statusCode: 400,
+        message: 'Для роли OWNER или MANAGER требуется организация'
+      })
+    }
+
+    // SUPER_ADMIN не должен иметь организацию
+    if (body.role === 'SUPER_ADMIN' && body.organizationId) {
+      body.organizationId = undefined
+    }
+  }
+
+  // Проверяем уникальность логина
+  const existingUser = await prisma.user.findUnique({
+    where: { login: body.login.trim() }
+  })
+
+  if (existingUser) {
+    throw createError({
+      statusCode: 400,
+      message: 'Пользователь с таким логином уже существует'
+    })
+  }
+
+  // Хешируем пароль
+  const passwordHash = await hash(body.password, 10)
+
+  // Создаем пользователя
+  const newUser = await prisma.user.create({
+    data: {
+      id: createId(),
+      name: body.name.trim(),
+      login: body.login.trim(),
+      passwordHash,
+      phone: body.phone?.trim() || null,
+      role: body.role,
+      organizationId: body.organizationId || null,
+      createdBy: user.id
+    },
+    include: {
+      organization: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    }
+  })
+
+  return newUser
+})

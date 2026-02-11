@@ -132,7 +132,7 @@ const handleLoginSubmit = async () => {
     })
 
     // Успешная авторизация - редирект на dashboard
-    await navigateTo('/')
+    await navigateTo('/', { replace: true })
   } catch (err: any) {
     console.error('Login error:', err)
     error.value = err.data?.message || err.message || 'Ошибка входа'
@@ -152,7 +152,7 @@ const handleTelegramAuth = async (user: any) => {
     })
 
     // Успешная авторизация - редирект на dashboard
-    await navigateTo('/')
+    await navigateTo('/', { replace: true })
   } catch (err: any) {
     console.error('Auth error:', err)
     error.value = err.data?.message || err.message || 'Ошибка авторизации'

@@ -1,4 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  // Только на клиенте
+  if (process.server) return
+
   const { isAuthenticated, fetchUser } = useAuth()
 
   // Публичные роуты (не требуют авторизации)
@@ -14,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  // Пытаемся получить пользователя из сессии
+  // Пытаемся получить пользователя из сессии ОДИН раз
   const user = await fetchUser()
 
   // Если пользователь не авторизован - редирект на login

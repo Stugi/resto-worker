@@ -172,7 +172,8 @@ const deleteLoading = ref(false);
 const fetchOrganizations = async () => {
     loading.value = true;
     try {
-        const data = await $fetch("/api/organizations");
+        const data = await $fetch("/api/organizations", {
+        });
         organizations.value = data as Organization[];
     } catch (error) {
         console.error("Error fetching organizations:", error);

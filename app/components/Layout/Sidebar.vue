@@ -29,71 +29,75 @@
 
       <!-- Navigation -->
       <nav class="flex-1 overflow-y-auto p-4">
-        <!-- Основное -->
-        <div class="mb-6">
-          <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
-            Основное
-          </h3>
-          <div class="space-y-1">
-            <NuxtLink
-              v-for="item in mainNavigation"
-              :key="item.path"
-              :to="item.path"
-              @click="$emit('close')"
-              :class="[
-                'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive(item.path)
-                  ? 'bg-gray-100 text-text'
-                  : 'text-text-secondary hover:bg-gray-50 hover:text-text'
-              ]"
-            >
-              {{ item.label }}
-            </NuxtLink>
+        <ClientOnly>
+          <!-- Основное -->
+          <div class="mb-6">
+            <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
+              Основное
+            </h3>
+            <div class="space-y-1">
+              <NuxtLink
+                v-for="item in mainNavigation"
+                :key="item.path"
+                :to="item.path"
+                @click="$emit('close')"
+                :class="[
+                  'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  isActive(item.path)
+                    ? 'bg-gray-100 text-text'
+                    : 'text-text-secondary hover:bg-gray-50 hover:text-text'
+                ]"
+              >
+                {{ item.label }}
+              </NuxtLink>
+            </div>
           </div>
-        </div>
 
-        <!-- Настройки -->
-        <div v-if="settingsNavigation.length > 0">
-          <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
-            Настройки
-          </h3>
-          <div class="space-y-1">
-            <NuxtLink
-              v-for="item in settingsNavigation"
-              :key="item.path"
-              :to="item.path"
-              @click="$emit('close')"
-              :class="[
-                'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive(item.path)
-                  ? 'bg-gray-100 text-text'
-                  : 'text-text-secondary hover:bg-gray-50 hover:text-text'
-              ]"
-            >
-              {{ item.label }}
-            </NuxtLink>
+          <!-- Настройки -->
+          <div v-if="settingsNavigation.length > 0">
+            <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
+              Настройки
+            </h3>
+            <div class="space-y-1">
+              <NuxtLink
+                v-for="item in settingsNavigation"
+                :key="item.path"
+                :to="item.path"
+                @click="$emit('close')"
+                :class="[
+                  'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  isActive(item.path)
+                    ? 'bg-gray-100 text-text'
+                    : 'text-text-secondary hover:bg-gray-50 hover:text-text'
+                ]"
+              >
+                {{ item.label }}
+              </NuxtLink>
+            </div>
           </div>
-        </div>
+        </ClientOnly>
       </nav>
 
       <!-- User Info and Logout -->
       <div class="p-4 border-t border-gray-200 space-y-3">
         <!-- User Info -->
-        <div class="flex items-center gap-3 px-3 py-2">
-          <div
-            class="w-10 h-10 bg-gradient-to-r from-action to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-          >
-            {{ userInitials }}
+        <ClientOnly>
+          <div class="flex items-center gap-3 px-3 py-2">
+            <div
+              class="w-10 h-10 bg-gradient-to-r from-action to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+            >
+              {{ userInitials }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-text text-sm truncate">
+                {{ user?.name || "Пользователь" }}
+              </p>
+              <p class="text-text-secondary text-xs">
+                {{ roleLabel }}
+              </p>
+            </div>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="font-medium text-text text-sm truncate">
-              {{ user?.name || "Пользователь" }}
-            </p>
-            <p class="text-text-secondary text-xs">
-              {{ roleLabel }}
-            </p>
-          </div>
-        </div>
+        </ClientOnly>
 
         <!-- Logout Button -->
         <button
@@ -200,29 +204,9 @@ const mainNavigation = computed(() => {
   return baseItems
 })
 
-// Settings navigation - Настройки
+// Settings navigation - Настройки (пока пустой, позже добавим страницы)
 const settingsNavigation = computed(() => {
-  const role = user.value?.role
-
-  const baseSettings = [
-    { path: '/settings/profile', label: 'Профиль' }
-  ]
-
-  if (role === 'SUPER_ADMIN') {
-    return [
-      ...baseSettings,
-      { path: '/settings/system', label: 'Система' }
-    ]
-  }
-
-  if (role === 'OWNER') {
-    return [
-      ...baseSettings,
-      { path: '/settings/organization', label: 'Организация' }
-    ]
-  }
-
-  return baseSettings
+  return []
 })
 
 const isActive = (path: string) => {

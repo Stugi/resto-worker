@@ -15,11 +15,22 @@ export async function verifyPassword(
   return bcrypt.compare(password, hash)
 }
 
+// Конфигурация сессии
+const sessionConfig = {
+  password: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  name: 'h3-session',
+  cookie: {
+    maxAge: 60 * 60 * 24 * 7, // 7 дней
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/'
+  }
+}
+
 // Получить текущего пользователя из сессии
 export async function getUserFromSession(event: H3Event) {
-  const session = await useSession(event, {
-    password: useRuntimeConfig().sessionSecret
-  })
+  const session = await useSession(event, sessionConfig)
 
   const userId = session.data.userId as string | undefined
 
@@ -45,9 +56,7 @@ export async function getUserFromSession(event: H3Event) {
 
 // Установить пользователя в сессию
 export async function setUserSession(event: H3Event, userId: string) {
-  const session = await useSession(event, {
-    password: useRuntimeConfig().sessionSecret
-  })
+  const session = await useSession(event, sessionConfig)
 
   await session.update({
     userId
@@ -56,9 +65,7 @@ export async function setUserSession(event: H3Event, userId: string) {
 
 // Очистить сессию
 export async function clearUserSession(event: H3Event) {
-  const session = await useSession(event, {
-    password: useRuntimeConfig().sessionSecret
-  })
+  const session = await useSession(event, sessionConfig)
 
   await session.clear()
 }

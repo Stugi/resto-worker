@@ -142,7 +142,7 @@ const handleRegister = async () => {
         name: name.value,
         login: login.value,
         password: password.value
-      }
+      },
     })
 
     success.value = 'Регистрация успешна! Перенаправление...'
