@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Feedback Statistics - Варианты визуализации</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --bg: #ffffff;
+                --bg-secondary: #fafafa;
+                --bg-muted: #f5f5f5;
+                --text: #0a0a0a;
+                --text-muted: #737373;
+                --border: #e5e5e5;
+                --positive: #22c55e;
+                --negative: #ef4444;
+                --neutral: #f59e0b;
+                --gradient-positive: linear-gradient(
+                    135deg,
+                    #22c55e 0%,
+                    #16a34a 100%
+                );
+                --gradient-negative: linear-gradient(
+                    135deg,
+                    #ef4444 0%,
+                    #dc2626 100%
+                );
+            }
+
+            [data-theme="dark"] {
+                --bg: #0a0a0a;
+                --bg-secondary: #151515;
+                --bg-muted: #1a1a1a;
+                --text: #fafafa;
+                --text-muted: #a3a3a3;
+                --border: #262626;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                padding: 40px 20px;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+            }
+
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            .header {
+                margin-bottom: 48px;
+            }
+
+            .title {
+                font-size: 32px;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+                margin-bottom: 8px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+                color: var(--text-muted);
+            }
+
+            .theme-toggle {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+            }
+
+            .section {
+                margin-bottom: 64px;
+            }
+
+            .section-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 24px;
+                padding-bottom: 12px;
+                border-bottom: 2px solid var(--border);
+            }
+
+            .grid {
+                display: grid;
+                gap: 20px;
+            }
+
+            .grid-2 {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+
+            .grid-3 {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+
+            .grid-4 {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            .card {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 24px;
+                background: var(--bg);
+                transition: all 0.2s;
+            }
+
+            .card:hover {
+                border-color: var(--text-muted);
+            }
+
+            .card-header {
+                font-size: 13px;
+                color: var(--text-muted);
+                margin-bottom: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 500;
+            }
+
+            .metric-value {
+                font-size: 36px;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+                margin-bottom: 8px;
+            }
+
+            .metric-change {
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .metric-change.positive {
+                color: var(--positive);
+            }
+
+            .metric-change.negative {
+                color: var(--negative);
+            }
+
+            /* Progress bars */
+            .progress-bar {
+                height: 8px;
+                background: var(--bg-muted);
+                border-radius: 4px;
+                overflow: hidden;
+                margin: 12px 0;
+            }
+
+            .progress-fill {
+                height: 100%;
+                transition: width 0.3s ease;
+            }
+
+            .progress-fill.positive {
+                background: var(--gradient-positive);
+            }
+
+            .progress-fill.negative {
+                background: var(--gradient-negative);
+            }
+
+            /* Bar chart */
+            .bar-chart {
+                display: flex;
+                gap: 12px;
+                align-items: flex-end;
+                height: 200px;
+                padding: 20px 0;
+            }
+
+            .bar {
+                flex: 1;
+                background: var(--bg-muted);
+                border-radius: 4px 4px 0 0;
+                position: relative;
+                transition: all 0.3s;
+                min-height: 20px;
+            }
+
+            .bar:hover {
+                opacity: 0.8;
+            }
+
+            .bar.positive {
+                background: var(--gradient-positive);
+            }
+
+            .bar.negative {
+                background: var(--gradient-negative);
+            }
+
+            .bar-label {
+                position: absolute;
+                bottom: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 11px;
+                color: var(--text-muted);
+                white-space: nowrap;
+            }
+
+            .bar-value {
+                position: absolute;
+                top: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            /* Donut chart */
+            .donut-container {
+                display: flex;
+                align-items: center;
+                gap: 32px;
+            }
+
+            .donut {
+                width: 160px;
+                height: 160px;
+                position: relative;
+            }
+
+            .donut-ring {
+                width: 100%;
+                height: 100%;
+                transform: rotate(-90deg);
+            }
+
+            .donut-center {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
+
+            .donut-value {
+                font-size: 32px;
+                font-weight: 600;
+            }
+
+            .donut-label {
+                font-size: 12px;
+                color: var(--text-muted);
+            }
+
+            .legend {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .legend-color {
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+            }
+
+            .legend-text {
+                font-size: 14px;
+                flex: 1;
+            }
+
+            .legend-value {
+                font-weight: 600;
+            }
+
+            /* Trend line */
+            .trend-line {
+                display: flex;
+                align-items: flex-end;
+                gap: 4px;
+                height: 60px;
+                margin: 16px 0;
+            }
+
+            .trend-point {
+                flex: 1;
+                background: var(--bg-muted);
+                border-radius: 2px;
+                transition: all 0.2s;
+            }
+
+            .trend-point:hover {
+                opacity: 0.7;
+            }
+
+            /* Table */
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .table th {
+                text-align: left;
+                padding: 12px;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table td {
+                padding: 12px;
+                font-size: 14px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table tr:last-child td {
+                border-bottom: none;
+            }
+
+            /* Heatmap */
+            .heatmap {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 4px;
+            }
+
+            .heatmap-cell {
+                aspect-ratio: 1;
+                border-radius: 3px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+                transition: all 0.2s;
+            }
+
+            .heatmap-cell:hover {
+                transform: scale(1.1);
+            }
+
+            /* Sentiment badges */
+            .sentiment-badge {
+                display: inline-block;
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .sentiment-badge.positive {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .sentiment-badge.negative {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .sentiment-badge.neutral {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            [data-theme="dark"] .sentiment-badge.positive {
+                background: #14532d;
+                color: #86efac;
+            }
+
+            [data-theme="dark"] .sentiment-badge.negative {
+                background: #7f1d1d;
+                color: #fca5a5;
+            }
+
+            [data-theme="dark"] .sentiment-badge.neutral {
+                background: #78350f;
+                color: #fcd34d;
+            }
+        </style>
+    </head>
+    <body>
+        <button class="theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
+
+        <div class="container">
+            <div class="header">
+                <h1 class="title">Варианты статистики по отзывам</h1>
+                <p class="subtitle">
+                    Разные подходы к визуализации негативных и позитивных
+                    откликов от ресторанов
+                </p>
+            </div>
+
+            <!-- ВАРИАНТ 1: Общие метрики -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 1: Базовые метрики (KPI Dashboard)
+                </h2>
+                <div class="grid grid-4">
+                    <div class="card">
+                        <div class="card-header">Всего отзывов</div>
+                        <div class="metric-value">1,248</div>
+                        <div class="metric-change positive">
+                            ↑ 12% за неделю
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Позитивные</div>
+                        <div
+                            class="metric-value"
+                            style="color: var(--positive)"
+                        >
+                            892
+                        </div>
+                        <div class="metric-change positive">71.5%</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Негативные</div>
+                        <div
+                            class="metric-value"
+                            style="color: var(--negative)"
+                        >
+                            234
+                        </div>
+                        <div class="metric-change negative">18.8%</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Нейтральные</div>
+                        <div class="metric-value" style="color: var(--neutral)">
+                            122
+                        </div>
+                        <div class="metric-change">9.7%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 2: Соотношение с прогресс-барами -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 2: Соотношение позитив/негатив (Progress Bars)
+                </h2>
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">Sentiment Distribution</div>
+                        <div style="margin-top: 16px">
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-bottom: 8px;
+                                "
+                            >
+                                <span style="font-size: 14px">Позитивные</span>
+                                <span style="font-weight: 600"
+                                    >892 (71.5%)</span
+                                >
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill positive"
+                                    style="width: 71.5%"
+                                ></div>
+                            </div>
+
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-bottom: 8px;
+                                    margin-top: 20px;
+                                "
+                            >
+                                <span style="font-size: 14px">Негативные</span>
+                                <span style="font-weight: 600"
+                                    >234 (18.8%)</span
+                                >
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill negative"
+                                    style="width: 18.8%"
+                                ></div>
+                            </div>
+
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-bottom: 8px;
+                                    margin-top: 20px;
+                                "
+                            >
+                                <span style="font-size: 14px">Нейтральные</span>
+                                <span style="font-weight: 600">122 (9.7%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill"
+                                    style="
+                                        width: 9.7%;
+                                        background: var(--neutral);
+                                    "
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Net Promoter Score (NPS)</div>
+                        <div style="margin-top: 16px">
+                            <div
+                                class="metric-value"
+                                style="color: var(--positive)"
+                            >
+                                +52.7
+                            </div>
+                            <p
+                                style="
+                                    font-size: 13px;
+                                    color: var(--text-muted);
+                                    margin-top: 8px;
+                                "
+                            >
+                                Отличный показатель! NPS выше 50 считается
+                                превосходным.
+                            </p>
+                            <div class="progress-bar" style="margin-top: 20px">
+                                <div
+                                    class="progress-fill positive"
+                                    style="width: 76.35%"
+                                ></div>
+                            </div>
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-top: 8px;
+                                    font-size: 12px;
+                                "
+                            >
+                                <span>-100</span>
+                                <span style="font-weight: 600">52.7</span>
+                                <span>+100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 3: Динамика по времени -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 3: Динамика по времени (Trends)
+                </h2>
+                <div class="card">
+                    <div class="card-header">Отзывы за последние 7 дней</div>
+                    <div class="bar-chart">
+                        <div class="bar positive" style="height: 75%">
+                            <div class="bar-value">124</div>
+                            <div class="bar-label">Пн</div>
+                        </div>
+                        <div class="bar positive" style="height: 85%">
+                            <div class="bar-value">142</div>
+                            <div class="bar-label">Вт</div>
+                        </div>
+                        <div class="bar positive" style="height: 65%">
+                            <div class="bar-value">108</div>
+                            <div class="bar-label">Ср</div>
+                        </div>
+                        <div class="bar positive" style="height: 90%">
+                            <div class="bar-value">156</div>
+                            <div class="bar-label">Чт</div>
+                        </div>
+                        <div class="bar positive" style="height: 100%">
+                            <div class="bar-value">178</div>
+                            <div class="bar-label">Пт</div>
+                        </div>
+                        <div class="bar positive" style="height: 95%">
+                            <div class="bar-value">165</div>
+                            <div class="bar-label">Сб</div>
+                        </div>
+                        <div class="bar positive" style="height: 80%">
+                            <div class="bar-value">132</div>
+                            <div class="bar-label">Вс</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top: 20px">
+                    <div class="card">
+                        <div class="card-header">Позитивные отзывы (тренд)</div>
+                        <div class="trend-line">
+                            <div
+                                class="trend-point"
+                                style="height: 45%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 55%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 50%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 65%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 75%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 80%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="
+                                    height: 100%;
+                                    background: var(--positive);
+                                "
+                            ></div>
+                        </div>
+                        <div class="metric-change positive">
+                            ↑ Рост на 18% за неделю
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">Негативные отзывы (тренд)</div>
+                        <div class="trend-line">
+                            <div
+                                class="trend-point"
+                                style="height: 60%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 55%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 50%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 45%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 35%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 30%; background: var(--negative)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 25%; background: var(--negative)"
+                            ></div>
+                        </div>
+                        <div class="metric-change positive">
+                            ↓ Снижение на 35% за неделю
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 4: Донат-чарт -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 4: Визуальное соотношение (Donut Chart)
+                </h2>
+                <div class="card">
+                    <div class="donut-container">
+                        <div class="donut">
+                            <svg class="donut-ring" viewBox="0 0 42 42">
+                                <circle
+                                    cx="21"
+                                    cy="21"
+                                    r="15.915"
+                                    fill="transparent"
+                                    stroke="var(--bg-muted)"
+                                    stroke-width="4"
+                                ></circle>
+                                <circle
+                                    cx="21"
+                                    cy="21"
+                                    r="15.915"
+                                    fill="transparent"
+                                    stroke="var(--positive)"
+                                    stroke-width="4"
+                                    stroke-dasharray="71.5 28.5"
+                                    stroke-dashoffset="0"
+                                ></circle>
+                                <circle
+                                    cx="21"
+                                    cy="21"
+                                    r="15.915"
+                                    fill="transparent"
+                                    stroke="var(--negative)"
+                                    stroke-width="4"
+                                    stroke-dasharray="18.8 81.2"
+                                    stroke-dashoffset="-71.5"
+                                ></circle>
+                                <circle
+                                    cx="21"
+                                    cy="21"
+                                    r="15.915"
+                                    fill="transparent"
+                                    stroke="var(--neutral)"
+                                    stroke-width="4"
+                                    stroke-dasharray="9.7 90.3"
+                                    stroke-dashoffset="-90.3"
+                                ></circle>
+                            </svg>
+                            <div class="donut-center">
+                                <div class="donut-value">1,248</div>
+                                <div class="donut-label">Всего</div>
+                            </div>
+                        </div>
+
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div
+                                    class="legend-color"
+                                    style="background: var(--positive)"
+                                ></div>
+                                <div class="legend-text">Позитивные</div>
+                                <div class="legend-value">892</div>
+                            </div>
+                            <div class="legend-item">
+                                <div
+                                    class="legend-color"
+                                    style="background: var(--negative)"
+                                ></div>
+                                <div class="legend-text">Негативные</div>
+                                <div class="legend-value">234</div>
+                            </div>
+                            <div class="legend-item">
+                                <div
+                                    class="legend-color"
+                                    style="background: var(--neutral)"
+                                ></div>
+                                <div class="legend-text">Нейтральные</div>
+                                <div class="legend-value">122</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 5: По категориям/темам -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 5: Анализ по категориям (Topics Breakdown)
+                </h2>
+                <div class="card">
+                    <div class="card-header">Топ тем в отзывах</div>
+                    <table class="table" style="margin-top: 16px">
+                        <thead>
+                            <tr>
+                                <th>Категория</th>
+                                <th>Позитивные</th>
+                                <th>Негативные</th>
+                                <th>Sentiment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Качество еды</strong></td>
+                                <td style="color: var(--positive)">456</td>
+                                <td style="color: var(--negative)">12</td>
+                                <td>
+                                    <span class="sentiment-badge positive"
+                                        >Отлично</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Обслуживание</strong></td>
+                                <td style="color: var(--positive)">312</td>
+                                <td style="color: var(--negative)">45</td>
+                                <td>
+                                    <span class="sentiment-badge positive"
+                                        >Хорошо</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Скорость доставки</strong></td>
+                                <td style="color: var(--positive)">234</td>
+                                <td style="color: var(--negative)">89</td>
+                                <td>
+                                    <span class="sentiment-badge neutral"
+                                        >Средне</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Цены</strong></td>
+                                <td style="color: var(--positive)">178</td>
+                                <td style="color: var(--negative)">134</td>
+                                <td>
+                                    <span class="sentiment-badge neutral"
+                                        >Средне</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Упаковка</strong></td>
+                                <td style="color: var(--positive)">124</td>
+                                <td style="color: var(--negative)">67</td>
+                                <td>
+                                    <span class="sentiment-badge positive"
+                                        >Хорошо</span
+                                    >
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 6: Heatmap по дням/часам -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 6: Тепловая карта активности (Heatmap)
+                </h2>
+                <div class="card">
+                    <div class="card-header">
+                        Активность отзывов по дням недели
+                    </div>
+                    <div style="margin-top: 20px">
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 80px 1fr;
+                                gap: 12px;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-muted);
+                                    padding-top: 4px;
+                                "
+                            >
+                                Пн
+                            </div>
+                            <div class="heatmap">
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.2)"
+                                >
+                                    12
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.3)"
+                                >
+                                    18
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.5)"
+                                >
+                                    34
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.7)"
+                                >
+                                    56
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.9)"
+                                >
+                                    78
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.6)"
+                                >
+                                    45
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.3)"
+                                >
+                                    23
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 80px 1fr;
+                                gap: 12px;
+                                margin-top: 4px;
+                            "
+                        >
+                            <div
+                                style="
+                                    font-size: 12px;
+                                    color: var(--text-muted);
+                                    padding-top: 4px;
+                                "
+                            >
+                                Вт
+                            </div>
+                            <div class="heatmap">
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.3)"
+                                >
+                                    15
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.4)"
+                                >
+                                    28
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.6)"
+                                >
+                                    42
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.8)"
+                                >
+                                    67
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 1)"
+                                >
+                                    89
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.7)"
+                                >
+                                    54
+                                </div>
+                                <div
+                                    class="heatmap-cell"
+                                    style="background: rgba(34, 197, 94, 0.4)"
+                                >
+                                    31
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                margin-top: 16px;
+                                font-size: 11px;
+                                color: var(--text-muted);
+                                padding-left: 92px;
+                            "
+                        >
+                            <span>6:00</span>
+                            <span>9:00</span>
+                            <span>12:00</span>
+                            <span>15:00</span>
+                            <span>18:00</span>
+                            <span>21:00</span>
+                            <span>00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 7: Сравнение ресторанов -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 7: Сравнение по ресторанам (Restaurant Comparison)
+                </h2>
+                <div class="card">
+                    <div class="card-header">Рейтинг ресторанов по отзывам</div>
+                    <table class="table" style="margin-top: 16px">
+                        <thead>
+                            <tr>
+                                <th>Ресторан</th>
+                                <th>Всего</th>
+                                <th>Позитивные</th>
+                                <th>Негативные</th>
+                                <th>Рейтинг</th>
+                                <th>Тренд</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Вкусно - Центр</strong></td>
+                                <td>342</td>
+                                <td style="color: var(--positive)">
+                                    287 (84%)
+                                </td>
+                                <td style="color: var(--negative)">55 (16%)</td>
+                                <td>
+                                    <span class="sentiment-badge positive"
+                                        >4.7 ⭐</span
+                                    >
+                                </td>
+                                <td style="color: var(--positive)">↑ 2%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Север</strong></td>
+                                <td>289</td>
+                                <td style="color: var(--positive)">
+                                    234 (81%)
+                                </td>
+                                <td style="color: var(--negative)">55 (19%)</td>
+                                <td>
+                                    <span class="sentiment-badge positive"
+                                        >4.5 ⭐</span
+                                    >
+                                </td>
+                                <td style="color: var(--positive)">↑ 5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Юг</strong></td>
+                                <td>267</td>
+                                <td style="color: var(--positive)">
+                                    198 (74%)
+                                </td>
+                                <td style="color: var(--negative)">69 (26%)</td>
+                                <td>
+                                    <span class="sentiment-badge neutral"
+                                        >4.2 ⭐</span
+                                    >
+                                </td>
+                                <td style="color: var(--negative)">↓ 3%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Запад</strong></td>
+                                <td>234</td>
+                                <td style="color: var(--positive)">
+                                    173 (74%)
+                                </td>
+                                <td style="color: var(--negative)">61 (26%)</td>
+                                <td>
+                                    <span class="sentiment-badge neutral"
+                                        >4.1 ⭐</span
+                                    >
+                                </td>
+                                <td style="color: var(--text-muted)">→ 0%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 8: Response time & resolution -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 8: Операционные метрики (Response Analytics)
+                </h2>
+                <div class="grid grid-3">
+                    <div class="card">
+                        <div class="card-header">Среднее время ответа</div>
+                        <div class="metric-value">
+                            2.4<span style="font-size: 20px; margin-left: 4px"
+                                >ч</span
+                            >
+                        </div>
+                        <div class="metric-change positive">↓ 18% быстрее</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">% решенных проблем</div>
+                        <div class="metric-value">
+                            87<span style="font-size: 20px; margin-left: 4px"
+                                >%</span
+                            >
+                        </div>
+                        <div class="metric-change positive">↑ 12%</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Требуют внимания</div>
+                        <div
+                            class="metric-value"
+                            style="color: var(--negative)"
+                        >
+                            23
+                        </div>
+                        <div class="metric-change negative">Срочно</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 9: Sentiment Score Evolution -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 9: Эволюция настроения (Sentiment Score Over Time)
+                </h2>
+                <div class="card">
+                    <div class="card-header">
+                        Динамика общего sentiment score
+                    </div>
+                    <div style="margin-top: 24px">
+                        <div
+                            style="
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 16px;
+                            "
+                        >
+                            <div>
+                                <div
+                                    style="
+                                        font-size: 48px;
+                                        font-weight: 600;
+                                        color: var(--positive);
+                                    "
+                                >
+                                    8.2/10
+                                </div>
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    Текущий score
+                                </div>
+                            </div>
+                            <div style="text-align: right">
+                                <div
+                                    class="metric-change positive"
+                                    style="font-size: 16px"
+                                >
+                                    ↑ 0.8
+                                </div>
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        color: var(--text-muted);
+                                    "
+                                >
+                                    За месяц
+                                </div>
+                            </div>
+                        </div>
+                        <div class="trend-line" style="height: 100px">
+                            <div
+                                class="trend-point"
+                                style="height: 60%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 65%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 70%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 68%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 75%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 78%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 80%; background: var(--positive)"
+                            ></div>
+                            <div
+                                class="trend-point"
+                                style="height: 82%; background: var(--positive)"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 10: Word Cloud Categories -->
+            <div class="section">
+                <h2 class="section-title">
+                    Вариант 10: Ключевые слова (Most Mentioned Keywords)
+                </h2>
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header" style="color: var(--positive)">
+                            Позитивные упоминания
+                        </div>
+                        <div style="margin-top: 20px; line-height: 2">
+                            <span
+                                style="
+                                    font-size: 24px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >вкусно</span
+                            >
+                            <span
+                                style="
+                                    font-size: 18px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >быстро</span
+                            >
+                            <span
+                                style="
+                                    font-size: 28px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >свежее</span
+                            >
+                            <span
+                                style="
+                                    font-size: 16px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >горячее</span
+                            >
+                            <span
+                                style="
+                                    font-size: 22px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >вежливо</span
+                            >
+                            <span
+                                style="
+                                    font-size: 20px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >чисто</span
+                            >
+                            <span
+                                style="
+                                    font-size: 26px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >отлично</span
+                            >
+                            <span
+                                style="
+                                    font-size: 17px;
+                                    color: var(--positive);
+                                    margin: 0 8px;
+                                "
+                                >спасибо</span
+                            >
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" style="color: var(--negative)">
+                            Негативные упоминания
+                        </div>
+                        <div style="margin-top: 20px; line-height: 2">
+                            <span
+                                style="
+                                    font-size: 26px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >холодное</span
+                            >
+                            <span
+                                style="
+                                    font-size: 22px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >долго</span
+                            >
+                            <span
+                                style="
+                                    font-size: 18px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >опоздали</span
+                            >
+                            <span
+                                style="
+                                    font-size: 24px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >забыли</span
+                            >
+                            <span
+                                style="
+                                    font-size: 16px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >грубо</span
+                            >
+                            <span
+                                style="
+                                    font-size: 20px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >дорого</span
+                            >
+                            <span
+                                style="
+                                    font-size: 17px;
+                                    color: var(--negative);
+                                    margin: 0 8px;
+                                "
+                                >помято</span
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute("data-theme");
+                html.setAttribute(
+                    "data-theme",
+                    current === "dark" ? "light" : "dark",
+                );
+            }
+        </script>
+    </body>
+</html>

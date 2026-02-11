@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>RMS - Restaurant Management System</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --bg: #ffffff;
+                --bg-secondary: #fafafa;
+                --text: #000000;
+                --text-secondary: #666666;
+                --border: #e0e0e0;
+                --action: #2563eb;
+                --action-hover: #1d4ed8;
+                --success: #16a34a;
+                --danger: #dc2626;
+            }
+
+            [data-theme="dark"] {
+                --bg: #000000;
+                --bg-secondary: #0a0a0a;
+                --text: #ffffff;
+                --text-secondary: #999999;
+                --border: #2a2a2a;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                    "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.5;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* Header */
+            .header {
+                border-bottom: 1px solid var(--border);
+                padding: 0 32px;
+                height: 64px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: var(--bg);
+            }
+
+            .logo {
+                font-size: 18px;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 24px;
+            }
+
+            .theme-toggle {
+                background: transparent;
+                border: 1px solid var(--border);
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.15s;
+            }
+
+            .theme-toggle:hover {
+                background: var(--bg-secondary);
+            }
+
+            .user-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                background: var(--text);
+                color: var(--bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: 600;
+            }
+
+            .user-text {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .user-name {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            .user-role {
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+
+            /* Layout */
+            .container {
+                display: grid;
+                grid-template-columns: 240px 1fr;
+            }
+
+            /* Sidebar */
+            .sidebar {
+                border-right: 1px solid var(--border);
+                padding: 32px 16px;
+                min-height: calc(100vh - 64px);
+            }
+
+            .nav-section {
+                margin-bottom: 32px;
+            }
+
+            .nav-label {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                padding: 0 12px;
+                margin-bottom: 12px;
+            }
+
+            .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 10px 12px;
+                font-size: 14px;
+                color: var(--text);
+                border-radius: 6px;
+                cursor: pointer;
+                transition: background 0.15s;
+                margin-bottom: 2px;
+                font-weight: 400;
+            }
+
+            .nav-item:hover {
+                background: var(--bg-secondary);
+            }
+
+            .nav-item.active {
+                background: var(--text);
+                color: var(--bg);
+                font-weight: 500;
+            }
+
+            /* Main */
+            .main {
+                padding: 48px;
+                max-width: 1600px;
+            }
+
+            .page-header {
+                margin-bottom: 40px;
+            }
+
+            .page-title {
+                font-size: 32px;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+                margin-bottom: 8px;
+            }
+
+            .page-description {
+                font-size: 16px;
+                color: var(--text-secondary);
+            }
+
+            .header-actions {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 40px;
+            }
+
+            /* Buttons */
+            .btn {
+                padding: 0 20px;
+                height: 40px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.15s;
+                border: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .btn-primary {
+                background: var(--action);
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: var(--action-hover);
+            }
+
+            .btn-secondary {
+                background: transparent;
+                color: var(--text);
+                border: 1px solid var(--border);
+            }
+
+            .btn-secondary:hover {
+                background: var(--bg-secondary);
+            }
+
+            .btn-danger {
+                background: transparent;
+                color: var(--danger);
+                border: 1px solid var(--border);
+            }
+
+            .btn-danger:hover {
+                background: #fee2e2;
+                border-color: var(--danger);
+            }
+
+            [data-theme="dark"] .btn-danger:hover {
+                background: #450a0a;
+            }
+
+            .btn-sm {
+                height: 32px;
+                padding: 0 12px;
+                font-size: 13px;
+            }
+
+            /* Stats */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 24px;
+                margin-bottom: 48px;
+            }
+
+            .stat-card {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 24px;
+                transition: border-color 0.15s;
+            }
+
+            .stat-card:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .stat-label {
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+
+            .stat-value {
+                font-size: 36px;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+                margin-bottom: 8px;
+            }
+
+            .stat-change {
+                font-size: 13px;
+                font-weight: 500;
+            }
+
+            .stat-change.up {
+                color: var(--success);
+            }
+
+            .stat-change.down {
+                color: var(--danger);
+            }
+
+            /* Card */
+            .card {
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--bg);
+                margin-bottom: 32px;
+            }
+
+            .card-header {
+                padding: 24px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .card-title {
+                font-size: 18px;
+                font-weight: 600;
+            }
+
+            .card-body {
+                padding: 24px;
+            }
+
+            /* Table */
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .table thead {
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table th {
+                text-align: left;
+                padding: 16px 24px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .table td {
+                padding: 16px 24px;
+                font-size: 14px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .table tbody tr:hover {
+                background: var(--bg-secondary);
+            }
+
+            .table-actions {
+                display: flex;
+                gap: 8px;
+            }
+
+            /* Badge */
+            .badge {
+                display: inline-flex;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 500;
+                border-radius: 4px;
+                border: 1px solid var(--border);
+            }
+
+            .badge.success {
+                color: var(--success);
+                background: #f0fdf4;
+                border-color: #bbf7d0;
+            }
+
+            [data-theme="dark"] .badge.success {
+                background: #14532d;
+                border-color: #166534;
+            }
+
+            /* Select */
+            .select {
+                padding: 0 16px;
+                height: 40px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg);
+                color: var(--text);
+                font-size: 14px;
+                cursor: pointer;
+                transition: border-color 0.15s;
+            }
+
+            .select:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .select:focus {
+                outline: none;
+                border-color: var(--action);
+            }
+
+            /* Form */
+            .form-group {
+                margin-bottom: 24px;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 13px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 0 16px;
+                height: 40px;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg);
+                color: var(--text);
+                font-size: 14px;
+                transition: border-color 0.15s;
+            }
+
+            .form-input:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .form-input:focus {
+                outline: none;
+                border-color: var(--action);
+            }
+
+            /* Login */
+            .login-container {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+            }
+
+            .login-card {
+                width: 100%;
+                max-width: 400px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 48px;
+            }
+
+            .login-header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .login-title {
+                font-size: 28px;
+                font-weight: 600;
+                letter-spacing: -0.03em;
+                margin-bottom: 8px;
+            }
+
+            .login-subtitle {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .login-btn {
+                width: 100%;
+                height: 44px;
+                background: var(--action);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background 0.15s;
+                margin-top: 8px;
+            }
+
+            .login-btn:hover {
+                background: var(--action-hover);
+            }
+
+            /* Note */
+            .note {
+                padding: 16px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                font-size: 13px;
+                color: var(--text-secondary);
+            }
+
+            /* Utilities */
+            .hidden {
+                display: none;
+            }
+
+            .flex {
+                display: flex;
+            }
+
+            .items-center {
+                align-items: center;
+            }
+
+            .justify-between {
+                justify-content: space-between;
+            }
+
+            .gap-16 {
+                gap: 16px;
+            }
+
+            .mb-24 {
+                margin-bottom: 24px;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- LOGIN PAGE -->
+        <div id="loginPage" class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1 class="login-title">RMS</h1>
+                    <p class="login-subtitle">Restaurant Management System</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input
+                            type="email"
+                            class="form-input"
+                            placeholder="admin@example.com"
+                            value="admin@example.com"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input
+                            type="password"
+                            class="form-input"
+                            placeholder="••••••••"
+                            value="password"
+                        />
+                    </div>
+                    <button type="submit" class="login-btn">Sign in</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAIN APP -->
+        <div id="mainApp" class="hidden">
+            <!-- Header -->
+            <header class="header">
+                <div class="logo">RMS</div>
+                <div class="header-right">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span id="themeIcon">◐</span>
+                    </button>
+                    <div class="user-info">
+                        <div class="avatar">ИП</div>
+                        <div class="user-text">
+                            <div class="user-name">Иван Петров</div>
+                            <div class="user-role">Super Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="container">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <nav class="nav-section">
+                        <div class="nav-label">Main</div>
+                        <div
+                            class="nav-item active"
+                            onclick="showSection('dashboard')"
+                        >
+                            <span>Dashboard</span>
+                        </div>
+                        <div
+                            class="nav-item"
+                            onclick="showSection('organizations')"
+                        >
+                            <span>Organizations</span>
+                        </div>
+                        <div
+                            class="nav-item"
+                            onclick="showSection('restaurants')"
+                        >
+                            <span>Restaurants</span>
+                        </div>
+                        <div class="nav-item" onclick="showSection('feedback')">
+                            <span>Feedback</span>
+                        </div>
+                    </nav>
+
+                    <nav class="nav-section">
+                        <div class="nav-label">Settings</div>
+                        <div class="nav-item" onclick="showSection('settings')">
+                            <span>Restaurant Settings</span>
+                        </div>
+                    </nav>
+                </aside>
+
+                <!-- Main Content -->
+                <main class="main">
+                    <!-- Dashboard Section -->
+                    <div id="dashboardSection">
+                        <div class="page-header">
+                            <h1 class="page-title">Dashboard</h1>
+                            <p class="page-description">
+                                Overview of your restaurant management system
+                            </p>
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-label">Organizations</div>
+                                <div class="stat-value">12</div>
+                                <div class="stat-change up">↑ 2 this month</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Restaurants</div>
+                                <div class="stat-value">48</div>
+                                <div class="stat-change up">↑ 5 this month</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Active Managers</div>
+                                <div class="stat-value">67</div>
+                                <div class="stat-change">→ No change</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Recent Activity</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="note">
+                                    Activity log: organization/restaurant
+                                    creation, updates, settings changes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organizations Section -->
+                    <div id="organizationsSection" class="hidden">
+                        <div class="header-actions">
+                            <div>
+                                <h1 class="page-title">Organizations</h1>
+                                <p class="page-description">
+                                    Manage your restaurant organizations
+                                </p>
+                            </div>
+                            <button class="btn btn-primary">
+                                New Organization
+                            </button>
+                        </div>
+
+                        <div class="card">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Restaurants</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Сеть "Вкусно"</strong></td>
+                                        <td>15</td>
+                                        <td>Иванов И.И.</td>
+                                        <td>
+                                            <span class="badge success"
+                                                >Active</span
+                                            >
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong
+                                                >Premium Dining Group</strong
+                                            >
+                                        </td>
+                                        <td>8</td>
+                                        <td>Петрова А.В.</td>
+                                        <td>
+                                            <span class="badge success"
+                                                >Active</span
+                                            >
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    View
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Restaurants Section -->
+                    <div id="restaurantsSection" class="hidden">
+                        <div class="header-actions">
+                            <div>
+                                <h1 class="page-title">Restaurants</h1>
+                                <p class="page-description">
+                                    Manage individual restaurant locations
+                                </p>
+                            </div>
+                            <button class="btn btn-primary">
+                                Add Restaurant
+                            </button>
+                        </div>
+
+                        <div class="flex gap-16 mb-24">
+                            <select class="select" style="width: 300px">
+                                <option>All Organizations</option>
+                                <option selected>Сеть "Вкусно"</option>
+                                <option>Premium Dining Group</option>
+                            </select>
+                        </div>
+
+                        <div class="card">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Address</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Вкусно - Центр</strong></td>
+                                        <td>Москва, ул. Тверская, 15</td>
+                                        <td>Сидоров С.С.</td>
+                                        <td>
+                                            <span class="badge success"
+                                                >Open</span
+                                            >
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Settings
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Вкусно - Север</strong></td>
+                                        <td>Москва, просп. Мира, 88</td>
+                                        <td>Николаев Н.Н.</td>
+                                        <td>
+                                            <span class="badge success"
+                                                >Open</span
+                                            >
+                                        </td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    class="btn btn-secondary btn-sm"
+                                                >
+                                                    Settings
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Section -->
+                    <div id="feedbackSection" class="hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Feedback Statistics</h1>
+                            <p class="page-description">
+                                Customer feedback analytics and insights
+                            </p>
+                        </div>
+
+                        <div class="stats">
+                            <div class="stat-card">
+                                <div class="stat-label">Total Feedback</div>
+                                <div class="stat-value">1,248</div>
+                                <div class="stat-change up">
+                                    ↑ 12% this week
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Positive</div>
+                                <div class="stat-value">892</div>
+                                <div class="stat-change">71.5%</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Negative</div>
+                                <div class="stat-value">234</div>
+                                <div class="stat-change">18.8%</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">NPS Score</div>
+                                <div class="stat-value">+52.7</div>
+                                <div class="stat-change up">Excellent</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Feedback by Category</h2>
+                            </div>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Positive</th>
+                                        <th>Negative</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Food Quality</strong></td>
+                                        <td>456</td>
+                                        <td>12</td>
+                                        <td>468</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Service</strong></td>
+                                        <td>312</td>
+                                        <td>45</td>
+                                        <td>357</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Delivery Speed</strong></td>
+                                        <td>234</td>
+                                        <td>89</td>
+                                        <td>323</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Price</strong></td>
+                                        <td>178</td>
+                                        <td>134</td>
+                                        <td>312</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div id="settingsSection" class="hidden">
+                        <div class="page-header">
+                            <h1 class="page-title">Restaurant Settings</h1>
+                            <p class="page-description">Вкусно - Центр</p>
+                        </div>
+
+                        <div class="card mb-24">
+                            <div class="card-header">
+                                <h2 class="card-title">General Settings</h2>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label"
+                                        >Restaurant Name</label
+                                    >
+                                    <input
+                                        type="text"
+                                        class="form-input"
+                                        value="Вкусно - Центр"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Timezone</label>
+                                    <select class="select" style="width: 100%">
+                                        <option>Europe/Moscow (UTC+3)</option>
+                                        <option>Europe/London (UTC+0)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-16 justify-between">
+                            <button class="btn btn-secondary">Cancel</button>
+                            <button class="btn btn-primary">
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <script>
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute("data-theme");
+                html.setAttribute(
+                    "data-theme",
+                    current === "dark" ? "light" : "dark",
+                );
+            }
+
+            document
+                .getElementById("loginForm")
+                ?.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    document
+                        .getElementById("loginPage")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("mainApp")
+                        .classList.remove("hidden");
+                });
+
+            function showSection(section) {
+                document.querySelectorAll('[id$="Section"]').forEach((el) => {
+                    el.classList.add("hidden");
+                });
+
+                document
+                    .getElementById(section + "Section")
+                    .classList.remove("hidden");
+
+                document.querySelectorAll(".nav-item").forEach((el) => {
+                    el.classList.remove("active");
+                });
+                event.currentTarget.classList.add("active");
+            }
+        </script>
+    </body>
+</html>

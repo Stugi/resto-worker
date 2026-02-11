@@ -1,0 +1,27 @@
+/* Убираем скроллбар полностью */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* IE and Edge */
+* {
+  -ms-overflow-style: none;
+}
+
+/* Для body и html убираем overflow по умолчанию */
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* Разрешаем скролл только по вертикали для основного контента */
+body {
+  overflow-y: auto;
+}

@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Feedback Statistics - RMS</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --bg: #ffffff;
+                --bg-secondary: #fafafa;
+                --text: #000000;
+                --text-secondary: #666666;
+                --border: #e0e0e0;
+                --action: #2a2a2a;
+                --action-hover: #1a1a1a;
+                --success: #16a34a;
+                --danger: #dc2626;
+            }
+
+            [data-theme="dark"] {
+                --bg: #000000;
+                --bg-secondary: #0a0a0a;
+                --text: #ffffff;
+                --text-secondary: #999999;
+                --border: #2a2a2a;
+                --action: #e5e5e5;
+                --action-hover: #ffffff;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                    "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.5;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* Header */
+            .header {
+                border-bottom: 1px solid var(--border);
+                padding: 0 24px;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: var(--bg);
+            }
+
+            .logo {
+                font-size: 16px;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+            }
+
+            .header-right {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .theme-toggle {
+                background: transparent;
+                border: 1px solid var(--border);
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.15s;
+            }
+
+            .theme-toggle:hover {
+                background: var(--bg-secondary);
+            }
+
+            /* Main */
+            .main {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 32px;
+            }
+
+            .page-header {
+                margin-bottom: 32px;
+            }
+
+            .page-title {
+                font-size: 24px;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+                margin-bottom: 6px;
+            }
+
+            .page-description {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .section {
+                margin-bottom: 48px;
+            }
+
+            .section-title {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            /* Stats Grid */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                margin-bottom: 32px;
+            }
+
+            .stat-card {
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 20px;
+                transition: border-color 0.15s;
+            }
+
+            .stat-card:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .stat-label {
+                font-size: 12px;
+                color: var(--text-secondary);
+                margin-bottom: 10px;
+                font-weight: 500;
+            }
+
+            .stat-value {
+                font-size: 30px;
+                font-weight: 600;
+                letter-spacing: -0.02em;
+                margin-bottom: 6px;
+            }
+
+            .stat-change {
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .stat-change.up {
+                color: var(--success);
+            }
+
+            .stat-change.down {
+                color: var(--danger);
+            }
+
+            /* Card */
+            .card {
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                background: var(--bg);
+                margin-bottom: 24px;
+            }
+
+            .card-header {
+                padding: 20px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .card-title {
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            /* Table */
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .table th {
+                text-align: left;
+                padding: 12px 20px;
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table td {
+                padding: 14px 20px;
+                font-size: 13px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .table tbody tr:hover {
+                background: var(--bg-secondary);
+            }
+
+            /* Progress Bar */
+            .progress-wrapper {
+                margin: 16px 0;
+            }
+
+            .progress-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 8px;
+                font-size: 13px;
+            }
+
+            .progress-label {
+                color: var(--text);
+            }
+
+            .progress-value {
+                font-weight: 600;
+            }
+
+            .progress-bar {
+                height: 6px;
+                background: var(--bg-secondary);
+                border-radius: 3px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                transition: width 0.3s ease;
+                background: var(--text);
+            }
+
+            .progress-fill.positive {
+                background: var(--success);
+            }
+
+            .progress-fill.negative {
+                background: var(--danger);
+            }
+
+            /* Bar Chart */
+            .bar-chart {
+                display: flex;
+                gap: 8px;
+                align-items: flex-end;
+                height: 180px;
+                padding: 20px 0;
+            }
+
+            .bar-wrapper {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .bar {
+                width: 100%;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 4px 4px 0 0;
+                transition: all 0.2s;
+                min-height: 20px;
+            }
+
+            .bar:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .bar-label {
+                font-size: 11px;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+
+            /* Trend Line */
+            .trend-line {
+                display: flex;
+                align-items: flex-end;
+                gap: 3px;
+                height: 60px;
+                margin: 16px 0;
+            }
+
+            .trend-point {
+                flex: 1;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 2px;
+                transition: all 0.2s;
+            }
+
+            .trend-point:hover {
+                border-color: var(--text-secondary);
+            }
+
+            /* Heatmap */
+            .heatmap-wrapper {
+                margin-top: 20px;
+            }
+
+            .heatmap-row {
+                display: grid;
+                grid-template-columns: 80px 1fr;
+                gap: 12px;
+                margin-bottom: 4px;
+            }
+
+            .heatmap-label {
+                font-size: 12px;
+                color: var(--text-secondary);
+                padding-top: 4px;
+            }
+
+            .heatmap {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 4px;
+            }
+
+            .heatmap-cell {
+                aspect-ratio: 1;
+                border: 1px solid var(--border);
+                border-radius: 3px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+                transition: all 0.15s;
+            }
+
+            .heatmap-cell:hover {
+                border-color: var(--text-secondary);
+                transform: scale(1.05);
+            }
+
+            .heatmap-footer {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 12px;
+                font-size: 10px;
+                color: var(--text-secondary);
+                padding-left: 92px;
+            }
+
+            /* Badge */
+            .badge {
+                display: inline-flex;
+                padding: 3px 8px;
+                font-size: 11px;
+                font-weight: 500;
+                border-radius: 4px;
+                border: 1px solid var(--border);
+            }
+
+            .badge.positive {
+                color: var(--success);
+                background: #f0fdf4;
+                border-color: #bbf7d0;
+            }
+
+            .badge.negative {
+                color: var(--danger);
+                background: #fee2e2;
+                border-color: #fecaca;
+            }
+
+            .badge.neutral {
+                color: var(--text-secondary);
+                background: var(--bg-secondary);
+            }
+
+            [data-theme="dark"] .badge.positive {
+                background: #14532d;
+                border-color: #166534;
+            }
+
+            [data-theme="dark"] .badge.negative {
+                background: #7f1d1d;
+                border-color: #991b1b;
+            }
+
+            /* Select */
+            .select {
+                padding: 0 12px;
+                height: 36px;
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                background: var(--bg);
+                color: var(--text);
+                font-size: 13px;
+                cursor: pointer;
+                transition: border-color 0.15s;
+            }
+
+            .select:hover {
+                border-color: var(--text-secondary);
+            }
+
+            .select:focus {
+                outline: none;
+                border-color: var(--text);
+            }
+
+            /* Grid Layouts */
+            .grid-2 {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 16px;
+            }
+
+            /* Note */
+            .note {
+                padding: 12px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 5px;
+                font-size: 12px;
+                color: var(--text-secondary);
+                margin: 16px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <header class="header">
+            <div class="logo">RMS / Feedback Statistics</div>
+            <div class="header-right">
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="themeIcon">◐</span>
+                </button>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">Feedback Statistics</h1>
+                <p class="page-description">
+                    Customer feedback analytics and insights
+                </p>
+            </div>
+
+            <!-- ВАРИАНТ 1: Базовые метрики -->
+            <div class="section">
+                <h2 class="section-title">Overview Metrics</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Feedback</div>
+                        <div class="stat-value">1,248</div>
+                        <div class="stat-change up">↑ 12% this week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Positive</div>
+                        <div class="stat-value">892</div>
+                        <div class="stat-change">71.5%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Negative</div>
+                        <div class="stat-value">234</div>
+                        <div class="stat-change">18.8%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Neutral</div>
+                        <div class="stat-value">122</div>
+                        <div class="stat-change">9.7%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 2: Sentiment Distribution -->
+            <div class="section">
+                <h2 class="section-title">Sentiment Distribution</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Feedback Breakdown</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="progress-wrapper">
+                                <div class="progress-header">
+                                    <span class="progress-label">Positive</span>
+                                    <span class="progress-value"
+                                        >892 (71.5%)</span
+                                    >
+                                </div>
+                                <div class="progress-bar">
+                                    <div
+                                        class="progress-fill positive"
+                                        style="width: 71.5%"
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div class="progress-wrapper">
+                                <div class="progress-header">
+                                    <span class="progress-label">Negative</span>
+                                    <span class="progress-value"
+                                        >234 (18.8%)</span
+                                    >
+                                </div>
+                                <div class="progress-bar">
+                                    <div
+                                        class="progress-fill negative"
+                                        style="width: 18.8%"
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div class="progress-wrapper">
+                                <div class="progress-header">
+                                    <span class="progress-label">Neutral</span>
+                                    <span class="progress-value"
+                                        >122 (9.7%)</span
+                                    >
+                                </div>
+                                <div class="progress-bar">
+                                    <div
+                                        class="progress-fill"
+                                        style="width: 9.7%"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">NPS Score</h3>
+                        </div>
+                        <div class="card-body">
+                            <div
+                                class="stat-value"
+                                style="
+                                    color: var(--success);
+                                    margin-bottom: 12px;
+                                "
+                            >
+                                +52.7
+                            </div>
+                            <p
+                                style="
+                                    font-size: 13px;
+                                    color: var(--text-secondary);
+                                    margin-bottom: 20px;
+                                "
+                            >
+                                Excellent rating. NPS above 50 is considered
+                                outstanding.
+                            </p>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill positive"
+                                    style="width: 76.35%"
+                                ></div>
+                            </div>
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-top: 8px;
+                                    font-size: 11px;
+                                    color: var(--text-secondary);
+                                "
+                            >
+                                <span>-100</span>
+                                <span
+                                    style="font-weight: 600; color: var(--text)"
+                                    >52.7</span
+                                >
+                                <span>+100</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 3: Weekly Trends -->
+            <div class="section">
+                <h2 class="section-title">Weekly Trends</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Feedback Volume (Last 7 Days)
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="bar-chart">
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 75%"></div>
+                                <div class="bar-label">Mon</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 85%"></div>
+                                <div class="bar-label">Tue</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 65%"></div>
+                                <div class="bar-label">Wed</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 90%"></div>
+                                <div class="bar-label">Thu</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 100%"></div>
+                                <div class="bar-label">Fri</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 95%"></div>
+                                <div class="bar-label">Sat</div>
+                            </div>
+                            <div class="bar-wrapper">
+                                <div class="bar" style="height: 80%"></div>
+                                <div class="bar-label">Sun</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 16px">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Positive Feedback Trend</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="trend-line">
+                                <div
+                                    class="trend-point"
+                                    style="height: 45%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 55%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 50%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 65%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 75%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 80%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 100%"
+                                ></div>
+                            </div>
+                            <div class="stat-change up">
+                                ↑ Growing 18% this week
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Negative Feedback Trend</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="trend-line">
+                                <div
+                                    class="trend-point"
+                                    style="height: 60%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 55%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 50%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 45%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 35%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 30%"
+                                ></div>
+                                <div
+                                    class="trend-point"
+                                    style="height: 25%"
+                                ></div>
+                            </div>
+                            <div class="stat-change up">
+                                ↓ Declining 35% this week
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 4: Category Analysis -->
+            <div class="section">
+                <h2 class="section-title">Category Analysis</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Feedback by Category</h3>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Positive</th>
+                                <th>Negative</th>
+                                <th>Total</th>
+                                <th>Sentiment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Food Quality</strong></td>
+                                <td>456</td>
+                                <td>12</td>
+                                <td>468</td>
+                                <td>
+                                    <span class="badge positive"
+                                        >Excellent</span
+                                    >
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Service</strong></td>
+                                <td>312</td>
+                                <td>45</td>
+                                <td>357</td>
+                                <td>
+                                    <span class="badge positive">Good</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Delivery Speed</strong></td>
+                                <td>234</td>
+                                <td>89</td>
+                                <td>323</td>
+                                <td>
+                                    <span class="badge neutral">Average</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Price</strong></td>
+                                <td>178</td>
+                                <td>134</td>
+                                <td>312</td>
+                                <td>
+                                    <span class="badge neutral">Average</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Packaging</strong></td>
+                                <td>124</td>
+                                <td>67</td>
+                                <td>191</td>
+                                <td>
+                                    <span class="badge positive">Good</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 5: Heatmap -->
+            <div class="section">
+                <h2 class="section-title">Activity Heatmap</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Feedback Activity by Day & Time
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="heatmap-wrapper">
+                            <div class="heatmap-row">
+                                <div class="heatmap-label">Monday</div>
+                                <div class="heatmap">
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.05)"
+                                    >
+                                        12
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.1)"
+                                    >
+                                        18
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.2)"
+                                    >
+                                        34
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.4)"
+                                    >
+                                        56
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.6)"
+                                    >
+                                        78
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.3)"
+                                    >
+                                        45
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.15)"
+                                    >
+                                        23
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="heatmap-row">
+                                <div class="heatmap-label">Tuesday</div>
+                                <div class="heatmap">
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.08)"
+                                    >
+                                        15
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.15)"
+                                    >
+                                        28
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.25)"
+                                    >
+                                        42
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.5)"
+                                    >
+                                        67
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.7)"
+                                    >
+                                        89
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.35)"
+                                    >
+                                        54
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.18)"
+                                    >
+                                        31
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="heatmap-row">
+                                <div class="heatmap-label">Wednesday</div>
+                                <div class="heatmap">
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.06)"
+                                    >
+                                        10
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.12)"
+                                    >
+                                        22
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.22)"
+                                    >
+                                        38
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.45)"
+                                    >
+                                        61
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.65)"
+                                    >
+                                        84
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.32)"
+                                    >
+                                        49
+                                    </div>
+                                    <div
+                                        class="heatmap-cell"
+                                        style="background: rgba(0, 0, 0, 0.16)"
+                                    >
+                                        27
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="heatmap-footer">
+                            <span>6:00</span>
+                            <span>9:00</span>
+                            <span>12:00</span>
+                            <span>15:00</span>
+                            <span>18:00</span>
+                            <span>21:00</span>
+                            <span>00:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 6: Restaurant Comparison -->
+            <div class="section">
+                <h2 class="section-title">Restaurant Comparison</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Feedback by Location</h3>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Restaurant</th>
+                                <th>Total</th>
+                                <th>Positive</th>
+                                <th>Negative</th>
+                                <th>Rating</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Вкусно - Центр</strong></td>
+                                <td>342</td>
+                                <td>287 (84%)</td>
+                                <td>55 (16%)</td>
+                                <td>
+                                    <span class="badge positive">4.7 ⭐</span>
+                                </td>
+                                <td style="color: var(--success)">↑ 2%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Север</strong></td>
+                                <td>289</td>
+                                <td>234 (81%)</td>
+                                <td>55 (19%)</td>
+                                <td>
+                                    <span class="badge positive">4.5 ⭐</span>
+                                </td>
+                                <td style="color: var(--success)">↑ 5%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Юг</strong></td>
+                                <td>267</td>
+                                <td>198 (74%)</td>
+                                <td>69 (26%)</td>
+                                <td>
+                                    <span class="badge neutral">4.2 ⭐</span>
+                                </td>
+                                <td style="color: var(--danger)">↓ 3%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Вкусно - Запад</strong></td>
+                                <td>234</td>
+                                <td>173 (74%)</td>
+                                <td>61 (26%)</td>
+                                <td>
+                                    <span class="badge neutral">4.1 ⭐</span>
+                                </td>
+                                <td style="color: var(--text-secondary)">
+                                    → 0%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ВАРИАНТ 7: Response Metrics -->
+            <div class="section">
+                <h2 class="section-title">Operational Metrics</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Response Time</div>
+                        <div class="stat-value">2.4h</div>
+                        <div class="stat-change up">↓ 18% faster</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Resolution Rate</div>
+                        <div class="stat-value">87%</div>
+                        <div class="stat-change up">↑ 12%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Issues</div>
+                        <div class="stat-value">23</div>
+                        <div class="stat-change down">Urgent</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute("data-theme");
+                html.setAttribute(
+                    "data-theme",
+                    current === "dark" ? "light" : "dark",
+                );
+            }
+        </script>
+    </body>
+</html>

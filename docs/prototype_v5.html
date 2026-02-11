@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>RMS - Restaurant Management System</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --bg: #f8f9fa;
+                --bg-card: #ffffff;
+                --text: #1a1a1a;
+                --text-secondary: #6b7280;
+                --border: #e5e7eb;
+                --accent: #10b981;
+                --accent-hover: #059669;
+                --accent-light: #d1fae5;
+            }
+
+            [data-theme="dark"] {
+                --bg: #0a0a0a;
+                --bg-card: #1a1a1a;
+                --text: #ffffff;
+                --text-secondary: #9ca3af;
+                --border: #2a2a2a;
+                --accent-light: #065f46;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                    "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.6;
+                transition:
+                    background 0.3s,
+                    color 0.3s;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* Header */
+            .header {
+                background: var(--bg-card);
+                padding: 0 48px;
+                height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .logo {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--text);
+            }
+
+            .logo-icon {
+                width: 40px;
+                height: 40px;
+                background: var(--accent);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 700;
+                font-size: 18px;
+            }
+
+            .nav {
+                display: flex;
+                gap: 32px;
+                align-items: center;
+            }
+
+            .nav-link {
+                font-size: 15px;
+                color: var(--text-secondary);
+                text-decoration: none;
+                transition: color 0.2s;
+                font-weight: 500;
+            }
+
+            .nav-link:hover {
+                color: var(--text);
+            }
+
+            .nav-link.active {
+                color: var(--text);
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .theme-toggle {
+                background: transparent;
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 18px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }
+
+            .theme-toggle:hover {
+                background: var(--bg);
+            }
+
+            .user-avatar {
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                background: var(--accent);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+            /* Hero Section */
+            .hero {
+                background: var(--bg-card);
+                padding: 80px 48px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 60px;
+                align-items: center;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+
+            .hero-content h1 {
+                font-size: 48px;
+                font-weight: 700;
+                line-height: 1.2;
+                margin-bottom: 24px;
+                letter-spacing: -0.02em;
+            }
+
+            .hero-content p {
+                font-size: 18px;
+                color: var(--text-secondary);
+                margin-bottom: 32px;
+                line-height: 1.6;
+            }
+
+            .hero-features {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                margin-bottom: 40px;
+            }
+
+            .feature-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 16px;
+            }
+
+            .feature-icon {
+                width: 24px;
+                height: 24px;
+                background: var(--accent-light);
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--accent);
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .btn-primary {
+                background: var(--accent);
+                color: white;
+                padding: 16px 32px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .btn-primary:hover {
+                background: var(--accent-hover);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+            }
+
+            .hero-visual {
+                position: relative;
+                height: 500px;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent) 0%,
+                    #34d399 100%
+                );
+                border-radius: 24px;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .hero-visual::before {
+                content: "";
+                position: absolute;
+                width: 300px;
+                height: 300px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                top: -50px;
+                right: -50px;
+            }
+
+            .hero-visual::after {
+                content: "";
+                position: absolute;
+                width: 200px;
+                height: 200px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                bottom: -30px;
+                left: -30px;
+            }
+
+            .visual-card {
+                position: relative;
+                z-index: 1;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+                max-width: 400px;
+            }
+
+            /* Main Content */
+            .main {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 60px 48px;
+            }
+
+            .section {
+                margin-bottom: 80px;
+            }
+
+            .section-header {
+                margin-bottom: 40px;
+            }
+
+            .section-title {
+                font-size: 36px;
+                font-weight: 700;
+                margin-bottom: 12px;
+                letter-spacing: -0.02em;
+            }
+
+            .section-description {
+                font-size: 18px;
+                color: var(--text-secondary);
+            }
+
+            /* Stats Grid */
+            .stats {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 24px;
+                margin-bottom: 40px;
+            }
+
+            .stat-card {
+                background: var(--bg-card);
+                padding: 32px;
+                border-radius: 16px;
+                transition: all 0.3s;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .stat-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-label {
+                font-size: 14px;
+                color: var(--text-secondary);
+                margin-bottom: 12px;
+                font-weight: 500;
+            }
+
+            .stat-value {
+                font-size: 40px;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+                margin-bottom: 8px;
+                color: var(--accent);
+            }
+
+            .stat-change {
+                font-size: 14px;
+                font-weight: 500;
+                color: var(--accent);
+            }
+
+            /* Card */
+            .card {
+                background: var(--bg-card);
+                border-radius: 16px;
+                padding: 32px;
+                margin-bottom: 32px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .card-header {
+                margin-bottom: 24px;
+            }
+
+            .card-title {
+                font-size: 24px;
+                font-weight: 700;
+            }
+
+            /* Table */
+            .table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .table th {
+                text-align: left;
+                padding: 16px 20px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 2px solid var(--border);
+            }
+
+            .table td {
+                padding: 20px;
+                font-size: 15px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .table tbody tr:last-child td {
+                border-bottom: none;
+            }
+
+            .table tbody tr {
+                transition: background 0.2s;
+            }
+
+            .table tbody tr:hover {
+                background: var(--bg);
+            }
+
+            .table-actions {
+                display: flex;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+                border: none;
+            }
+
+            .btn-secondary {
+                background: var(--bg);
+                color: var(--text);
+            }
+
+            .btn-secondary:hover {
+                background: var(--accent-light);
+                color: var(--accent);
+            }
+
+            .btn-sm {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+
+            /* Badge */
+            .badge {
+                display: inline-flex;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+
+            .badge.success {
+                background: var(--accent-light);
+                color: var(--accent);
+            }
+
+            /* Progress Bar */
+            .progress-wrapper {
+                margin: 24px 0;
+            }
+
+            .progress-header {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                font-size: 15px;
+            }
+
+            .progress-label {
+                font-weight: 500;
+            }
+
+            .progress-value {
+                font-weight: 700;
+                color: var(--accent);
+            }
+
+            .progress-bar {
+                height: 10px;
+                background: var(--bg);
+                border-radius: 5px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: var(--accent);
+                border-radius: 5px;
+                transition: width 0.3s ease;
+            }
+
+            /* Login */
+            .login-container {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+                background: var(--bg);
+            }
+
+            .login-card {
+                width: 100%;
+                max-width: 440px;
+                background: var(--bg-card);
+                border-radius: 20px;
+                padding: 48px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            }
+
+            .login-header {
+                text-align: center;
+                margin-bottom: 40px;
+            }
+
+            .login-logo {
+                width: 60px;
+                height: 60px;
+                background: var(--accent);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 20px;
+                font-size: 28px;
+                color: white;
+                font-weight: 700;
+            }
+
+            .login-title {
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+
+            .login-subtitle {
+                font-size: 15px;
+                color: var(--text-secondary);
+            }
+
+            .form-group {
+                margin-bottom: 24px;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+
+            .form-input {
+                width: 100%;
+                padding: 14px 16px;
+                border: 2px solid var(--border);
+                border-radius: 10px;
+                background: var(--bg);
+                color: var(--text);
+                font-size: 15px;
+                transition: all 0.2s;
+            }
+
+            .form-input:hover {
+                border-color: var(--accent);
+            }
+
+            .form-input:focus {
+                outline: none;
+                border-color: var(--accent);
+                background: var(--bg-card);
+            }
+
+            .login-btn {
+                width: 100%;
+                height: 48px;
+                background: var(--accent);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s;
+                margin-top: 8px;
+            }
+
+            .login-btn:hover {
+                background: var(--accent-hover);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+            }
+
+            /* Utilities */
+            .hidden {
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                .hero {
+                    grid-template-columns: 1fr;
+                    padding: 40px 24px;
+                }
+
+                .hero-content h1 {
+                    font-size: 36px;
+                }
+
+                .hero-visual {
+                    height: 400px;
+                }
+
+                .main {
+                    padding: 40px 24px;
+                }
+
+                .stats {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- LOGIN PAGE -->
+        <div id="loginPage" class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-logo">R</div>
+                    <h1 class="login-title">Welcome back</h1>
+                    <p class="login-subtitle">Sign in to your account</p>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input
+                            type="email"
+                            class="form-input"
+                            placeholder="admin@example.com"
+                            value="admin@example.com"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input
+                            type="password"
+                            class="form-input"
+                            placeholder="••••••••"
+                            value="password"
+                        />
+                    </div>
+                    <button type="submit" class="login-btn">Sign in</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAIN APP -->
+        <div id="mainApp" class="hidden">
+            <!-- Header -->
+            <header class="header">
+                <div class="logo">
+                    <div class="logo-icon">R</div>
+                    <span>RMS</span>
+                </div>
+                <nav class="nav">
+                    <a href="#" class="nav-link active">Dashboard</a>
+                    <a href="#" class="nav-link">Organizations</a>
+                    <a href="#" class="nav-link">Restaurants</a>
+                    <a href="#" class="nav-link">Feedback</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span id="themeIcon">◐</span>
+                    </button>
+                    <div class="user-avatar">ИП</div>
+                </div>
+            </header>
+
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>Управление рестораном нового поколения</h1>
+                    <p>
+                        Первая платформа комплексного управления обратной связью
+                        на основе данных для сетей ресторанов
+                    </p>
+
+                    <div class="hero-features">
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <span>Средний рост конверсии +15%</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <span>Первые результаты за 30 рабочих дней</span>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <span
+                                >80% клиентов переходят на абонентскую
+                                работу</span
+                            >
+                        </div>
+                    </div>
+
+                    <button class="btn-primary">
+                        Начать работу
+                        <span>→</span>
+                    </button>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="visual-card">
+                        <h3 style="font-size: 24px; margin-bottom: 16px">
+                            Статистика в реальном времени
+                        </h3>
+                        <p
+                            style="
+                                color: var(--text-secondary);
+                                font-size: 15px;
+                            "
+                        >
+                            Мониторинг всех ключевых метрик вашего бизнеса
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Content -->
+            <main class="main">
+                <!-- Stats Section -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Ключевые показатели</h2>
+                        <p class="section-description">
+                            Обзор производительности вашей сети ресторанов
+                        </p>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">Организаций</div>
+                            <div class="stat-value">12</div>
+                            <div class="stat-change">↑ 2 за месяц</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Ресторанов</div>
+                            <div class="stat-value">48</div>
+                            <div class="stat-change">↑ 5 за месяц</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Активных менеджеров</div>
+                            <div class="stat-value">67</div>
+                            <div class="stat-change">Без изменений</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Feedback Section -->
+                <section class="section">
+                    <div class="section-header">
+                        <h2 class="section-title">Статистика отзывов</h2>
+                        <p class="section-description">
+                            Анализ обратной связи от клиентов
+                        </p>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-label">Всего отзывов</div>
+                            <div class="stat-value">1,248</div>
+                            <div class="stat-change">↑ 12% за неделю</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Позитивных</div>
+                            <div class="stat-value">892</div>
+                            <div class="stat-change">71.5%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Негативных</div>
+                            <div class="stat-value">234</div>
+                            <div class="stat-change">18.8%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">NPS Score</div>
+                            <div class="stat-value">+52.7</div>
+                            <div class="stat-change">Отлично</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Распределение отзывов</h3>
+                        </div>
+
+                        <div class="progress-wrapper">
+                            <div class="progress-header">
+                                <span class="progress-label">Позитивные</span>
+                                <span class="progress-value">892 (71.5%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill"
+                                    style="width: 71.5%"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-wrapper">
+                            <div class="progress-header">
+                                <span class="progress-label">Негативные</span>
+                                <span class="progress-value">234 (18.8%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill"
+                                    style="width: 18.8%; background: #ef4444"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="progress-wrapper">
+                            <div class="progress-header">
+                                <span class="progress-label">Нейтральные</span>
+                                <span class="progress-value">122 (9.7%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div
+                                    class="progress-fill"
+                                    style="width: 9.7%; background: #6b7280"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Restaurants Table -->
+                <section class="section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Рестораны</h3>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Адрес</th>
+                                    <th>Менеджер</th>
+                                    <th>Статус</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Вкусно - Центр</strong></td>
+                                    <td>Москва, ул. Тверская, 15</td>
+                                    <td>Сидоров С.С.</td>
+                                    <td>
+                                        <span class="badge success"
+                                            >Работает</span
+                                        >
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button
+                                                class="btn btn-secondary btn-sm"
+                                            >
+                                                Редактировать
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Вкусно - Север</strong></td>
+                                    <td>Москва, просп. Мира, 88</td>
+                                    <td>Николаев Н.Н.</td>
+                                    <td>
+                                        <span class="badge success"
+                                            >Работает</span
+                                        >
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button
+                                                class="btn btn-secondary btn-sm"
+                                            >
+                                                Редактировать
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Вкусно - Юг</strong></td>
+                                    <td>Москва, ул. Профсоюзная, 42</td>
+                                    <td>Кузнецова Л.М.</td>
+                                    <td>
+                                        <span class="badge success"
+                                            >Работает</span
+                                        >
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button
+                                                class="btn btn-secondary btn-sm"
+                                            >
+                                                Редактировать
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <script>
+            function toggleTheme() {
+                const html = document.documentElement;
+                const current = html.getAttribute("data-theme");
+                html.setAttribute(
+                    "data-theme",
+                    current === "dark" ? "light" : "dark",
+                );
+            }
+
+            document
+                .getElementById("loginForm")
+                ?.addEventListener("submit", (e) => {
+                    e.preventDefault();
+                    document
+                        .getElementById("loginPage")
+                        .classList.add("hidden");
+                    document
+                        .getElementById("mainApp")
+                        .classList.remove("hidden");
+                });
+        </script>
+    </body>
+</html>
