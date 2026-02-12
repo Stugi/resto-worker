@@ -181,6 +181,7 @@ const mainNavigation = computed(() => {
     return [
       ...baseItems,
       { path: '/organizations', label: 'Организации' },
+      { path: '/restaurants', label: 'Рестораны' },
       { path: '/users', label: 'Пользователи' }
     ]
   }

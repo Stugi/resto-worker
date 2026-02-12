@@ -1,4 +1,5 @@
 import { hash } from 'bcrypt'
+import { createId } from '@paralleldrive/cuid2'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
