@@ -32,12 +32,35 @@
         <ClientOnly>
           <!-- Основное -->
           <div class="mb-6">
-            <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
+            <h3 class="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
               Основное
             </h3>
             <div class="space-y-1">
               <NuxtLink
                 v-for="item in mainNavigation"
+                :key="item.path"
+                :to="item.path"
+                @click="$emit('close')"
+                :class="[
+                  'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  isActive(item.path)
+                    ? 'bg-gray-100 text-text'
+                    : 'text-text-secondary hover:bg-gray-50 hover:text-text'
+                ]"
+              >
+                {{ item.label }}
+              </NuxtLink>
+            </div>
+          </div>
+
+          <!-- Отчёты -->
+          <div v-if="analyticsNavigation.length > 0" class="mb-6">
+            <h3 class="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
+              Отчёты
+            </h3>
+            <div class="space-y-1">
+              <NuxtLink
+                v-for="item in analyticsNavigation"
                 :key="item.path"
                 :to="item.path"
                 @click="$emit('close')"
@@ -98,6 +121,9 @@
             </div>
           </div>
         </ClientOnly>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-200"></div>
 
         <!-- Logout Button -->
         <button
@@ -190,19 +216,43 @@ const mainNavigation = computed(() => {
     return [
       ...baseItems,
       { path: '/restaurants', label: 'Рестораны' },
-      { path: '/users', label: 'Пользователи' },
+      { path: '/users', label: 'Пользователи' }
+    ]
+  }
+
+  if (role === 'MANAGER') {
+    return [
+      ...baseItems
+    ]
+  }
+
+  return baseItems
+})
+
+// Analytics navigation - Отчёты и статистика
+const analyticsNavigation = computed(() => {
+  const role = user.value?.role
+
+  if (role === 'SUPER_ADMIN') {
+    return [
+      { path: '/analytics', label: 'Аналитика' },
+      { path: '/stats', label: 'Статистика' }
+    ]
+  }
+
+  if (role === 'OWNER') {
+    return [
       { path: '/analytics', label: 'Аналитика' }
     ]
   }
 
   if (role === 'MANAGER') {
     return [
-      ...baseItems,
       { path: '/stats', label: 'Статистика' }
     ]
   }
 
-  return baseItems
+  return []
 })
 
 // Settings navigation - Настройки (пока пустой, позже добавим страницы)

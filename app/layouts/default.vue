@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
     <!-- Header -->
     <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
-    <div class="flex">
+    <div class="flex flex-1 overflow-hidden">
       <!-- Sidebar -->
       <LayoutSidebar :is-open="sidebarOpen" @close="sidebarOpen = false" />
 
       <!-- Main Content -->
-      <main class="flex-1 min-h-[calc(100vh-4rem)]">
+      <main class="flex-1 overflow-y-auto">
         <div class="p-4 md:p-6 lg:p-8">
           <slot />
         </div>
