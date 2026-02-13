@@ -29,7 +29,7 @@ model User {
   role          Role      @default(MANAGER)
 
   // Состояние онбординга в боте
-  botState      String?   // WAITING_NAME, WAITING_SCALE, WAITING_CONTACT, WAITING_FIRST_REST, COMPLETED
+  botState      String?   // WAITING_NAME, WAITING_SCALE, WAITING_CONTACT, WAITING_FIRST_REST, WAITING_CHAT_CHOICE, COMPLETED
   tempOrgName   String?   // Временное название организации для онбординга
 
   organizationId String?
