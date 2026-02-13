@@ -28,10 +28,13 @@ model User {
   phone         String?
   role          Role      @default(MANAGER)
 
+  // Состояние онбординга в боте
+  botState      String?   // WAITING_NAME, WAITING_SCALE, WAITING_CONTACT, WAITING_FIRST_REST, COMPLETED
+  tempOrgName   String?   // Временное название организации для онбординга
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  
+
   restaurantId   String?
   restaurant     Restaurant?   @relation(fields: [restaurantId], references: [id])
 
