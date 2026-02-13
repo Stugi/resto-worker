@@ -1,6 +1,7 @@
 import { Bot, InlineKeyboard } from 'grammy'
 import { prisma } from '../../utils/prisma'
 import { createId } from '@paralleldrive/cuid2'
+import { BotState } from '../../types/bot'
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 if (!token) {
@@ -19,11 +20,11 @@ bot.command('start', async (ctx) => {
   // Создаем или обновляем пользователя
   await prisma.user.upsert({
     where: { telegramId: tgId },
-    update: { botState: 'WAITING_NAME' },
+    update: { botState: BotState.WAITING_NAME },
     create: {
       id: createId(),
       telegramId: tgId,
-      botState: 'WAITING_NAME',
+      botState: BotState.WAITING_NAME,
       role: 'OWNER',
       createdBy: 'telegram_bot'
     }
@@ -45,12 +46,12 @@ bot.on('message:text', async (ctx) => {
   }
 
   // ШАГ 1: Ожидаем название организации
-  if (user.botState === 'WAITING_NAME') {
+  if (user.botState === BotState.WAITING_NAME) {
     await prisma.user.update({
       where: { telegramId: tgId },
       data: {
         tempOrgName: text,
-        botState: 'WAITING_SCALE'
+        botState: BotState.WAITING_SCALE
       }
     })
 
@@ -66,7 +67,7 @@ bot.on('message:text', async (ctx) => {
   }
 
   // ШАГ 4: Ожидаем название первого ресторана
-  if (user.botState === 'WAITING_FIRST_REST') {
+  if (user.botState === BotState.WAITING_FIRST_REST) {
     const restaurant = await prisma.restaurant.create({
       data: {
         id: createId(),
@@ -78,7 +79,7 @@ bot.on('message:text', async (ctx) => {
 
     await prisma.user.update({
       where: { telegramId: tgId },
-      data: { botState: 'WAITING_CHAT_CHOICE' }
+      data: { botState: BotState.WAITING_CHAT_CHOICE }
     })
 
     await ctx.reply(`✅ Отлично! Ресторан "${text}" успешно добавлен!`)
@@ -119,7 +120,7 @@ bot.on('callback_query:data', async (ctx) => {
   if (data.startsWith('scale_')) {
     await prisma.user.update({
       where: { telegramId: tgId },
-      data: { botState: 'WAITING_CONTACT' }
+      data: { botState: BotState.WAITING_CONTACT }
     })
 
     await ctx.answerCallbackQuery()
@@ -152,7 +153,7 @@ bot.on('message:contact', async (ctx) => {
   const tgId = ctx.from.id.toString()
   const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
 
-  if (!user || user.botState !== 'WAITING_CONTACT') {
+  if (!user || user.botState !== BotState.WAITING_CONTACT) {
     return
   }
 
@@ -181,7 +182,7 @@ bot.on('message:contact', async (ctx) => {
     data: {
       phone,
       organizationId: org.id,
-      botState: 'WAITING_FIRST_REST',
+      botState: BotState.WAITING_FIRST_REST,
       login: `owner_${tgId.slice(-6)}`,
       name: ctx.from.first_name || 'Владелец'
     }
