@@ -1,3 +1,7 @@
+// ============================================
+// БАЗА: Generator, Datasource, Enums
+// ============================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,85 +23,97 @@ enum BillingStatus {
   DISABLED
 }
 
+// ============================================
+// ПОЛЬЗОВАТЕЛИ
+// ============================================
+
 model User {
-  id            String    @id
-  telegramId    String?   @unique
-  login         String?   @unique
-  passwordHash  String?
-  name          String?
-  phone         String?
-  role          Role      @default(MANAGER)
+  id           String  @id
+  telegramId   String? @unique
+  login        String? @unique
+  passwordHash String?
+  name         String?
+  phone        String?
+  role         Role    @default(MANAGER)
 
   // Состояние онбординга в боте
-  botState      String?   // WAITING_NAME, WAITING_SCALE, WAITING_CONTACT, WAITING_FIRST_REST, WAITING_CHAT_CHOICE, COMPLETED
-  tempOrgName   String?   // Временное название организации для онбординга
+  botState    String? // WAITING_NAME, WAITING_SCALE, WAITING_CONTACT, WAITING_FIRST_REST, WAITING_CHAT_CHOICE, COMPLETED
+  tempOrgName String? // Временное название организации для онбординга
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
 
-  restaurantId   String?
-  restaurant     Restaurant?   @relation(fields: [restaurantId], references: [id])
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
 
   // Аудит
-  createdAt      DateTime  @default(now())
-  createdBy      String?
-  updatedAt      DateTime  @updatedAt
-  updatedBy      String?
-  deletedAt      DateTime?
-  deletedBy      String?
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
 
   @@index([organizationId])
 }
 
-model Organization {
-  id            String        @id
-  name          String
-  
-  billing       Billing?
-  users         User[]
-  restaurants   Restaurant[]
+// ============================================
+// ОРГАНИЗАЦИИ И БИЛЛИНГ
+// ============================================
 
-  createdAt      DateTime  @default(now())
-  createdBy      String?
-  updatedAt      DateTime  @updatedAt
-  updatedBy      String?
-  deletedAt      DateTime?
-  deletedBy      String?
+model Organization {
+  id   String @id
+  name String
+
+  billing     Billing?
+  users       User[]
+  restaurants Restaurant[]
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
 }
 
 model Billing {
-  id             String        @id
-  status         BillingStatus @default(TRIAL)
-  trialStartsAt  DateTime      @default(now())
-  
-  organizationId String        @unique
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id            String        @id
+  status        BillingStatus @default(TRIAL)
+  trialStartsAt DateTime      @default(now())
 
-  createdAt      DateTime  @default(now())
-  createdBy      String?
-  updatedAt      DateTime  @updatedAt
-  updatedBy      String?
-  deletedAt      DateTime?
-  deletedBy      String?
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
 }
+
+// ============================================
+// РЕСТОРАНЫ И СТАТИСТИКА
+// ============================================
 
 model Restaurant {
   id             String       @id
   name           String
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  
-  settingsComment String?     @db.Text
-  
-  users          User[]
-  stats          RestaurantStat[]
 
-  createdAt      DateTime  @default(now())
-  createdBy      String?
-  updatedAt      DateTime  @updatedAt
-  updatedBy      String?
-  deletedAt      DateTime?
-  deletedBy      String?
+  settingsComment String? @db.Text
+
+  users User[]
+  stats RestaurantStat[]
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
 
   @@index([organizationId])
 }
@@ -106,13 +122,56 @@ model RestaurantStat {
   id           String     @id
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  
-  date         DateTime   @default(now())
-  metricName   String
-  value        Float
 
-  createdAt      DateTime  @default(now())
-  deletedAt      DateTime?
+  date       DateTime @default(now())
+  metricName String
+  value      Float
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@index([restaurantId, date])
+}
+
+// ============================================
+// USERBOT: Логирование и антифрод
+// ============================================
+
+// Логирование действий userbot
+model UserbotAction {
+  id           String   @id
+  action       String // CREATE_GROUP, ADD_USER, PROMOTE_ADMIN
+  userId       String
+  restaurantId String?
+  chatId       String?
+  success      Boolean
+  error        String?  @db.Text
+  metadata     Json? // { chatTitle, ownerId, duration }
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+// Rate limiting логи
+model RateLimitLog {
+  id        String   @id
+  userId    String
+  action    String // create_group
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId, action, createdAt])
+}
+
+// Подозрительная активность
+model SuspiciousActivity {
+  id         String   @id
+  userId     String
+  reason     String // UNIFORM_INTERVALS, TOO_FAST, etc
+  detectedAt DateTime @default(now())
+  resolved   Boolean  @default(false)
+  metadata   Json?
+
+  @@index([userId, detectedAt])
 }

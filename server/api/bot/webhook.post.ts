@@ -3,6 +3,8 @@ import { prisma } from '../../utils/prisma'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '../../../shared/constants/roles'
+import { createRestaurantGroup } from '../../utils/userbot'
+import { checkAndIncrement, detectSuspiciousActivity } from '../../utils/rate-limiter'
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 if (!token) {
@@ -78,21 +80,70 @@ bot.on('message:text', async (ctx) => {
       }
     })
 
-    await prisma.user.update({
-      where: { telegramId: tgId },
-      data: { botState: BotState.WAITING_CHAT_CHOICE }
-    })
-
     await ctx.reply(`Ресторан "${text}" успешно добавлен!`)
 
-    // Одна кнопка для настройки чата
-    const chatKeyboard = new InlineKeyboard()
-      .text('Настроить чат', `setup_chat_${restaurant.id}`)
+    try {
+      await ctx.replyWithChatAction('typing')
 
-    await ctx.reply(
-      `Последний шаг — настроить рабочий чат для "${text}".\n\nВ нем я буду собирать отчеты от менеджеров.`,
-      { reply_markup: chatKeyboard }
-    )
+      // Антифрод проверки
+      await checkAndIncrement(user.id, 'create_group')
+      const isSuspicious = await detectSuspiciousActivity(user.id)
+      if (isSuspicious) {
+        throw new Error('Обнаружена подозрительная активность')
+      }
+
+      // Создание группы через userbot
+      const groupResult = await createRestaurantGroup(
+        text,
+        tgId,
+        restaurant.id
+      )
+
+      if (!groupResult.success) {
+        throw new Error(groupResult.error || 'Неизвестная ошибка')
+      }
+
+      // Сохранение chatId
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: {
+          settingsComment: JSON.stringify({
+            telegramChatId: groupResult.chatId,
+            chatTitle: groupResult.chatTitle,
+            createdByUserbot: true
+          })
+        }
+      })
+
+      // COMPLETED
+      await prisma.user.update({
+        where: { telegramId: tgId },
+        data: { botState: BotState.COMPLETED }
+      })
+
+      await ctx.reply(
+        `Отлично!\n\n` +
+        `Группа "${groupResult.chatTitle}" создана.\n\n` +
+        `Регистрация завершена!`
+      )
+    } catch (error: any) {
+      console.error('Ошибка создания группы через userbot:', error)
+
+      // FALLBACK на ручной режим
+      await prisma.user.update({
+        where: { telegramId: tgId },
+        data: { botState: BotState.WAITING_CHAT_CHOICE }
+      })
+
+      const chatKeyboard = new InlineKeyboard()
+        .text('Настроить чат', `setup_chat_${restaurant.id}`)
+
+      await ctx.reply(
+        'Не удалось автоматически создать группу.\n\n' +
+        'Пожалуйста, создай группу вручную:',
+        { reply_markup: chatKeyboard }
+      )
+    }
 
     return
   }
