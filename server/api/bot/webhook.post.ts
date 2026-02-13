@@ -184,11 +184,21 @@ bot.on('message:contact', async (ctx) => {
   )
 })
 
+// Инициализация бота (только один раз)
+let botInitialized = false
+async function ensureBotInitialized() {
+  if (!botInitialized) {
+    await bot.init()
+    botInitialized = true
+  }
+}
+
 // Экспорт обработчика для Nuxt
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
   try {
+    await ensureBotInitialized()
     await bot.handleUpdate(body)
   } catch (err) {
     console.error('Bot Error:', err)
