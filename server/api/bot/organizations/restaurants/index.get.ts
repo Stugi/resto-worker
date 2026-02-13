@@ -1,4 +1,5 @@
 import { getUserFromSession } from '../../utils/auth'
+import { UserRole } from '../../../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   // Получаем текущего пользователя
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Только OWNER и SUPER_ADMIN могут просматривать рестораны
-  if (!['OWNER', 'SUPER_ADMIN'].includes(user.role)) {
+  if (![UserRole.OWNER, UserRole.SUPER_ADMIN].includes(user.role)) {
     throw createError({
       statusCode: 403,
       message: 'Недостаточно прав'
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // SUPER_ADMIN видит все рестораны
   // OWNER видит только рестораны своей организации
-  const whereClause = user.role === 'SUPER_ADMIN'
+  const whereClause = user.role === UserRole.SUPER_ADMIN
     ? { deletedAt: null }
     : { organizationId: user.organizationId!, deletedAt: null }
 

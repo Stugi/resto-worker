@@ -56,7 +56,7 @@
                 />
 
                 <!-- Роль (только для SUPER_ADMIN) -->
-                <div v-if="currentUser?.role === 'SUPER_ADMIN'">
+                <div v-if="currentUser?.role === UserRole.SUPER_ADMIN">
                     <label class="block text-sm font-medium text-text mb-2">
                         Роль
                     </label>
@@ -64,14 +64,14 @@
                         v-model="form.role"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
                     >
-                        <option value="SUPER_ADMIN">Супер Админ</option>
-                        <option value="OWNER">Владелец</option>
-                        <option value="MANAGER">Менеджер</option>
+                        <option :value="UserRole.SUPER_ADMIN">Супер Админ</option>
+                        <option :value="UserRole.OWNER">Владелец</option>
+                        <option :value="UserRole.MANAGER">Менеджер</option>
                     </select>
                 </div>
 
                 <!-- Организация (только для SUPER_ADMIN) -->
-                <div v-if="currentUser?.role === 'SUPER_ADMIN' && (form.role === 'OWNER' || form.role === 'MANAGER')">
+                <div v-if="currentUser?.role === UserRole.SUPER_ADMIN && (form.role === UserRole.OWNER || form.role === UserRole.MANAGER)">
                     <label class="block text-sm font-medium text-text mb-2">
                         Организация
                     </label>
@@ -127,6 +127,8 @@
 </template>
 
 <script setup lang="ts">
+import { UserRole } from '~/shared/constants/roles'
+
 interface Props {
     user?: {
         id: string;
@@ -159,13 +161,13 @@ const form = reactive({
     login: props.user?.login || "",
     password: "",
     phone: props.user?.phone || "",
-    role: props.user?.role || (currentUser.value?.role === 'OWNER' ? 'MANAGER' : 'SUPER_ADMIN'),
+    role: props.user?.role || (currentUser.value?.role === UserRole.OWNER ? UserRole.MANAGER : UserRole.SUPER_ADMIN),
     organizationId: props.user?.organization?.id || "",
 });
 
 // Загрузка организаций для SUPER_ADMIN
 const fetchOrganizations = async () => {
-    if (currentUser.value?.role !== 'SUPER_ADMIN') return;
+    if (currentUser.value?.role !== UserRole.SUPER_ADMIN) return;
 
     try {
         const data = await $fetch("/api/organizations", {
@@ -207,9 +209,9 @@ const handleSubmit = async () => {
             body.password = form.password;
         }
 
-        if (currentUser.value?.role === 'SUPER_ADMIN') {
+        if (currentUser.value?.role === UserRole.SUPER_ADMIN) {
             body.role = form.role;
-            if (form.role === 'OWNER' || form.role === 'MANAGER') {
+            if (form.role === UserRole.OWNER || form.role === UserRole.MANAGER) {
                 body.organizationId = form.organizationId;
             }
         }

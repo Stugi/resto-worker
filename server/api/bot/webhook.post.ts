@@ -2,6 +2,7 @@ import { Bot, InlineKeyboard } from 'grammy'
 import { prisma } from '../../utils/prisma'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
+import { UserRole } from '../../../shared/constants/roles'
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 if (!token) {
@@ -25,7 +26,7 @@ bot.command('start', async (ctx) => {
       id: createId(),
       telegramId: tgId,
       botState: BotState.WAITING_NAME,
-      role: 'OWNER',
+      role: UserRole.OWNER,
       createdBy: 'telegram_bot'
     }
   })
@@ -161,6 +162,33 @@ bot.on('message:contact', async (ctx) => {
   }
 
   const phone = ctx.message.contact.phone_number
+
+  // ПРОВЕРКА: Один номер = одна организация
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      phone,
+      organizationId: { not: null },
+      deletedAt: null
+    }
+  })
+
+  if (existingUser) {
+    await ctx.reply(
+      'На этот номер уже зарегистрирована организация.\n\n' +
+      'Для создания новой организации используй другой номер телефона.'
+    )
+
+    // Сбросить состояние
+    await prisma.user.update({
+      where: { telegramId: tgId },
+      data: {
+        botState: BotState.WAITING_NAME,
+        tempOrgName: null
+      }
+    })
+
+    return
+  }
 
   // Создаем организацию и биллинг в транзакции
   const org = await prisma.organization.create({

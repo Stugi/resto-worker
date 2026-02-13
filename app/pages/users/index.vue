@@ -56,7 +56,7 @@
                                 Роль
                             </th>
                             <th
-                                v-if="currentUser?.role === 'SUPER_ADMIN'"
+                                v-if="currentUser?.role === UserRole.SUPER_ADMIN"
                                 class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider"
                             >
                                 Организация
@@ -138,7 +138,7 @@
                                 </span>
                             </td>
                             <td
-                                v-if="currentUser?.role === 'SUPER_ADMIN'"
+                                v-if="currentUser?.role === UserRole.SUPER_ADMIN"
                                 class="px-4 py-4 whitespace-nowrap text-sm text-text-secondary"
                             >
                                 {{ user.organization?.name || "—" }}
@@ -228,7 +228,7 @@
                         </span>
                     </div>
                     <div
-                        v-if="currentUser?.role === 'SUPER_ADMIN' && user.organization"
+                        v-if="currentUser?.role === UserRole.SUPER_ADMIN && user.organization"
                         class="flex justify-between"
                     >
                         <span class="text-text-secondary">Организация:</span>
@@ -293,6 +293,8 @@
 </template>
 
 <script setup lang="ts">
+import { UserRole } from '~/shared/constants/roles'
+
 definePageMeta({
     layout: "default",
 });
@@ -336,11 +338,11 @@ const fetchUsers = async () => {
 // Получить класс для роли
 const getRoleClass = (role: string) => {
     switch (role) {
-        case "SUPER_ADMIN":
+        case UserRole.SUPER_ADMIN:
             return "bg-purple-50 text-purple-700 border-purple-200";
-        case "OWNER":
+        case UserRole.OWNER:
             return "bg-blue-50 text-blue-700 border-blue-200";
-        case "MANAGER":
+        case UserRole.MANAGER:
             return "bg-gray-100 text-gray-800 border-gray-300";
         default:
             return "bg-gray-100 text-gray-700 border-gray-200";
@@ -350,11 +352,11 @@ const getRoleClass = (role: string) => {
 // Получить label для роли
 const getRoleLabel = (role: string) => {
     switch (role) {
-        case "SUPER_ADMIN":
+        case UserRole.SUPER_ADMIN:
             return "Супер Админ";
-        case "OWNER":
+        case UserRole.OWNER:
             return "Владелец";
-        case "MANAGER":
+        case UserRole.MANAGER:
             return "Менеджер";
         default:
             return "Неизвестно";

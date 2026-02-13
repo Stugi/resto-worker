@@ -1,4 +1,5 @@
 import { getUserFromSession } from '../../utils/auth'
+import { UserRole } from '../../../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   // Получаем текущего пользователя
@@ -11,8 +12,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Только OWNER и SUPER_ADMIN могут редактировать рестораны
-  if (!['OWNER', 'SUPER_ADMIN'].includes(user.role)) {
+  // Только OWNER и SUPER_ADMIN могут удалять рестораны
+  if (![UserRole.OWNER, UserRole.SUPER_ADMIN].includes(user.role)) {
     throw createError({
       statusCode: 403,
       message: 'Недостаточно прав'
@@ -20,11 +21,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const id = getRouterParam(event, 'id')
-  const body = await readBody(event)
 
   // Проверяем существование ресторана
-  // SUPER_ADMIN может редактировать любой ресторан, OWNER - только своей организации
-  const whereClause = user.role === 'SUPER_ADMIN'
+  // SUPER_ADMIN может удалять любой ресторан, OWNER - только своей организации
+  const whereClause = user.role === UserRole.SUPER_ADMIN
     ? { id, deletedAt: null }
     : { id, organizationId: user.organizationId!, deletedAt: null }
 
@@ -39,31 +39,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Валидация
-  if (!body.name?.trim()) {
-    throw createError({
-      statusCode: 400,
-      message: 'Название ресторана обязательно'
-    })
-  }
-
-  // Обновляем ресторан
-  const restaurant = await prisma.restaurant.update({
+  // Soft delete
+  await prisma.restaurant.update({
     where: { id },
     data: {
-      name: body.name.trim(),
-      settingsComment: body.settingsComment?.trim() || null,
-      updatedBy: user.id
-    },
-    include: {
-      organization: {
-        select: {
-          id: true,
-          name: true
-        }
-      }
+      deletedAt: new Date(),
+      deletedBy: user.id
     }
   })
 
-  return restaurant
+  return { success: true }
 })

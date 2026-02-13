@@ -16,6 +16,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.2.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@pinia/nuxt": "^0.11.3",
     "@prisma/adapter-pg": "^7.4.0",
@@ -26,6 +27,7 @@
     "nuxt": "^4.3.1",
     "pg": "^8.18.0",
     "pinia": "^3.0.4",
+    "telegram": "^2.26.22",
     "vue": "^3.5.28",
     "vue-router": "^4.6.4"
   },

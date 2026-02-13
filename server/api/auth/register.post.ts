@@ -1,4 +1,5 @@
 import { hashPassword } from '../../utils/auth'
+import { UserRole } from '../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) => {
       login,
       name: body.name.trim(),
       passwordHash,
-      role: 'MANAGER', // По умолчанию создаем как MANAGER
+      role: UserRole.MANAGER, // По умолчанию создаем как MANAGER
       createdBy: 'login-registration'
     },
     include: {

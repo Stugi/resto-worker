@@ -1,7 +1,9 @@
+import { UserRole } from '../../../shared/constants/roles'
+
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
-  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OWNER') {
+  if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.OWNER) {
     throw createError({
       statusCode: 403,
       message: 'Доступ запрещен'
@@ -38,7 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // OWNER может удалять только пользователей своей организации
-  if (user.role === 'OWNER') {
+  if (user.role === UserRole.OWNER) {
     if (existingUser.organizationId !== user.organizationId) {
       throw createError({
         statusCode: 403,
@@ -47,7 +49,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // OWNER не может удалять других OWNER
-    if (existingUser.role === 'OWNER') {
+    if (existingUser.role === UserRole.OWNER) {
       throw createError({
         statusCode: 403,
         message: 'Вы не можете удалять других владельцев'

@@ -1,10 +1,11 @@
 import { hash } from 'bcrypt'
 import { createId } from '@paralleldrive/cuid2'
+import { UserRole } from '../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
-  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OWNER') {
+  if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.OWNER) {
     throw createError({
       statusCode: 403,
       message: 'Доступ запрещен'
@@ -36,8 +37,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // OWNER может создавать только MANAGER в своей организации
-  if (user.role === 'OWNER') {
-    if (body.role !== 'MANAGER') {
+  if (user.role === UserRole.OWNER) {
+    if (body.role !== UserRole.MANAGER) {
       throw createError({
         statusCode: 403,
         message: 'Вы можете создавать только менеджеров'
@@ -55,8 +56,8 @@ export default defineEventHandler(async (event) => {
   }
 
   // SUPER_ADMIN должен указать организацию для OWNER и MANAGER
-  if (user.role === 'SUPER_ADMIN') {
-    if ((body.role === 'OWNER' || body.role === 'MANAGER') && !body.organizationId) {
+  if (user.role === UserRole.SUPER_ADMIN) {
+    if ((body.role === UserRole.OWNER || body.role === UserRole.MANAGER) && !body.organizationId) {
       throw createError({
         statusCode: 400,
         message: 'Для роли OWNER или MANAGER требуется организация'
@@ -64,7 +65,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // SUPER_ADMIN не должен иметь организацию
-    if (body.role === 'SUPER_ADMIN' && body.organizationId) {
+    if (body.role === UserRole.SUPER_ADMIN && body.organizationId) {
       body.organizationId = undefined
     }
   }

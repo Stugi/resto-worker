@@ -1,9 +1,10 @@
 import { hash } from 'bcrypt'
+import { UserRole } from '../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
-  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OWNER') {
+  if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.OWNER) {
     throw createError({
       statusCode: 403,
       message: 'Доступ запрещен'
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // OWNER может редактировать только пользователей своей организации
-  if (user.role === 'OWNER') {
+  if (user.role === UserRole.OWNER) {
     if (existingUser.organizationId !== user.organizationId) {
       throw createError({
         statusCode: 403,
@@ -87,8 +88,8 @@ export default defineEventHandler(async (event) => {
   if (body.name) updateData.name = body.name.trim()
   if (body.login) updateData.login = body.login.trim()
   if (body.phone !== undefined) updateData.phone = body.phone?.trim() || null
-  if (body.role && user.role === 'SUPER_ADMIN') updateData.role = body.role
-  if (body.organizationId !== undefined && user.role === 'SUPER_ADMIN') {
+  if (body.role && user.role === UserRole.SUPER_ADMIN) updateData.role = body.role
+  if (body.organizationId !== undefined && user.role === UserRole.SUPER_ADMIN) {
     updateData.organizationId = body.organizationId || null
   }
 

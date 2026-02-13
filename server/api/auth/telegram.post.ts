@@ -1,4 +1,5 @@
 import { verifyTelegramAuth, isAuthDataFresh, formatTelegramId, type TelegramAuthData } from '../../utils/telegram'
+import { UserRole } from '../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -62,7 +63,7 @@ export default defineEventHandler(async (event) => {
       data: {
         telegramId,
         name: name || 'Telegram User',
-        role: 'MANAGER', // По умолчанию создаем как MANAGER
+        role: UserRole.MANAGER, // По умолчанию создаем как MANAGER
         createdBy: 'telegram-auth'
       },
       include: {

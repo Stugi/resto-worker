@@ -1,5 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import { getUserFromSession } from '../../utils/auth'
+import { UserRole } from '../../../../../shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   // Получаем текущего пользователя
@@ -13,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Только OWNER и SUPER_ADMIN могут создавать рестораны
-  if (!['OWNER', 'SUPER_ADMIN'].includes(user.role)) {
+  if (![UserRole.OWNER, UserRole.SUPER_ADMIN].includes(user.role)) {
     throw createError({
       statusCode: 403,
       message: 'Недостаточно прав'
@@ -31,14 +32,14 @@ export default defineEventHandler(async (event) => {
   }
 
   // Для SUPER_ADMIN требуется указать organizationId
-  if (user.role === 'SUPER_ADMIN' && !body.organizationId) {
+  if (user.role === UserRole.SUPER_ADMIN && !body.organizationId) {
     throw createError({
       statusCode: 400,
       message: 'Для супер-админа необходимо указать organizationId'
     })
   }
 
-  const organizationId = user.role === 'SUPER_ADMIN'
+  const organizationId = user.role === UserRole.SUPER_ADMIN
     ? body.organizationId
     : user.organizationId!
 

@@ -157,6 +157,8 @@
 </template>
 
 <script setup lang="ts">
+import { UserRole } from '~/shared/constants/roles'
+
 interface Props {
   isOpen: boolean
 }
@@ -182,9 +184,9 @@ const userInitials = computed(() => {
 
 const roleLabel = computed(() => {
   const roleLabels = {
-    SUPER_ADMIN: "Супер Админ",
-    OWNER: "Владелец",
-    MANAGER: "Менеджер",
+    [UserRole.SUPER_ADMIN]: "Супер Админ",
+    [UserRole.OWNER]: "Владелец",
+    [UserRole.MANAGER]: "Менеджер",
   }
   return user.value?.role
     ? roleLabels[user.value.role as keyof typeof roleLabels]
@@ -203,7 +205,7 @@ const mainNavigation = computed(() => {
     { path: '/', label: 'Главная' }
   ]
 
-  if (role === 'SUPER_ADMIN') {
+  if (role === UserRole.SUPER_ADMIN) {
     return [
       ...baseItems,
       { path: '/organizations', label: 'Организации' },
@@ -212,7 +214,7 @@ const mainNavigation = computed(() => {
     ]
   }
 
-  if (role === 'OWNER') {
+  if (role === UserRole.OWNER) {
     return [
       ...baseItems,
       { path: '/restaurants', label: 'Рестораны' },
@@ -220,7 +222,7 @@ const mainNavigation = computed(() => {
     ]
   }
 
-  if (role === 'MANAGER') {
+  if (role === UserRole.MANAGER) {
     return [
       ...baseItems
     ]
@@ -233,20 +235,20 @@ const mainNavigation = computed(() => {
 const analyticsNavigation = computed(() => {
   const role = user.value?.role
 
-  if (role === 'SUPER_ADMIN') {
+  if (role === UserRole.SUPER_ADMIN) {
     return [
       { path: '/analytics', label: 'Аналитика' },
       { path: '/stats', label: 'Статистика' }
     ]
   }
 
-  if (role === 'OWNER') {
+  if (role === UserRole.OWNER) {
     return [
       { path: '/analytics', label: 'Аналитика' }
     ]
   }
 
-  if (role === 'MANAGER') {
+  if (role === UserRole.MANAGER) {
     return [
       { path: '/stats', label: 'Статистика' }
     ]

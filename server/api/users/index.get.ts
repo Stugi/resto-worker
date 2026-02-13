@@ -1,8 +1,10 @@
+import { UserRole } from '../../../shared/constants/roles'
+
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
 
   // Только SUPER_ADMIN и OWNER могут видеть пользователей
-  if (user.role !== 'SUPER_ADMIN' && user.role !== 'OWNER') {
+  if (user.role !== UserRole.SUPER_ADMIN && user.role !== UserRole.OWNER) {
     throw createError({
       statusCode: 403,
       message: 'Доступ запрещен'
@@ -10,7 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // SUPER_ADMIN видит всех пользователей
-  if (user.role === 'SUPER_ADMIN') {
+  if (user.role === UserRole.SUPER_ADMIN) {
     const users = await prisma.user.findMany({
       where: { deletedAt: null },
       include: {
@@ -30,7 +32,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // OWNER видит только пользователей своей организации
-  if (user.role === 'OWNER') {
+  if (user.role === UserRole.OWNER) {
     if (!user.organizationId) {
       throw createError({
         statusCode: 400,
