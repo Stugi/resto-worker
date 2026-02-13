@@ -84,13 +84,12 @@ bot.on('message:text', async (ctx) => {
 
     await ctx.reply(`✅ Отлично! Ресторан "${text}" успешно добавлен!`)
 
-    // Предлагаем выбор: создать новую группу или привязать существующую
+    // Одна кнопка для настройки чата
     const chatKeyboard = new InlineKeyboard()
-      .text('➕ Создать новую группу', `create_chat_${restaurant.id}`).row()
-      .text('🔗 Привязать существующую', `bind_existing_${restaurant.id}`)
+      .text('📱 Настроить чат ресторана', `setup_chat_${restaurant.id}`)
 
     await ctx.reply(
-      `🎊 Регистрация почти завершена!\n\nПоследний шаг - настроить рабочий чат для ресторана "${text}".\n\n👥 В нем я буду собирать отчеты от менеджеров.`,
+      `🎊 Регистрация почти завершена!\n\nПоследний шаг - настроить рабочий чат для "${text}".\n\n👥 В нем я буду собирать отчеты от менеджеров.`,
       { reply_markup: chatKeyboard }
     )
 
@@ -134,9 +133,9 @@ bot.on('callback_query:data', async (ctx) => {
     return
   }
 
-  // Обработка создания новой группы
-  if (data.startsWith('create_chat_')) {
-    const restaurantId = data.replace('create_chat_', '')
+  // Обработка настройки чата
+  if (data.startsWith('setup_chat_')) {
+    const restaurantId = data.replace('setup_chat_', '')
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId }
@@ -144,24 +143,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     await ctx.answerCallbackQuery()
     await ctx.reply(
-      `➕ Создай новую группу для "${restaurant?.name}":\n\n1️⃣ Нажми на скрепку 📎 → "Новая группа"\n2️⃣ Назови группу (например: "Отчеты ${restaurant?.name}")\n3️⃣ Можешь добавить менеджеров сразу или позже\n4️⃣ Добавь меня (@${ctx.me.username}) в группу\n5️⃣ Сделай меня администратором\n6️⃣ Отправь в группу:\n\n<code>/bind ${restaurantId}</code>\n\n✅ Готово! Я буду собирать отчеты в этой группе.`,
-      { parse_mode: 'HTML' }
-    )
-
-    return
-  }
-
-  // Обработка привязки к существующей группе
-  if (data.startsWith('bind_existing_')) {
-    const restaurantId = data.replace('bind_existing_', '')
-
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: restaurantId }
-    })
-
-    await ctx.answerCallbackQuery()
-    await ctx.reply(
-      `🔗 Привяжи существующую группу к "${restaurant?.name}":\n\n1️⃣ Открой нужную группу\n2️⃣ Добавь меня (@${ctx.me.username}) в группу\n3️⃣ Сделай меня администратором\n4️⃣ Отправь в группу:\n\n<code>/bind ${restaurantId}</code>\n\n✅ Я привяжу эту группу к ресторану!`,
+      `📱 Настройка чата для "${restaurant?.name}"\n\n<b>Всего 3 простых шага:</b>\n\n1️⃣ Создай новую группу или открой существующую\n   (Скрепка 📎 → "Новая группа")\n\n2️⃣ Добавь меня @${ctx.me.username} в эту группу\n\n3️⃣ Готово! Я автоматически привяжусь к ресторану ✨\n\n💡 <i>Не нужны никакие команды - всё произойдёт само!</i>`,
       { parse_mode: 'HTML' }
     )
 
@@ -218,89 +200,56 @@ bot.on('message:contact', async (ctx) => {
   )
 })
 
-// Команда /bind для привязки группы к ресторану
-bot.command('bind', async (ctx) => {
-  // Проверяем, что команда вызвана в группе
-  if (ctx.chat.type !== 'group' && ctx.chat.type !== 'supergroup') {
-    return ctx.reply('❌ Эта команда работает только в группах!')
-  }
-
-  // Получаем ID ресторана из команды
-  const restaurantId = ctx.message.text.split(' ')[1]
-
-  if (!restaurantId) {
-    return ctx.reply('❌ Укажи ID ресторана!\nИспользуй: /bind RESTAURANT_ID')
-  }
-
-  // Проверяем, что ресторан существует
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: restaurantId }
-  })
-
-  if (!restaurant) {
-    return ctx.reply('❌ Ресторан с таким ID не найден!')
-  }
-
-  // Сохраняем ID чата в настройках ресторана
-  await prisma.restaurant.update({
-    where: { id: restaurantId },
-    data: {
-      settingsComment: JSON.stringify({
-        ...JSON.parse(restaurant.settingsComment || '{}'),
-        telegramChatId: ctx.chat.id.toString(),
-        chatTitle: ctx.chat.title
-      })
-    }
-  })
-
-  // Обновляем состояние владельца на COMPLETED
-  const owner = await prisma.user.findFirst({
-    where: {
-      organizationId: restaurant.organizationId,
-      role: 'OWNER'
-    }
-  })
-
-  if (owner && owner.botState === BotState.WAITING_CHAT_CHOICE) {
-    await prisma.user.update({
-      where: { id: owner.id },
-      data: { botState: BotState.COMPLETED }
-    })
-  }
-
-  await ctx.reply(`✅ Отлично! Эта группа теперь привязана к ресторану "${restaurant.name}"!\n\n👥 Менеджеры смогут отправлять сюда отчеты.\n\n🎊 Регистрация завершена!`)
-})
-
-// Обработка добавления бота в новую группу (через магическую ссылку)
+// Обработка добавления бота в группу (автоматическая привязка)
 bot.on('my_chat_member', async (ctx) => {
   const newStatus = ctx.myChatMember.new_chat_member.status
 
   // Бот был добавлен в группу
   if (newStatus === 'member' || newStatus === 'administrator') {
-    const startParam = ctx.myChatMember.from.id.toString()
+    const tgId = ctx.from.id.toString()
 
-    // Проверяем, есть ли start parameter в deep link
-    // Формат: new_RESTAURANT_ID
-    if (startParam && startParam.startsWith('new_')) {
-      const restaurantId = startParam.replace('new_', '')
+    // Находим пользователя который добавил бота
+    const user = await prisma.user.findUnique({
+      where: { telegramId: tgId }
+    })
 
-      const restaurant = await prisma.restaurant.findUnique({
-        where: { id: restaurantId }
+    // Если пользователь в состоянии ожидания настройки чата
+    if (user && user.botState === BotState.WAITING_CHAT_CHOICE) {
+      // Находим последний созданный ресторан этого пользователя
+      const restaurant = await prisma.restaurant.findFirst({
+        where: {
+          organizationId: user.organizationId!,
+          settingsComment: {
+            not: {
+              contains: 'telegramChatId'
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
       })
 
       if (restaurant) {
-        // Сохраняем ID чата
+        // Привязываем чат к ресторану
         await prisma.restaurant.update({
-          where: { id: restaurantId },
+          where: { id: restaurant.id },
           data: {
             settingsComment: JSON.stringify({
               ...JSON.parse(restaurant.settingsComment || '{}'),
-              telegramChatId: ctx.chat.id.toString()
+              telegramChatId: ctx.chat.id.toString(),
+              chatTitle: ctx.chat.title
             })
           }
         })
 
-        await ctx.reply(`✅ Группа успешно создана и привязана к ресторану "${restaurant.name}"!\n\n👥 Менеджеры смогут отправлять сюда отчеты.`)
+        // Обновляем состояние пользователя
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { botState: BotState.COMPLETED }
+        })
+
+        await ctx.reply(
+          `✅ Отлично! Группа "${ctx.chat.title}" привязана к ресторану "${restaurant.name}"!\n\n👥 Теперь менеджеры смогут отправлять сюда отчеты.\n\n🎊 Регистрация завершена!`
+        )
       }
     }
   }
