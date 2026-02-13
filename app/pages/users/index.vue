@@ -293,7 +293,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserRole } from '~/shared/constants/roles'
+import { UserRole } from '../../../shared/constants/roles'
 
 definePageMeta({
     layout: "default",
