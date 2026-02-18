@@ -1,4 +1,3 @@
-import { hashPassword } from '../../utils/auth'
 import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {

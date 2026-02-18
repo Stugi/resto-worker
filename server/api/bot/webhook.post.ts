@@ -1,10 +1,7 @@
 import { Bot, InlineKeyboard, Keyboard } from 'grammy'
-import { prisma } from '../../utils/prisma'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
-import { createRestaurantGroup } from '../../utils/userbot'
-import { checkAndIncrement, detectSuspiciousActivity } from '../../utils/rate-limiter'
 
 const token = process.env.TELEGRAM_BOT_TOKEN
 if (!token) {

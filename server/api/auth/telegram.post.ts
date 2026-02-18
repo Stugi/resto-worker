@@ -1,4 +1,3 @@
-import { verifyTelegramAuth, isAuthDataFresh, formatTelegramId, type TelegramAuthData } from '../../utils/telegram'
 import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
