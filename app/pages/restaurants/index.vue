@@ -282,6 +282,7 @@ const deleteRestaurant = async () => {
     fetchRestaurants()
   } catch (error: any) {
     alert(error.data?.message || 'Ошибка при удалении ресторана')
+  } finally {
     deleteLoading.value = false
   }
 }

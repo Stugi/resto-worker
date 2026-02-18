@@ -200,6 +200,7 @@ const deletePrompt = async () => {
     fetchPrompts()
   } catch (error: any) {
     alert(error.data?.message || 'Ошибка при удалении промпта')
+  } finally {
     deleteLoading.value = false
   }
 }

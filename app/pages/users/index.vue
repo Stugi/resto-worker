@@ -413,6 +413,7 @@ const deleteUser = async () => {
         fetchUsers();
     } catch (error: any) {
         alert(error.data?.message || "Ошибка при удалении пользователя");
+    } finally {
         deleteLoading.value = false;
     }
 };

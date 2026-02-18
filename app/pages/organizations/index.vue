@@ -232,6 +232,7 @@ const deleteOrganization = async () => {
         fetchOrganizations();
     } catch (error: any) {
         alert(error.data?.message || "Ошибка при удалении организации");
+    } finally {
         deleteLoading.value = false;
     }
 };
