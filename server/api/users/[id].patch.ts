@@ -1,5 +1,5 @@
 import { hash } from 'bcrypt'
-import { UserRole } from '../../../shared/constants/roles'
+import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)

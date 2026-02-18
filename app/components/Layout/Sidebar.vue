@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { UserRole } from '../../../../shared/constants/roles'
+import { UserRole } from '#shared/constants/roles'
 
 interface Props {
   isOpen: boolean

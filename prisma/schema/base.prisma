@@ -1,0 +1,24 @@
+// ============================================
+// БАЗА: Generator, Datasource, Enums
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  MANAGER
+}
+
+enum BillingStatus {
+  TRIAL
+  ACTIVE
+  DISABLED
+}

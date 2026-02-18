@@ -1,0 +1,39 @@
+// ============================================
+// USERBOT: Логирование и антифрод
+// ============================================
+
+model UserbotAction {
+  id           String   @id
+  action       String
+  userId       String
+  restaurantId String?
+  chatId       String?
+  success      Boolean
+  error        String?  @db.Text
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model RateLimitLog {
+  id        String   @id
+  userId    String
+  action    String
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId, action, createdAt])
+}
+
+model SuspiciousActivity {
+  id         String   @id
+  userId     String
+  reason     String
+  detectedAt DateTime @default(now())
+  resolved   Boolean  @default(false)
+  metadata   Json?
+
+  @@index([userId, detectedAt])
+}

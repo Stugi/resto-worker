@@ -1,6 +1,6 @@
 import { checkUserbotHealth } from '../../utils/userbot'
 import { prisma } from '../../utils/prisma'
-import { UserRole } from '../../../shared/constants/roles'
+import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const session = await requireUserSession(event)

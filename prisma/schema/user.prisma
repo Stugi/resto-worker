@@ -1,0 +1,33 @@
+// ============================================
+// ПОЛЬЗОВАТЕЛИ
+// ============================================
+
+model User {
+  id           String  @id
+  telegramId   String? @unique
+  login        String? @unique
+  passwordHash String?
+  name         String?
+  phone        String?
+  role         Role    @default(MANAGER)
+
+  // Состояние онбординга в боте
+  botState    String?
+  tempOrgName String?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+
+  // Аудит
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+
+  @@index([organizationId])
+}
