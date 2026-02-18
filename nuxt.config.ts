@@ -42,6 +42,19 @@ export default defineNuxtConfig({
   nitro: {
     experimental: {
       sessions: true
+    },
+    // Фикс ESM directory import для gramjs на Vercel
+    rollupConfig: {
+      plugins: [
+        {
+          name: 'fix-telegram-sessions',
+          resolveId(source: string) {
+            if (source === 'telegram/sessions') {
+              return { id: 'telegram/sessions/index.js', external: true }
+            }
+          }
+        }
+      ]
     }
   }
 })
