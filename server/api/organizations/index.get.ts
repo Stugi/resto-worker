@@ -16,7 +16,11 @@ export default defineEventHandler(async (event) => {
       deletedAt: null
     },
     include: {
-      billing: true,
+      billing: {
+        include: {
+          tariff: { select: { id: true, name: true, price: true } }
+        }
+      },
       _count: {
         select: {
           users: true,

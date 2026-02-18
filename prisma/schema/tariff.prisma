@@ -1,0 +1,26 @@
+// ============================================
+// ТАРИФЫ
+// ============================================
+
+model Tariff {
+  id               String  @id
+  name             String          // "Пробный", "Базовый"
+  description      String? @db.Text
+  price            Float   @default(0)  // Цена в рублях (0 = бесплатный)
+  period           Int     @default(30) // Период в днях
+  maxRestaurants   Int     @default(1)
+  maxUsers         Int     @default(5)
+  maxTranscriptions Int    @default(100) // Лимит транскрипций за период
+  isActive         Boolean @default(true)
+  sortOrder        Int     @default(0)
+
+  billings Billing[]
+  payments Payment[]
+
+  createdAt DateTime  @default(now())
+  createdBy String?
+  updatedAt DateTime  @updatedAt
+  updatedBy String?
+  deletedAt DateTime?
+  deletedBy String?
+}

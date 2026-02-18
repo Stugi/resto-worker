@@ -9,6 +9,7 @@ model Organization {
   billing     Billing?
   users       User[]
   restaurants Restaurant[]
+  payments    Payment[]
 
   createdAt DateTime  @default(now())
   createdBy String?

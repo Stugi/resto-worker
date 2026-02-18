@@ -1,3 +1,17 @@
+/**
+ * Аутентификация и управление сессиями
+ *
+ * Используется Nitro auto-import — все экспортированные функции
+ * доступны в API-эндпоинтах без явного импорта.
+ *
+ * Основной паттерн:
+ *   const user = await requireAuth(event) // Бросает 401 если нет сессии
+ *
+ * Сессии:
+ * - Хранятся в httpOnly cookies (7 дней)
+ * - Содержат только userId
+ * - При каждом запросе подтягивается User из БД с organization и restaurant
+ */
 import bcrypt from 'bcrypt'
 import type { H3Event } from 'h3'
 import type { User } from '@prisma/client'

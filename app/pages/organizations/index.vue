@@ -57,15 +57,39 @@
                 </div>
 
                 <!-- Биллинг статус -->
-                <div class="mb-4">
-                    <span
-                        :class="[
-                            'inline-block px-3 py-1 rounded-full text-xs font-medium',
-                            getBillingStatusClass(org.billing?.status),
-                        ]"
+                <div class="mb-4 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span
+                            :class="[
+                                'inline-block px-3 py-1 rounded-full text-xs font-medium',
+                                getBillingStatusClass(org.billing?.status),
+                            ]"
+                        >
+                            {{ getBillingStatusLabel(org.billing?.status) }}
+                        </span>
+                        <span
+                            v-if="org.billing?.tariff"
+                            class="text-xs text-text-secondary"
+                        >
+                            {{ org.billing.tariff.name }}
+                        </span>
+                    </div>
+                    <div v-if="org.billing?.activeUntil" class="text-xs text-text-secondary">
+                        Активна до: {{ new Date(org.billing.activeUntil).toLocaleDateString('ru-RU') }}
+                    </div>
+                    <div v-else-if="org.billing?.trialEndsAt" class="text-xs text-text-secondary">
+                        Триал до: {{ new Date(org.billing.trialEndsAt).toLocaleDateString('ru-RU') }}
+                    </div>
+                </div>
+
+                <!-- Кнопка оплаты (для организаций без активной подписки) -->
+                <div v-if="org.billing?.status !== 'ACTIVE'" class="mb-4">
+                    <button
+                        @click="openPaymentModal(org)"
+                        class="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
                     >
-                        {{ getBillingStatusLabel(org.billing?.status) }}
-                    </span>
+                        Оплатить подписку
+                    </button>
                 </div>
 
                 <!-- Действия -->
@@ -139,6 +163,14 @@
             @cancel="closeDeleteModal"
             @confirm="deleteOrganization"
         />
+
+        <!-- Payment Modal -->
+        <PaymentModal
+            v-if="showPaymentModal"
+            :organization="paymentOrg!"
+            @close="closePaymentModal"
+            @paid="handlePaid"
+        />
     </div>
 </template>
 
@@ -153,6 +185,11 @@ interface Organization {
     billing?: {
         id: string;
         status: string;
+        tariffId?: string;
+        tariff?: { id: string; name: string; price: number };
+        activeUntil?: string;
+        trialEndsAt?: string;
+        transcriptionsUsed?: number;
     };
     _count: {
         users: number;
@@ -167,6 +204,8 @@ const selectedOrg = ref<Organization | null>(null);
 const showDeleteModal = ref(false);
 const orgToDelete = ref<Organization | null>(null);
 const deleteLoading = ref(false);
+const showPaymentModal = ref(false);
+const paymentOrg = ref<Organization | null>(null);
 
 // Загрузка организаций
 const fetchOrganizations = async () => {
@@ -235,6 +274,22 @@ const deleteOrganization = async () => {
     } finally {
         deleteLoading.value = false;
     }
+};
+
+// Оплата
+const openPaymentModal = (org: Organization) => {
+    paymentOrg.value = org;
+    showPaymentModal.value = true;
+};
+
+const closePaymentModal = () => {
+    showPaymentModal.value = false;
+    paymentOrg.value = null;
+};
+
+const handlePaid = () => {
+    closePaymentModal();
+    fetchOrganizations();
 };
 
 // Получить класс для статуса биллинга

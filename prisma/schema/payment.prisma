@@ -1,0 +1,42 @@
+// ============================================
+// ПЛАТЕЖИ (Альфа-Банк эквайринг)
+// ============================================
+
+enum PaymentStatus {
+  CREATED     // Заказ создан в Альфа-Банке
+  PENDING     // Ожидает оплаты
+  COMPLETED   // Оплата прошла
+  FAILED      // Ошибка оплаты
+  REFUNDED    // Возврат
+}
+
+model Payment {
+  id              String        @id
+  amount          Float                  // Сумма в рублях
+  status          PaymentStatus @default(CREATED)
+
+  // Связи
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  tariffId        String
+  tariff          Tariff?       @relation(fields: [tariffId], references: [id])
+  billingId       String?
+  billing         Billing?      @relation(fields: [billingId], references: [id])
+
+  // Альфа-Банк
+  alfaOrderId     String?       @unique  // orderId от Альфа-Банка
+  alfaFormUrl     String?       @db.Text // Ссылка на форму оплаты
+  alfaStatus      Int?                   // Статус от Альфа-Банка (0-6)
+
+  // Период подписки
+  periodStart     DateTime?
+  periodEnd       DateTime?
+
+  createdAt       DateTime      @default(now())
+  completedAt     DateTime?
+  error           String?       @db.Text
+
+  @@index([organizationId])
+  @@index([alfaOrderId])
+  @@index([status])
+}

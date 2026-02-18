@@ -263,6 +263,7 @@ const settingsNavigation = computed(() => {
 
   if (role === UserRole.SUPER_ADMIN) {
     return [
+      { path: '/admin/tariffs', label: 'Тарифы' },
       { path: '/admin/prompts', label: 'Промпты' }
     ]
   }

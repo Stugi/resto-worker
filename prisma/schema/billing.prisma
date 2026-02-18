@@ -6,9 +6,20 @@ model Billing {
   id            String        @id
   status        BillingStatus @default(TRIAL)
   trialStartsAt DateTime      @default(now())
+  trialEndsAt   DateTime?     // Дата окончания триала (7 дней)
+  activeUntil   DateTime?     // Подписка активна до этой даты
+
+  // Текущий тариф
+  tariffId      String?
+  tariff        Tariff?       @relation(fields: [tariffId], references: [id])
+
+  // Счётчики использования
+  transcriptionsUsed Int      @default(0)
 
   organizationId String       @unique
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
 
   createdAt DateTime  @default(now())
   createdBy String?
