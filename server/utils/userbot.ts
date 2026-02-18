@@ -128,10 +128,13 @@ export async function createRestaurantGroup(
 
     // 2. Добавляем бота в группу
     try {
+      // Резолвим бота по username в InputUser
+      const botEntity = await client.getInputEntity(`@${botUsername}`)
+
       await client.invoke(
         new Api.messages.AddChatUser({
           chatId: BigInt(chatId),
-          userId: botUsername
+          userId: botEntity
         })
       )
 
@@ -151,7 +154,7 @@ export async function createRestaurantGroup(
     // 3. Назначаем владельца и бота админами
     try {
       await promoteToAdmin(chatId, ownerTelegramId)
-      await promoteToAdmin(chatId, botUsername)
+      await promoteToAdmin(chatId, `@${botUsername}`)
 
       await logUserbotAction({
         action: 'PROMOTE_ADMIN',
@@ -207,10 +210,13 @@ export async function createRestaurantGroup(
 async function promoteToAdmin(chatId: string, userIdOrUsername: string): Promise<void> {
   const client = await getUserbotClient()
 
+  // Резолвим пользователя в InputUser
+  const userEntity = await client.getInputEntity(userIdOrUsername)
+
   await client.invoke(
     new Api.messages.EditChatAdmin({
       chatId: BigInt(chatId),
-      userId: userIdOrUsername,
+      userId: userEntity,
       isAdmin: true
     })
   )
