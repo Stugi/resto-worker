@@ -276,23 +276,17 @@ bot.on('callback_query:data', async (ctx) => {
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
-        // FALLBACK на ручной режим
+        // Группа не создалась, но организация готова — ставим COMPLETED
         await prisma.user.update({
           where: { telegramId: tgId },
-          data: { botState: BotState.WAITING_CHAT_CHOICE }
+          data: { botState: BotState.COMPLETED }
         })
-
-        const chatKeyboard = new InlineKeyboard()
-          .text('Настроить чат', `setup_chat_${restaurant.id}`)
 
         await ctx.reply(
           `<b>Организация "${orgName}" создана!</b>\n\n` +
-          'Не удалось автоматически создать группу.\n' +
-          'Пожалуйста, создай группу вручную:',
-          {
-            parse_mode: 'HTML',
-            reply_markup: chatKeyboard
-          }
+          `Группу для отчетов создадим чуть позже.\n\n` +
+          `<i>Если есть вопросы — пиши сюда!</i>`,
+          { parse_mode: 'HTML' }
         )
       }
     } catch (error: any) {
@@ -305,90 +299,6 @@ bot.on('callback_query:data', async (ctx) => {
     return
   }
 
-  // Обработка настройки чата (fallback)
-  if (data.startsWith('setup_chat_')) {
-    const restaurantId = data.replace('setup_chat_', '')
-
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: restaurantId }
-    })
-
-    await ctx.answerCallbackQuery()
-    await ctx.reply(
-      `<b>Настройка чата для "${restaurant?.name}"</b>\n\n` +
-      `<b>Всего 3 простых шага:</b>\n\n` +
-      `1. Создай группу или открой существующую\n` +
-      `   (Нажми на скрепку -> "Новая группа")\n\n` +
-      `2. Добавь меня @${ctx.me.username} в группу\n\n` +
-      `3. Готово! Я автоматически привяжусь\n\n` +
-      `<i>Никакие команды не нужны!</i>`,
-      { parse_mode: 'HTML' }
-    )
-
-    return
-  }
-})
-
-// Обработка добавления бота в группу (автоматическая привязка)
-bot.on('my_chat_member', async (ctx) => {
-  const newStatus = ctx.myChatMember.new_chat_member.status
-
-  // Бот был добавлен в группу
-  if (newStatus === 'member' || newStatus === 'administrator') {
-    const tgId = ctx.from.id.toString()
-
-    // Находим пользователя который добавил бота
-    const user = await prisma.user.findUnique({
-      where: { telegramId: tgId }
-    })
-
-    // Если пользователь в состоянии ожидания настройки чата
-    if (user && user.botState === BotState.WAITING_CHAT_CHOICE) {
-      // Находим последний созданный ресторан этого пользователя
-      const restaurant = await prisma.restaurant.findFirst({
-        where: {
-          organizationId: user.organizationId!,
-          settingsComment: {
-            not: {
-              contains: 'telegramChatId'
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      })
-
-      if (restaurant) {
-        // Привязываем чат к ресторану
-        await prisma.restaurant.update({
-          where: { id: restaurant.id },
-          data: {
-            settingsComment: JSON.stringify({
-              ...JSON.parse(restaurant.settingsComment || '{}'),
-              telegramChatId: ctx.chat.id.toString(),
-              chatTitle: ctx.chat.title
-            })
-          }
-        })
-
-        // Обновляем состояние пользователя
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { botState: BotState.COMPLETED }
-        })
-
-        await ctx.reply(
-          `<b>Группа "${ctx.chat.title}" привязана к ресторану "${restaurant.name}"!</b>\n\n` +
-          `Теперь менеджеры смогут отправлять сюда отчеты.\n\n` +
-          `<b>Что делать дальше:</b>\n\n` +
-          `1. Отправляй голосовые отчеты в эту группу\n` +
-          `2. Я буду транскрибировать их и формировать еженедельные отчеты\n` +
-          `3. Добавляй менеджеров — они тоже смогут отправлять отчеты\n\n` +
-          `<i>Если есть вопросы — пиши сюда!</i>`,
-          { parse_mode: 'HTML' }
-        )
-      }
-    }
-  }
 })
 
 // Инициализация бота (только один раз)
