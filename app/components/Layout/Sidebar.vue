@@ -257,8 +257,22 @@ const analyticsNavigation = computed(() => {
   return []
 })
 
-// Settings navigation - Настройки (пока пустой, позже добавим страницы)
+// Settings navigation - Настройки
 const settingsNavigation = computed(() => {
+  const role = user.value?.role
+
+  if (role === UserRole.SUPER_ADMIN) {
+    return [
+      { path: '/admin/prompts', label: 'Промпты' }
+    ]
+  }
+
+  if (role === UserRole.OWNER) {
+    return [
+      { path: '/admin/prompts', label: 'Промпты' }
+    ]
+  }
+
   return []
 })
 

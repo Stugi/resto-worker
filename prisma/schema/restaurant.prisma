@@ -10,8 +10,9 @@ model Restaurant {
 
   settingsComment String? @db.Text
 
-  users User[]
-  stats RestaurantStat[]
+  users   User[]
+  stats   RestaurantStat[]
+  prompts ReportPrompt[]
 
   createdAt DateTime  @default(now())
   createdBy String?
