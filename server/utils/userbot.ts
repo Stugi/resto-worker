@@ -95,42 +95,51 @@ export async function createRestaurantGroup(
     console.log('[userbot] CreateChat result:', safeStringify(result))
 
     // Получаем chatId из результата
-    // CreateChat может вернуть: Updates, UpdatesCombined, messages.InvitedUsers
+    // messages.InvitedUsers возвращает: { updates: { updates: [...], chats: [...], ... } }
+    // Updates/UpdatesCombined возвращает: { updates: [...], chats: [...], ... }
     const res = result as any
 
-    // Способ 1: chats[] — основной (Updates / UpdatesCombined)
-    if (res.chats && Array.isArray(res.chats) && res.chats.length > 0) {
-      const chat = res.chats[0]
-      chatId = chat.id?.toString()
-      console.log('[userbot] chatId from chats[]:', chatId)
+    // Определяем где искать — на верхнем уровне или внутри res.updates
+    const topLevel = res
+    const nested = res.updates || {}
+
+    console.log('[userbot] topLevel keys:', Object.keys(topLevel))
+    console.log('[userbot] nested keys:', nested ? Object.keys(nested) : 'none')
+
+    // Способ 1: chats[] на верхнем уровне (Updates / UpdatesCombined)
+    if (topLevel.chats && Array.isArray(topLevel.chats) && topLevel.chats.length > 0) {
+      chatId = topLevel.chats[0].id?.toString()
+      console.log('[userbot] chatId from topLevel.chats[]:', chatId)
     }
 
-    // Способ 2: updates[] — ищем в списке обновлений
-    if (!chatId && res.updates && Array.isArray(res.updates)) {
-      for (const update of res.updates) {
-        if (update.message?.peerId?.chatId) {
-          chatId = update.message.peerId.chatId.toString()
-          console.log('[userbot] chatId from updates[]:', chatId)
+    // Способ 2: chats[] внутри updates (messages.InvitedUsers)
+    if (!chatId && nested.chats && Array.isArray(nested.chats) && nested.chats.length > 0) {
+      chatId = nested.chats[0].id?.toString()
+      console.log('[userbot] chatId from nested.chats[]:', chatId)
+    }
+
+    // Способ 3: updates[] на верхнем уровне — ищем peerId.chatId
+    if (!chatId && topLevel.updates && Array.isArray(topLevel.updates)) {
+      for (const update of topLevel.updates) {
+        const cid = update.message?.peerId?.chatId || update.participants?.chatId
+        if (cid) {
+          chatId = cid.toString()
+          console.log('[userbot] chatId from topLevel.updates[]:', chatId)
           break
         }
       }
     }
 
-    // Способ 3: missingUpdates / messages.InvitedUsers — chatId может быть в другом месте
-    if (!chatId && res.missingUpdates) {
-      for (const update of Array.isArray(res.missingUpdates) ? res.missingUpdates : []) {
-        if (update.message?.peerId?.chatId) {
-          chatId = update.message.peerId.chatId.toString()
-          console.log('[userbot] chatId from missingUpdates[]:', chatId)
+    // Способ 4: updates[] внутри nested — ищем peerId.chatId
+    if (!chatId && nested.updates && Array.isArray(nested.updates)) {
+      for (const update of nested.updates) {
+        const cid = update.message?.peerId?.chatId || update.participants?.chatId
+        if (cid) {
+          chatId = cid.toString()
+          console.log('[userbot] chatId from nested.updates[]:', chatId)
           break
         }
       }
-    }
-
-    // Способ 4: Если ответ сам содержит chatId (InvitedUsers)
-    if (!chatId && res.chatId) {
-      chatId = res.chatId.toString()
-      console.log('[userbot] chatId from result.chatId:', chatId)
     }
 
     if (!chatId) {
