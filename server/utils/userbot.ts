@@ -87,14 +87,29 @@ export async function createRestaurantGroup(
     )
 
     // Получаем chatId из результата
-    if ('chats' in result && result.chats.length > 0) {
-      const chat = result.chats[0]
-      if ('id' in chat) {
-        chatId = chat.id.toString()
+    // CreateChat может вернуть Updates, UpdatesCombined или messages.InvitedUsers
+    const updates = result as any
+
+    // Ищем chatId в chats
+    if (updates.chats && updates.chats.length > 0) {
+      const chat = updates.chats[0]
+      chatId = chat.id?.toString()
+    }
+
+    // Если не нашли в chats, ищем в updates
+    if (!chatId && updates.updates) {
+      for (const update of updates.updates) {
+        if (update.message?.peerId?.chatId) {
+          chatId = update.message.peerId.chatId.toString()
+          break
+        }
       }
     }
 
     if (!chatId) {
+      console.error('CreateChat result structure:', JSON.stringify(result, (_, v) =>
+        typeof v === 'bigint' ? v.toString() : v
+      ).slice(0, 1000))
       throw new GroupCreationError('Не удалось получить chatId созданной группы')
     }
 
