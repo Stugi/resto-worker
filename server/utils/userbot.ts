@@ -86,30 +86,55 @@ export async function createRestaurantGroup(
       })
     )
 
-    // Получаем chatId из результата
-    // CreateChat может вернуть Updates, UpdatesCombined или messages.InvitedUsers
-    const updates = result as any
+    // Логируем полную структуру ответа для отладки
+    const safeStringify = (obj: any) => JSON.stringify(obj, (_, v) =>
+      typeof v === 'bigint' ? v.toString() : v
+    ).slice(0, 2000)
 
-    // Ищем chatId в chats
-    if (updates.chats && updates.chats.length > 0) {
-      const chat = updates.chats[0]
+    console.log('[userbot] CreateChat result className:', result?.className)
+    console.log('[userbot] CreateChat result:', safeStringify(result))
+
+    // Получаем chatId из результата
+    // CreateChat может вернуть: Updates, UpdatesCombined, messages.InvitedUsers
+    const res = result as any
+
+    // Способ 1: chats[] — основной (Updates / UpdatesCombined)
+    if (res.chats && Array.isArray(res.chats) && res.chats.length > 0) {
+      const chat = res.chats[0]
       chatId = chat.id?.toString()
+      console.log('[userbot] chatId from chats[]:', chatId)
     }
 
-    // Если не нашли в chats, ищем в updates
-    if (!chatId && updates.updates) {
-      for (const update of updates.updates) {
+    // Способ 2: updates[] — ищем в списке обновлений
+    if (!chatId && res.updates && Array.isArray(res.updates)) {
+      for (const update of res.updates) {
         if (update.message?.peerId?.chatId) {
           chatId = update.message.peerId.chatId.toString()
+          console.log('[userbot] chatId from updates[]:', chatId)
           break
         }
       }
     }
 
+    // Способ 3: missingUpdates / messages.InvitedUsers — chatId может быть в другом месте
+    if (!chatId && res.missingUpdates) {
+      for (const update of Array.isArray(res.missingUpdates) ? res.missingUpdates : []) {
+        if (update.message?.peerId?.chatId) {
+          chatId = update.message.peerId.chatId.toString()
+          console.log('[userbot] chatId from missingUpdates[]:', chatId)
+          break
+        }
+      }
+    }
+
+    // Способ 4: Если ответ сам содержит chatId (InvitedUsers)
+    if (!chatId && res.chatId) {
+      chatId = res.chatId.toString()
+      console.log('[userbot] chatId from result.chatId:', chatId)
+    }
+
     if (!chatId) {
-      console.error('CreateChat result structure:', JSON.stringify(result, (_, v) =>
-        typeof v === 'bigint' ? v.toString() : v
-      ).slice(0, 1000))
+      console.error('[userbot] Failed to extract chatId. Full result:', safeStringify(result))
       throw new GroupCreationError('Не удалось получить chatId созданной группы')
     }
 
@@ -128,8 +153,9 @@ export async function createRestaurantGroup(
 
     // 2. Добавляем бота в группу
     try {
-      // Резолвим бота по username в InputUser
+      console.log(`[userbot] Adding bot @${botUsername} to chat ${chatId}`)
       const botEntity = await client.getInputEntity(`@${botUsername}`)
+      console.log('[userbot] Bot entity resolved:', botEntity?.className)
 
       await client.invoke(
         new Api.messages.AddChatUser({
@@ -137,6 +163,7 @@ export async function createRestaurantGroup(
           userId: botEntity
         })
       )
+      console.log('[userbot] Bot added to group successfully')
 
       await logUserbotAction({
         action: 'ADD_USER',
@@ -147,14 +174,24 @@ export async function createRestaurantGroup(
         metadata: { username: botUsername }
       })
     } catch (error: any) {
-      console.error('Не удалось добавить бота в группу:', error)
-      // Не фатально - владелец может добавить вручную
+      console.error('[userbot] Failed to add bot to group:', error.message || error)
+      await logUserbotAction({
+        action: 'ADD_USER',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: false,
+        error: error.message || String(error)
+      })
     }
 
     // 3. Назначаем владельца и бота админами
     try {
+      console.log(`[userbot] Promoting owner ${ownerTelegramId} to admin`)
       await promoteToAdmin(chatId, ownerTelegramId)
+      console.log(`[userbot] Promoting bot @${botUsername} to admin`)
       await promoteToAdmin(chatId, `@${botUsername}`)
+      console.log('[userbot] Admins promoted successfully')
 
       await logUserbotAction({
         action: 'PROMOTE_ADMIN',
@@ -165,8 +202,7 @@ export async function createRestaurantGroup(
         metadata: { promotedUsers: [ownerTelegramId, botUsername] }
       })
     } catch (error: any) {
-      console.error('Не удалось назначить админов:', error)
-      // Не фатально
+      console.error('[userbot] Failed to promote admins:', error.message || error)
     }
 
     return {
