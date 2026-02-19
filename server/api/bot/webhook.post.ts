@@ -1,14 +1,7 @@
-import { Bot, InlineKeyboard, Keyboard } from 'grammy'
+import { InlineKeyboard, Keyboard } from 'grammy'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
-
-const token = process.env.TELEGRAM_BOT_TOKEN
-if (!token) {
-  throw new Error('TELEGRAM_BOT_TOKEN is not set')
-}
-
-const bot = new Bot(token)
 
 // --- КОМАНДЫ И ОБРАБОТЧИКИ ---
 
