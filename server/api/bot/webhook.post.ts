@@ -100,7 +100,7 @@ bot.on('message:contact', async (ctx) => {
   await ctx.reply(
     'Отлично! Номер сохранен.\n\n' +
     '<b>Как называется твоя сеть ресторанов?</b>\n' +
-    '<i>(например: "Вкусно и точка" или "Мой ресторан")</i>',
+    '<i>(например: "Пицца и Суши" или "Мой ресторан")</i>',
     {
       parse_mode: 'HTML',
       reply_markup: { remove_keyboard: true }
@@ -168,6 +168,16 @@ bot.on('callback_query:data', async (ctx) => {
     try {
       await ctx.reply('Настраиваю систему...')
 
+      // Ищем триальный тариф
+      const trialTariff = await prisma.tariff.findFirst({
+        where: { isActive: true, deletedAt: null },
+        orderBy: { price: 'asc' }
+      })
+
+      const now = new Date()
+      const trialDays = trialTariff?.period ?? 7
+      const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
+
       // Создаем организацию + биллинг + ресторан в транзакции
       const { org, restaurant } = await prisma.$transaction(async (tx) => {
         const org = await tx.organization.create({
@@ -179,7 +189,9 @@ bot.on('callback_query:data', async (ctx) => {
               create: {
                 id: createId(),
                 status: 'TRIAL',
-                trialStartsAt: new Date(),
+                trialStartsAt: now,
+                trialEndsAt,
+                tariffId: trialTariff?.id || null,
                 createdBy: user.login || user.telegramId || user.id
               }
             }
@@ -261,6 +273,11 @@ bot.on('callback_query:data', async (ctx) => {
         //   { parse_mode: 'HTML' }
         // )
 
+        // Формируем инфо о тарифе
+        const tariffInfo = trialTariff
+          ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} транскрипций`
+          : ''
+
         await ctx.reply(
           `<b>Все готово!</b>\n\n` +
           `Организация: <b>${orgName}</b>\n` +
@@ -269,8 +286,9 @@ bot.on('callback_query:data', async (ctx) => {
           `<b>Что делать дальше:</b>\n\n` +
           `1. Отправляй голосовые отчеты в созданную группу\n` +
           `2. Я буду транскрибировать их и формировать еженедельные отчеты\n` +
-          `3. Добавляй менеджеров в группу — они тоже смогут отправлять отчеты\n\n` +
-          `<i>Если есть вопросы — пиши сюда!</i>`,
+          `3. Добавляй менеджеров в группу — они тоже смогут отправлять отчеты` +
+          tariffInfo +
+          `\n\n<i>Если есть вопросы — пиши сюда!</i>`,
           { parse_mode: 'HTML' }
         )
       } catch (error: any) {

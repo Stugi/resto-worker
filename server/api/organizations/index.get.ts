@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     include: {
       billing: {
         include: {
-          tariff: { select: { id: true, name: true, price: true } }
+          tariff: { select: { id: true, name: true, price: true, maxTranscriptions: true } }
         }
       },
       _count: {

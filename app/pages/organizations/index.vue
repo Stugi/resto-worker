@@ -56,12 +56,13 @@
                     </div>
                 </div>
 
-                <!-- Биллинг статус -->
-                <div class="mb-4 space-y-2">
-                    <div class="flex items-center gap-2">
+                <!-- Подписка и тариф -->
+                <div class="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-100 space-y-2.5">
+                    <!-- Статус + тариф -->
+                    <div class="flex items-center justify-between">
                         <span
                             :class="[
-                                'inline-block px-3 py-1 rounded-full text-xs font-medium',
+                                'inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold',
                                 getBillingStatusClass(org.billing?.status),
                             ]"
                         >
@@ -69,16 +70,52 @@
                         </span>
                         <span
                             v-if="org.billing?.tariff"
-                            class="text-xs text-text-secondary"
+                            class="text-sm font-medium text-text"
                         >
                             {{ org.billing.tariff.name }}
+                            <span class="text-text-secondary font-normal">
+                                — {{ formatPrice(org.billing.tariff.price) }}
+                            </span>
+                        </span>
+                        <span v-else class="text-xs text-text-secondary italic">
+                            Тариф не выбран
                         </span>
                     </div>
-                    <div v-if="org.billing?.activeUntil" class="text-xs text-text-secondary">
-                        Активна до: {{ new Date(org.billing.activeUntil).toLocaleDateString('ru-RU') }}
+
+                    <!-- Дата окончания -->
+                    <div v-if="org.billing?.activeUntil || org.billing?.trialEndsAt" class="flex items-center gap-1.5 text-sm">
+                        <svg class="w-4 h-4 flex-shrink-0" :class="isSubscriptionExpired(org.billing) ? 'text-red-500' : 'text-text-secondary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <template v-if="org.billing?.activeUntil">
+                            <span :class="isSubscriptionExpired(org.billing) ? 'text-red-600 font-medium' : 'text-text-secondary'">
+                                Подписка до: {{ formatDate(org.billing.activeUntil) }}
+                            </span>
+                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-red-600 font-medium">· Истекла</span>
+                        </template>
+                        <template v-else-if="org.billing?.trialEndsAt">
+                            <span :class="isSubscriptionExpired(org.billing) ? 'text-red-600 font-medium' : 'text-text-secondary'">
+                                Триал до: {{ formatDate(org.billing.trialEndsAt) }}
+                            </span>
+                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-red-600 font-medium">· Истёк</span>
+                        </template>
                     </div>
-                    <div v-else-if="org.billing?.trialEndsAt" class="text-xs text-text-secondary">
-                        Триал до: {{ new Date(org.billing.trialEndsAt).toLocaleDateString('ru-RU') }}
+
+                    <!-- Транскрипции прогресс -->
+                    <div v-if="org.billing?.tariff" class="space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-text-secondary">Транскрипции</span>
+                            <span class="font-medium text-text">
+                                {{ org.billing.transcriptionsUsed ?? 0 }} / {{ org.billing.tariff.maxTranscriptions }}
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div
+                                class="h-1.5 rounded-full transition-all"
+                                :class="getTranscriptionBarClass(org.billing)"
+                                :style="{ width: getTranscriptionPercent(org.billing) + '%' }"
+                            ></div>
+                        </div>
                     </div>
                 </div>
 
@@ -186,7 +223,12 @@ interface Organization {
         id: string;
         status: string;
         tariffId?: string;
-        tariff?: { id: string; name: string; price: number };
+        tariff?: {
+            id: string;
+            name: string;
+            price: number;
+            maxTranscriptions: number;
+        };
         activeUntil?: string;
         trialEndsAt?: string;
         transcriptionsUsed?: number;
@@ -298,7 +340,7 @@ const getBillingStatusClass = (status?: string) => {
         case "TRIAL":
             return "bg-amber-50 text-amber-700 border border-amber-200";
         case "ACTIVE":
-            return "bg-gray-100 text-gray-800 border border-gray-300";
+            return "bg-emerald-50 text-emerald-700 border border-emerald-200";
         case "DISABLED":
             return "bg-red-50 text-red-700 border border-red-200";
         default:
@@ -318,6 +360,42 @@ const getBillingStatusLabel = (status?: string) => {
         default:
             return "Неизвестно";
     }
+};
+
+// Форматирование цены
+const formatPrice = (price: number) => {
+    return price.toLocaleString("ru-RU") + " \u20BD/мес";
+};
+
+// Форматирование даты
+const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("ru-RU");
+};
+
+// Проверка истечения подписки/триала
+const isSubscriptionExpired = (billing?: Organization["billing"]) => {
+    if (!billing) return false;
+    const now = new Date();
+    if (billing.activeUntil) return new Date(billing.activeUntil) < now;
+    if (billing.trialEndsAt) return new Date(billing.trialEndsAt) < now;
+    return false;
+};
+
+// Процент использования транскрипций
+const getTranscriptionPercent = (billing?: Organization["billing"]) => {
+    if (!billing?.tariff) return 0;
+    const used = billing.transcriptionsUsed ?? 0;
+    const max = billing.tariff.maxTranscriptions;
+    if (max <= 0) return 0;
+    return Math.min(100, Math.round((used / max) * 100));
+};
+
+// Цвет прогресс-бара транскрипций
+const getTranscriptionBarClass = (billing?: Organization["billing"]) => {
+    const percent = getTranscriptionPercent(billing);
+    if (percent >= 90) return "bg-red-500";
+    if (percent >= 70) return "bg-amber-500";
+    return "bg-emerald-500";
 };
 
 // Загрузка при монтировании
