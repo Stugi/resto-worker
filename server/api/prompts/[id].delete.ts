@@ -2,6 +2,15 @@ import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
+
+  // Промпты доступны только SUPER_ADMIN
+  if (user.role !== UserRole.SUPER_ADMIN) {
+    throw createError({
+      statusCode: 403,
+      message: 'Доступ запрещен'
+    })
+  }
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -20,32 +29,6 @@ export default defineEventHandler(async (event) => {
       statusCode: 404,
       message: 'Промпт не найден'
     })
-  }
-
-  // Нельзя удалить дефолтный промпт (кроме SUPER_ADMIN)
-  if (prompt.isDefault && user.role !== UserRole.SUPER_ADMIN) {
-    throw createError({
-      statusCode: 403,
-      message: 'Нельзя удалить промпт по умолчанию'
-    })
-  }
-
-  // OWNER может удалять только промпты своих ресторанов
-  if (user.role === UserRole.OWNER && prompt.restaurantId) {
-    const restaurant = await prisma.restaurant.findFirst({
-      where: {
-        id: prompt.restaurantId,
-        organizationId: user.organizationId!,
-        deletedAt: null
-      }
-    })
-
-    if (!restaurant) {
-      throw createError({
-        statusCode: 403,
-        message: 'Доступ запрещен'
-      })
-    }
   }
 
   // Soft delete

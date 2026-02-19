@@ -30,8 +30,13 @@ export async function verifyPassword(
 }
 
 // Конфигурация сессии
+const sessionSecret = process.env.SESSION_SECRET
+if (!sessionSecret) {
+  throw new Error('SESSION_SECRET is not set. Generate a secure random string (64+ chars) and add it to .env')
+}
+
 const sessionConfig = {
-  password: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+  password: sessionSecret,
   name: 'h3-session',
   cookie: {
     maxAge: 60 * 60 * 24 * 7, // 7 дней

@@ -50,12 +50,39 @@ bot.on('message:contact', async (ctx) => {
     return
   }
 
-  const phone = ctx.message.contact.phone_number
+  const rawPhone = ctx.message.contact.phone_number
+  // Нормализация телефона: убираем всё кроме цифр → BigInt
+  const phoneDigits = rawPhone.replace(/\D/g, '')
+  const phoneBigInt = BigInt(phoneDigits)
+
+  // СРАЗУ сохраняем в Lead (даже если пользователь бросит онбординг)
+  try {
+    await prisma.lead.upsert({
+      where: {
+        telegramId_phone: {
+          telegramId: tgId,
+          phone: phoneBigInt
+        }
+      },
+      update: {
+        name: ctx.from.first_name || null,
+        username: ctx.from.username || null
+      },
+      create: {
+        telegramId: tgId,
+        phone: phoneBigInt,
+        name: ctx.from.first_name || null,
+        username: ctx.from.username || null
+      }
+    })
+  } catch (err) {
+    console.error('[bot] Failed to save lead:', err)
+  }
 
   // ПРОВЕРКА: Один номер = одна организация
   const existingUser = await prisma.user.findFirst({
     where: {
-      phone,
+      phone: phoneBigInt,
       organizationId: { not: null },
       deletedAt: null
     }
@@ -84,7 +111,7 @@ bot.on('message:contact', async (ctx) => {
   await prisma.user.update({
     where: { telegramId: tgId },
     data: {
-      phone,
+      phone: phoneBigInt,
       name: ctx.from.first_name || 'Владелец',
       botState: BotState.WAITING_NAME
     }
@@ -253,6 +280,16 @@ bot.on('callback_query:data', async (ctx) => {
           where: { telegramId: tgId },
           data: { botState: BotState.COMPLETED }
         })
+
+        // Помечаем лид как сконвертированный
+        if (user.phone) {
+          try {
+            await prisma.lead.updateMany({
+              where: { telegramId: tgId, phone: user.phone },
+              data: { converted: true }
+            })
+          } catch {}
+        }
 
         // TODO: раскомментировать когда будет готова админка
         // const adminUrl = process.env.APP_URL || 'https://restoworker.ru'

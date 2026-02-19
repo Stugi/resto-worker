@@ -1,0 +1,21 @@
+// ============================================
+// ЛИДЫ — промежуточная таблица для ранних контактов
+// Сохраняются сразу при получении номера телефона,
+// даже если пользователь не завершил онбординг
+// ============================================
+
+model Lead {
+  id         String  @id @default(cuid())
+  telegramId String
+  phone      BigInt
+  name       String?
+  username   String?
+
+  // Прошёл ли полный онбординг
+  converted  Boolean @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@unique([telegramId, phone])
+  @@index([phone])
+}

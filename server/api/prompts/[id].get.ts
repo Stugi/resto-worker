@@ -2,6 +2,15 @@ import { UserRole } from '#shared/constants/roles'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
+
+  // Промпты доступны только SUPER_ADMIN
+  if (user.role !== UserRole.SUPER_ADMIN) {
+    throw createError({
+      statusCode: 403,
+      message: 'Доступ запрещен'
+    })
+  }
+
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -25,26 +34,6 @@ export default defineEventHandler(async (event) => {
       statusCode: 404,
       message: 'Промпт не найден'
     })
-  }
-
-  // OWNER может видеть только дефолтные или промпты своих ресторанов
-  if (user.role === UserRole.OWNER && !prompt.isDefault) {
-    if (prompt.restaurant) {
-      const restaurant = await prisma.restaurant.findFirst({
-        where: {
-          id: prompt.restaurantId!,
-          organizationId: user.organizationId!,
-          deletedAt: null
-        }
-      })
-
-      if (!restaurant) {
-        throw createError({
-          statusCode: 403,
-          message: 'Доступ запрещен'
-        })
-      }
-    }
   }
 
   return prompt

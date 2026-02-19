@@ -8,7 +8,7 @@ model User {
   login        String? @unique
   passwordHash String?
   name         String?
-  phone        String?
+  phone        BigInt?
   role         Role    @default(MANAGER)
 
   // Состояние онбординга в боте
