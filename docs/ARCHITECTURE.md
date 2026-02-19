@@ -51,10 +51,13 @@ resto-worker/
       prompts/                # CRUD промптов GPT
       tariffs/                # CRUD тарифов
       payments/               # Платежи (create, check, list)
+      transcripts/            # Список транскрипций
+      reports/                # Отчёты (list, get, generate)
     utils/
       auth.ts                 # Аутентификация и сессии
       prisma.ts               # Prisma client
       alfa-payment.ts         # Альфа-Банк API
+      openai.ts               # Whisper + GPT (транскрипция + отчёты)
       userbot.ts              # Telegram MTProto userbot
 
   shared/                     # Общий код (фронт + бэк)
@@ -71,6 +74,9 @@ resto-worker/
       tariff.prisma           # Tariff (тарифы)
       payment.prisma          # Payment (платежи)
       report-prompt.prisma    # ReportPrompt (промпты GPT)
+      voice-message.prisma    # VoiceMessage (голосовые)
+      transcript.prisma       # Transcript (транскрипции Whisper)
+      report.prisma           # Report + ReportTranscript (отчёты GPT)
 
   docs/                       # Документация
 ```

@@ -1,0 +1,38 @@
+// ============================================
+// ГОЛОСОВЫЕ СООБЩЕНИЯ
+// ============================================
+
+model VoiceMessage {
+  id              String   @id
+  telegramFileId  String            // file_id из Telegram API
+  telegramChatId  String            // ID чата откуда пришло
+  duration        Int               // Длительность в секундах
+  fileSize        Int?              // Размер файла в байтах
+  mimeType        String?           // audio/ogg, audio/mpeg и т.д.
+
+  // Связи
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  userId          String?
+  user            User?      @relation(fields: [userId], references: [id])
+
+  // Транскрипция (1:1)
+  transcript      Transcript?
+
+  // Статус обработки
+  status          VoiceStatus @default(RECEIVED)
+  error           String?     @db.Text  // Ошибка обработки если есть
+
+  createdAt       DateTime @default(now())
+
+  @@index([restaurantId])
+  @@index([telegramChatId])
+  @@index([createdAt])
+}
+
+enum VoiceStatus {
+  RECEIVED        // Получено, ожидает обработки
+  TRANSCRIBING    // Идёт транскрипция (Whisper)
+  TRANSCRIBED     // Транскрипция завершена
+  FAILED          // Ошибка обработки
+}

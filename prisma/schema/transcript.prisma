@@ -1,0 +1,28 @@
+// ============================================
+// ТРАНСКРИПЦИИ (Whisper)
+// ============================================
+
+model Transcript {
+  id              String   @id
+  text            String   @db.Text    // Текст транскрипции
+  language        String?              // Определённый язык (ru, en...)
+  durationMs      Int?                 // Время обработки Whisper (мс)
+
+  // Связи
+  voiceMessageId  String   @unique
+  voiceMessage    VoiceMessage @relation(fields: [voiceMessageId], references: [id])
+
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+
+  // Используется в отчётах
+  reports         ReportTranscript[]
+
+  createdAt       DateTime @default(now())
+
+  @@index([restaurantId])
+  @@index([createdAt])
+}

@@ -301,6 +301,196 @@ bot.on('callback_query:data', async (ctx) => {
 
 })
 
+// --- ГОЛОСОВЫЕ СООБЩЕНИЯ В ГРУППЕ ---
+
+// Обработка голосовых (voice) и аудио (audio) сообщений
+bot.on(['message:voice', 'message:audio'], async (ctx) => {
+  const chatId = ctx.chat.id.toString()
+  const tgUserId = ctx.from?.id.toString()
+
+  // Работаем только в группах (не в личке)
+  if (ctx.chat.type === 'private') {
+    return
+  }
+
+  console.log(`[bot] Voice message received in chat ${chatId} from user ${tgUserId}`)
+
+  // Ищем ресторан по chatId
+  const restaurants = await prisma.restaurant.findMany({
+    where: { deletedAt: null },
+    select: { id: true, name: true, settingsComment: true, organizationId: true }
+  })
+
+  const restaurant = restaurants.find(r => {
+    if (!r.settingsComment) return false
+    try {
+      const settings = JSON.parse(r.settingsComment)
+      return settings.telegramChatId?.toString() === chatId
+    } catch { return false }
+  })
+
+  if (!restaurant) {
+    console.log(`[bot] No restaurant found for chat ${chatId}, ignoring voice message`)
+    return
+  }
+
+  // Ищем пользователя
+  const user = tgUserId
+    ? await prisma.user.findUnique({ where: { telegramId: tgUserId } })
+    : null
+
+  // Проверяем лимит транскрипций
+  const billing = await prisma.billing.findUnique({
+    where: { organizationId: restaurant.organizationId },
+    include: { tariff: true }
+  })
+
+  if (billing) {
+    const maxTranscriptions = billing.tariff?.maxTranscriptions ?? 100
+    if (billing.transcriptionsUsed >= maxTranscriptions) {
+      console.log(`[bot] Transcription limit reached for org ${restaurant.organizationId}: ${billing.transcriptionsUsed}/${maxTranscriptions}`)
+      await ctx.reply(
+        'Достигнут лимит транскрипций для текущего тарифа.\n' +
+        'Обратитесь к администратору для продления подписки.',
+        { reply_to_message_id: ctx.message.message_id }
+      )
+      return
+    }
+
+    // Проверяем что триал/подписка не истекли
+    const now = new Date()
+    if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < now) {
+      await ctx.reply(
+        'Пробный период истёк.\n' +
+        'Оплатите подписку для продолжения работы.',
+        { reply_to_message_id: ctx.message.message_id }
+      )
+      return
+    }
+    if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < now) {
+      await ctx.reply(
+        'Срок подписки истёк.\n' +
+        'Продлите подписку для продолжения работы.',
+        { reply_to_message_id: ctx.message.message_id }
+      )
+      return
+    }
+    if (billing.status === 'DISABLED') {
+      await ctx.reply(
+        'Подписка отключена. Обратитесь к администратору.',
+        { reply_to_message_id: ctx.message.message_id }
+      )
+      return
+    }
+  }
+
+  // Получаем file_id
+  const voice = ctx.message.voice || ctx.message.audio
+  if (!voice) return
+
+  const fileId = voice.file_id
+  const duration = voice.duration || 0
+  const fileSize = voice.file_size || null
+  const mimeType = voice.mime_type || 'audio/ogg'
+
+  // Сохраняем голосовое в БД
+  const voiceMessage = await prisma.voiceMessage.create({
+    data: {
+      id: createId(),
+      telegramFileId: fileId,
+      telegramChatId: chatId,
+      duration,
+      fileSize,
+      mimeType,
+      restaurantId: restaurant.id,
+      userId: user?.id || null,
+      status: 'RECEIVED'
+    }
+  })
+
+  console.log(`[bot] VoiceMessage saved: ${voiceMessage.id}, duration: ${duration}s, restaurant: ${restaurant.name}`)
+
+  // Отправляем реакцию "обрабатываем"
+  await ctx.replyWithChatAction('typing')
+
+  // Транскрибируем асинхронно
+  try {
+    // Обновляем статус
+    await prisma.voiceMessage.update({
+      where: { id: voiceMessage.id },
+      data: { status: 'TRANSCRIBING' }
+    })
+
+    // Скачиваем файл из Telegram
+    const audioBuffer = await downloadTelegramFile(fileId)
+
+    // Транскрибируем через Whisper
+    const result = await transcribeAudio(audioBuffer, `voice_${voiceMessage.id}.ogg`)
+
+    if (!result.text || result.text.trim().length === 0) {
+      throw new Error('Whisper вернул пустую транскрипцию')
+    }
+
+    // Сохраняем транскрипцию
+    const transcript = await prisma.transcript.create({
+      data: {
+        id: createId(),
+        text: result.text,
+        language: result.language || 'ru',
+        durationMs: result.durationMs,
+        voiceMessageId: voiceMessage.id,
+        restaurantId: restaurant.id,
+        userId: user?.id || null
+      }
+    })
+
+    // Обновляем статус голосового
+    await prisma.voiceMessage.update({
+      where: { id: voiceMessage.id },
+      data: { status: 'TRANSCRIBED' }
+    })
+
+    // Увеличиваем счётчик транскрипций
+    if (billing) {
+      await prisma.billing.update({
+        where: { id: billing.id },
+        data: { transcriptionsUsed: { increment: 1 } }
+      })
+    }
+
+    console.log(`[bot] Transcript saved: ${transcript.id}, length: ${result.text.length} chars`)
+
+    // Отправляем подтверждение с превью текста
+    const preview = result.text.length > 200
+      ? result.text.substring(0, 200) + '...'
+      : result.text
+
+    await ctx.reply(
+      `Транскрипция (${duration}с):\n\n${preview}`,
+      { reply_to_message_id: ctx.message.message_id }
+    )
+
+  } catch (error: any) {
+    console.error(`[bot] Transcription failed for voice ${voiceMessage.id}:`, error.message)
+
+    // Сохраняем ошибку
+    await prisma.voiceMessage.update({
+      where: { id: voiceMessage.id },
+      data: {
+        status: 'FAILED',
+        error: error.message
+      }
+    })
+
+    await ctx.reply(
+      'Не удалось обработать голосовое сообщение. Попробуйте ещё раз.',
+      { reply_to_message_id: ctx.message.message_id }
+    )
+  }
+})
+
+// --- ИНИЦИАЛИЗАЦИЯ ---
+
 // Инициализация бота (только один раз)
 let botInitialized = false
 async function ensureBotInitialized() {

@@ -1,0 +1,57 @@
+// ============================================
+// ОТЧЁТЫ (GPT)
+// ============================================
+
+model Report {
+  id              String   @id
+  title           String              // Название отчёта ("Отчёт за 10-16 фев 2026")
+  content         String   @db.Text   // Текст отчёта (Markdown)
+  summary         String?  @db.Text   // Краткая выжимка
+  status          ReportStatus @default(GENERATING)
+
+  // Период
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  // Связи
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  promptId        String?
+  prompt          ReportPrompt? @relation(fields: [promptId], references: [id])
+
+  // Транскрипции включённые в отчёт
+  transcripts     ReportTranscript[]
+
+  // GPT метаданные
+  model           String?            // gpt-4o-mini, gpt-4o
+  tokensUsed      Int?               // Использовано токенов
+  generationTimeMs Int?              // Время генерации (мс)
+
+  error           String?  @db.Text  // Ошибка если FAILED
+
+  createdAt       DateTime @default(now())
+  createdBy       String?
+
+  @@index([restaurantId])
+  @@index([periodStart, periodEnd])
+}
+
+// Связующая таблица Report <-> Transcript (many-to-many)
+model ReportTranscript {
+  id           String     @id
+  reportId     String
+  report       Report     @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  transcriptId String
+  transcript   Transcript @relation(fields: [transcriptId], references: [id])
+
+  @@unique([reportId, transcriptId])
+  @@index([reportId])
+  @@index([transcriptId])
+}
+
+enum ReportStatus {
+  GENERATING    // GPT генерирует отчёт
+  COMPLETED     // Отчёт готов
+  FAILED        // Ошибка генерации
+}

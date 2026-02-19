@@ -237,6 +237,8 @@ const analyticsNavigation = computed(() => {
 
   if (role === UserRole.SUPER_ADMIN) {
     return [
+      { path: '/transcripts', label: 'Транскрипции' },
+      { path: '/reports', label: 'Отчёты' },
       { path: '/analytics', label: 'Аналитика' },
       { path: '/stats', label: 'Статистика' }
     ]
@@ -244,12 +246,16 @@ const analyticsNavigation = computed(() => {
 
   if (role === UserRole.OWNER) {
     return [
+      { path: '/transcripts', label: 'Транскрипции' },
+      { path: '/reports', label: 'Отчёты' },
       { path: '/analytics', label: 'Аналитика' }
     ]
   }
 
   if (role === UserRole.MANAGER) {
     return [
+      { path: '/transcripts', label: 'Транскрипции' },
+      { path: '/reports', label: 'Отчёты' },
       { path: '/stats', label: 'Статистика' }
     ]
   }

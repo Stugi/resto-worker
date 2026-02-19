@@ -179,11 +179,54 @@ Nuxt/Nitro автоматически маршрутизирует по файл
 
 ---
 
+## Транскрипции
+
+### GET /api/transcripts
+Список транскрипций голосовых отчётов.
+**Доступ:** SUPER_ADMIN (все), OWNER (свои рестораны), MANAGER (свой ресторан)
+**Query:**
+- `restaurantId` — фильтр по ресторану
+- `from` — дата начала (ISO)
+- `to` — дата конца (ISO)
+- `limit` — лимит (по умолчанию 50, макс 200)
+
+---
+
+## Отчёты (GPT)
+
+### GET /api/reports
+Список отчётов.
+**Доступ:** SUPER_ADMIN, OWNER, MANAGER
+**Query:** `?restaurantId=xxx&limit=20`
+
+### GET /api/reports/:id
+Полный отчёт с содержимым и списком транскрипций.
+
+### POST /api/reports/generate
+Сгенерировать отчёт по транскрипциям за период.
+**Доступ:** SUPER_ADMIN, OWNER
+**Body:**
+```json
+{
+  "restaurantId": "...",
+  "periodStart": "2026-02-10T00:00:00.000Z",
+  "periodEnd": "2026-02-16T23:59:59.000Z",
+  "promptId": "..."
+}
+```
+Если `promptId` не указан — используется дефолтный промпт.
+
+---
+
 ## Telegram Bot Webhook
 
 ### POST /api/bot/webhook
 Обработчик webhook от Telegram.
 **Внимание:** Этот эндпоинт вызывается Telegram, не фронтендом.
+
+**Обрабатывает:**
+- `/start` — онбординг нового пользователя
+- Голосовые сообщения в группах — транскрипция через Whisper
 
 ---
 

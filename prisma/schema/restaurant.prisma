@@ -10,9 +10,12 @@ model Restaurant {
 
   settingsComment String? @db.Text
 
-  users   User[]
-  stats   RestaurantStat[]
-  prompts ReportPrompt[]
+  users         User[]
+  stats         RestaurantStat[]
+  prompts       ReportPrompt[]
+  voiceMessages VoiceMessage[]
+  transcripts   Transcript[]
+  reports       Report[]
 
   createdAt DateTime  @default(now())
   createdBy String?
