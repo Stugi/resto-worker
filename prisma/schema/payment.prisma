@@ -1,9 +1,9 @@
 // ============================================
-// ПЛАТЕЖИ (Альфа-Банк эквайринг)
+// ПЛАТЕЖИ (Тинькофф Касса)
 // ============================================
 
 enum PaymentStatus {
-  CREATED     // Заказ создан в Альфа-Банке
+  CREATED     // Платёж создан
   PENDING     // Ожидает оплаты
   COMPLETED   // Оплата прошла
   FAILED      // Ошибка оплаты
@@ -23,10 +23,10 @@ model Payment {
   billingId       String?
   billing         Billing?      @relation(fields: [billingId], references: [id])
 
-  // Альфа-Банк
-  alfaOrderId     String?       @unique  // orderId от Альфа-Банка
-  alfaFormUrl     String?       @db.Text // Ссылка на форму оплаты
-  alfaStatus      Int?                   // Статус от Альфа-Банка (0-6)
+  // Провайдер платежей (Тинькофф)
+  providerPaymentId String?     @unique  // PaymentId от Тинькофф
+  paymentUrl        String?     @db.Text // Ссылка на форму оплаты
+  providerStatus    String?              // Статус от Тинькофф (NEW, CONFIRMED, и т.д.)
 
   // Период подписки
   periodStart     DateTime?
@@ -37,6 +37,6 @@ model Payment {
   error           String?       @db.Text
 
   @@index([organizationId])
-  @@index([alfaOrderId])
+  @@index([providerPaymentId])
   @@index([status])
 }

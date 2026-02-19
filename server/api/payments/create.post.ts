@@ -3,10 +3,10 @@
  *
  * Поток оплаты:
  * 1. Фронтенд вызывает этот эндпоинт с tariffId и organizationId
- * 2. Мы создаём заказ в Альфа-Банке (register.do)
- * 3. Получаем formUrl — ссылку на платёжную форму
- * 4. Возвращаем formUrl фронтенду для редиректа
- * 5. После оплаты Альфа-Банк редиректит на success/fail страницу
+ * 2. Мы создаём платёж в Тинькофф (Init)
+ * 3. Получаем PaymentURL — ссылку на платёжную форму
+ * 4. Возвращаем PaymentURL фронтенду для редиректа
+ * 5. После оплаты Тинькофф редиректит на success/fail страницу
  * 6. Фронтенд вызывает /api/payments/check для проверки статуса
  *
  * Доступ: SUPER_ADMIN или OWNER своей организации
@@ -70,20 +70,20 @@ export default defineEventHandler(async (event) => {
 
   console.log(`[payments] Creating payment: org=${body.organizationId}, tariff=${tariff.name}, amount=${tariff.price} RUB`)
 
-  // Создаём заказ в Альфа-Банке
-  let alfaOrder
+  // Создаём платёж в Тинькофф
+  let tinkoffPayment
   try {
-    alfaOrder = await createAlfaOrder({
-      orderNumber,
+    tinkoffPayment = await createTinkoffPayment({
+      orderId: orderNumber,
       amount: tariff.price,
       description: `Подписка "${tariff.name}" — ${tariff.period} дней`,
       paymentId
     })
   } catch (err: any) {
-    console.error('[payments] Alfa-Bank order creation failed:', err.message)
+    console.error('[payments] Tinkoff payment creation failed:', err.message)
     throw createError({
       statusCode: 502,
-      message: `Ошибка создания заказа в банке: ${err.message}`
+      message: `Ошибка создания платежа: ${err.message}`
     })
   }
 
@@ -96,18 +96,18 @@ export default defineEventHandler(async (event) => {
       organizationId: body.organizationId,
       tariffId: body.tariffId,
       billingId: organization.billing?.id || null,
-      alfaOrderId: alfaOrder.orderId,
-      alfaFormUrl: alfaOrder.formUrl,
+      providerPaymentId: tinkoffPayment.paymentId,
+      paymentUrl: tinkoffPayment.paymentUrl,
       periodStart,
       periodEnd
     }
   })
 
-  console.log(`[payments] Payment created: ${payment.id}, alfaOrderId=${alfaOrder.orderId}, formUrl=${alfaOrder.formUrl}`)
+  console.log(`[payments] Payment created: ${payment.id}, tinkoffPaymentId=${tinkoffPayment.paymentId}`)
 
   return {
     paymentId: payment.id,
-    formUrl: alfaOrder.formUrl,
+    formUrl: tinkoffPayment.paymentUrl,
     amount: tariff.price,
     tariffName: tariff.name
   }

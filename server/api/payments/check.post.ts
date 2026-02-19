@@ -1,8 +1,8 @@
 /**
- * POST /api/payments/check — Проверить статус платежа в Альфа-Банке
+ * POST /api/payments/check — Проверить статус платежа в Тинькофф
  *
  * Вызывается:
- * 1. Со страницы success/fail после редиректа от Альфа-Банка
+ * 1. Со страницы success/fail после редиректа от Тинькофф
  * 2. Вручную из админки для проверки статуса
  *
  * Если оплата прошла:
@@ -43,34 +43,34 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (!payment.alfaOrderId) {
-    throw createError({ statusCode: 400, message: 'Платёж не имеет alfaOrderId' })
+  if (!payment.providerPaymentId) {
+    throw createError({ statusCode: 400, message: 'Платёж не имеет providerPaymentId' })
   }
 
-  // Проверяем статус в Альфа-Банке
-  console.log(`[payments] Checking Alfa-Bank status for payment ${payment.id}, alfaOrderId=${payment.alfaOrderId}`)
+  // Проверяем статус в Тинькофф
+  console.log(`[payments] Checking Tinkoff status for payment ${payment.id}, providerPaymentId=${payment.providerPaymentId}`)
 
-  let alfaStatus
+  let tinkoffState
   try {
-    alfaStatus = await getAlfaOrderStatus(payment.alfaOrderId)
+    tinkoffState = await getTinkoffPaymentState(payment.providerPaymentId)
   } catch (err: any) {
-    console.error('[payments] Alfa-Bank status check failed:', err.message)
+    console.error('[payments] Tinkoff status check failed:', err.message)
     throw createError({
       statusCode: 502,
       message: `Ошибка проверки статуса в банке: ${err.message}`
     })
   }
 
-  console.log(`[payments] Alfa-Bank response: orderStatus=${alfaStatus.orderStatus}, actionCode=${alfaStatus.actionCode}`)
+  console.log(`[payments] Tinkoff response: status=${tinkoffState.status}, errorCode=${tinkoffState.errorCode}`)
 
-  // Обновляем alfaStatus в платеже
+  // Обновляем providerStatus в платеже
   await prisma.payment.update({
     where: { id: payment.id },
-    data: { alfaStatus: alfaStatus.orderStatus }
+    data: { providerStatus: tinkoffState.status }
   })
 
   // Проверяем: оплата успешна?
-  if (isPaymentSuccessful(alfaStatus.orderStatus)) {
+  if (isPaymentSuccessful(tinkoffState.status)) {
     console.log(`[payments] Payment ${payment.id} SUCCESSFUL! Activating subscription...`)
 
     // Обновляем платёж
@@ -106,17 +106,22 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Оплата не прошла
-  const isDeclined = alfaStatus.orderStatus === 6 // DECLINED
+  // Оплата не прошла — проверяем финальные неуспешные статусы
+  const failedStatuses = [
+    TinkoffPaymentStatus.REJECTED,
+    TinkoffPaymentStatus.CANCELED,
+    TinkoffPaymentStatus.AUTH_FAIL,
+    TinkoffPaymentStatus.DEADLINE_EXPIRED
+  ]
 
-  if (isDeclined) {
-    console.log(`[payments] Payment ${payment.id} DECLINED (actionCode=${alfaStatus.actionCode})`)
+  if (failedStatuses.includes(tinkoffState.status as any)) {
+    console.log(`[payments] Payment ${payment.id} FAILED: status=${tinkoffState.status}`)
 
     await prisma.payment.update({
       where: { id: payment.id },
       data: {
         status: 'FAILED',
-        error: alfaStatus.errorMessage || `Declined (actionCode: ${alfaStatus.actionCode})`
+        error: tinkoffState.message || `${tinkoffState.status} (errorCode: ${tinkoffState.errorCode})`
       }
     })
 
@@ -129,14 +134,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Ещё в процессе (REGISTERED, PENDING, ACS и т.д.)
-  console.log(`[payments] Payment ${payment.id} still pending: alfaStatus=${alfaStatus.orderStatus}`)
+  // Ещё в процессе (NEW, FORM_SHOWED, AUTHORIZING и т.д.)
+  console.log(`[payments] Payment ${payment.id} still pending: tinkoffStatus=${tinkoffState.status}`)
 
   return {
     paymentId: payment.id,
     status: 'PENDING',
     amount: payment.amount,
     tariffName: payment.tariff?.name,
-    alfaStatus: alfaStatus.orderStatus
+    providerStatus: tinkoffState.status
   }
 })

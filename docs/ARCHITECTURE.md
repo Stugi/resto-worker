@@ -56,7 +56,7 @@ resto-worker/
     utils/
       auth.ts                 # Аутентификация и сессии
       prisma.ts               # Prisma client
-      alfa-payment.ts         # Альфа-Банк API
+      tinkoff-payment.ts      # Тинькофф Касса API
       openai.ts               # Whisper + GPT (транскрипция + отчёты)
       userbot.ts              # Telegram MTProto userbot
 
@@ -141,14 +141,12 @@ server/api/{resource}/
 
 ## Платежи
 
-Подробная документация: [PAYMENT_ALFA.md](./PAYMENT_ALFA.md)
-
 ### Поток
 ```
-Клиент → POST /api/payments/create → Альфа-Банк register.do → formUrl
-Клиент ← redirect на formUrl (платёжная форма банка)
-Банк → redirect на /payment/success?paymentId=XXX
-Клиент → POST /api/payments/check → getOrderStatusExtended.do → Активация подписки
+Клиент → POST /api/payments/create → Тинькофф /v2/Init → formUrl
+Клиент ← redirect на formUrl (платёжная форма Тинькофф)
+Тинькофф → redirect на /payment/success?paymentId=XXX
+Клиент → POST /api/payments/check → /v2/GetState → Активация подписки
 ```
 
 ### Тарифы
@@ -158,7 +156,7 @@ server/api/{resource}/
 ## Логирование
 
 Все важные операции логируются с префиксами:
-- `[alfa]` — Альфа-Банк API
+- `[tinkoff]` — Тинькофф Касса API
 - `[payments]` — Платежи
 - `[tariffs]` — Тарифы
 - `[userbot]` — Telegram userbot
@@ -177,7 +175,7 @@ server/api/{resource}/
 | `USERBOT_SESSION_ENCRYPTED` | Зашифрованная сессия userbot |
 | `USERBOT_ENCRYPTION_KEY` | Ключ шифрования сессии |
 | `USERBOT_ENABLED` | Включить/выключить userbot |
-| `ALFA_MERCHANT_LOGIN` | Логин мерчанта Альфа-Банк |
-| `ALFA_MERCHANT_PASSWORD` | Пароль мерчанта |
-| `ALFA_API_URL` | URL API банка |
+| `TINKOFF_TERMINAL_KEY` | TerminalKey от Тинькофф Кассы |
+| `TINKOFF_PASSWORD` | Пароль терминала Тинькофф |
+| `TINKOFF_API_URL` | URL API Тинькофф |
 | `APP_URL` | URL приложения |
