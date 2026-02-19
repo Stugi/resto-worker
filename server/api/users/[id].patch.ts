@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
   // Подготавливаем данные для обновления
   const updateData: any = {
-    updatedBy: user.id
+    updatedBy: user.login || user.id
   }
 
   if (body.name) updateData.name = body.name.trim()

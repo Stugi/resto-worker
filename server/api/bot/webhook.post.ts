@@ -174,13 +174,13 @@ bot.on('callback_query:data', async (ctx) => {
           data: {
             id: createId(),
             name: orgName,
-            createdBy: user.id,
+            createdBy: user.login || user.telegramId || user.id,
             billing: {
               create: {
                 id: createId(),
                 status: 'TRIAL',
                 trialStartsAt: new Date(),
-                createdBy: user.id
+                createdBy: user.login || user.telegramId || user.id
               }
             }
           }
@@ -192,7 +192,7 @@ bot.on('callback_query:data', async (ctx) => {
             id: createId(),
             name: orgName,
             organizationId: org.id,
-            createdBy: user.id
+            createdBy: user.login || user.telegramId || user.id
           }
         })
 

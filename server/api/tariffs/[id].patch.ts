@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
       ...(body.maxTranscriptions !== undefined && { maxTranscriptions: body.maxTranscriptions }),
       ...(body.isActive !== undefined && { isActive: body.isActive }),
       ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
-      updatedBy: user.id
+      updatedBy: user.login || user.id
     }
   })
 

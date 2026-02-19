@@ -95,7 +95,7 @@ export default defineEventHandler(async (event) => {
       phone: body.phone?.trim() || null,
       role: body.role,
       organizationId: body.organizationId || null,
-      createdBy: user.id
+      createdBy: user.login || user.id
     },
     include: {
       organization: {

@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     where: { id },
     data: {
       ...(body.name && { name: body.name.trim() }),
-      updatedBy: user.id
+      updatedBy: user.login || user.id
     },
     include: {
       billing: true
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
       where: { id: organization.billing.id },
       data: {
         status: body.billingStatus as any,
-        updatedBy: user.id
+        updatedBy: user.login || user.id
       }
     })
   }

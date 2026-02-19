@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     where: { id },
     data: {
       deletedAt: new Date(),
-      deletedBy: user.id
+      deletedBy: user.login || user.id
     }
   })
 

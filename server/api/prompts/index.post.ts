@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
       template: body.template.trim(),
       isDefault: body.isDefault || false,
       restaurantId,
-      createdBy: user.id
+      createdBy: user.login || user.id
     },
     include: {
       restaurant: {

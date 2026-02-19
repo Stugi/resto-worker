@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
       periodEnd,
       restaurantId: body.restaurantId,
       promptId: prompt.id,
-      createdBy: user.id
+      createdBy: user.login || user.id
     }
   })
 

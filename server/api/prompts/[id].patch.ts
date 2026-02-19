@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
       ...(body.isActive !== undefined && { isActive: body.isActive }),
       ...(body.isDefault !== undefined && { isDefault: body.isDefault }),
       ...(body.restaurantId !== undefined && { restaurantId: body.restaurantId }),
-      updatedBy: user.id
+      updatedBy: user.login || user.id
     },
     include: {
       restaurant: {

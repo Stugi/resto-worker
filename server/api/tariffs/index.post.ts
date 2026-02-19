@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       maxUsers: body.maxUsers ?? 5,
       maxTranscriptions: body.maxTranscriptions ?? 100,
       sortOrder: body.sortOrder ?? 0,
-      createdBy: user.id
+      createdBy: user.login || user.id
     }
   })
 

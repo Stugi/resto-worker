@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     data: {
       name: body.name.trim(),
       settingsComment: body.settingsComment?.trim() || null,
-      updatedBy: user.id
+      updatedBy: user.login || user.id
     },
     include: {
       organization: {

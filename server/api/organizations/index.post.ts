@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const organization = await prisma.organization.create({
     data: {
       name: body.name.trim(),
-      createdBy: user.id
+      createdBy: user.login || user.id
     }
   })
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       organizationId: organization.id,
       status: 'TRIAL',
       trialStartsAt: new Date(),
-      createdBy: user.id
+      createdBy: user.login || user.id
     }
   })
 

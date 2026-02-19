@@ -2,7 +2,6 @@
   <!-- Modal Overlay -->
   <div
     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-    @click.self="$emit('close')"
   >
     <!-- Modal Content -->
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">

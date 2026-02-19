@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
       name: body.name.trim(),
       organizationId,
       settingsComment: body.settingsComment?.trim() || null,
-      createdBy: user.id
+      createdBy: user.login || user.id
     },
     include: {
       organization: {
