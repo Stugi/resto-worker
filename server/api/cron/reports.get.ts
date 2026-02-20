@@ -93,23 +93,32 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Определяем период: от последнего отчёта (или 24ч назад) до сейчас
-    const lastReport = await prisma.report.findFirst({
-      where: { restaurantId: restaurant.id, status: 'COMPLETED' },
+    // Определяем период: от последнего АВТО-отчёта (createdBy='cron') или 24ч назад
+    // Смотрим только на автоотчёты, чтобы ручные отчёты не влияли на период
+    const lastAutoReport = await prisma.report.findFirst({
+      where: { restaurantId: restaurant.id, status: 'COMPLETED', createdBy: 'cron' },
       orderBy: { createdAt: 'desc' },
-      select: { periodEnd: true }
+      select: { id: true, periodEnd: true }
     })
 
-    const periodStart = lastReport?.periodEnd || new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const periodStart = lastAutoReport?.periodEnd || new Date(now.getTime() - 24 * 60 * 60 * 1000)
     const periodEnd = now
 
-    console.log(`[cron/reports] ${restaurant.name}: period ${periodStart.toISOString()} — ${periodEnd.toISOString()}`)
+    console.log(`[cron/reports] ${restaurant.name}: period ${periodStart.toISOString()} — ${periodEnd.toISOString()}, lastAutoReport=${lastAutoReport?.id || 'none'}`)
 
-    // Получаем транскрипции за период
+    // Получаем транскрипции за период, исключая те, что уже были в предыдущих автоотчётах
     const transcripts = await prisma.transcript.findMany({
       where: {
         restaurantId: restaurant.id,
-        createdAt: { gte: periodStart, lte: periodEnd }
+        createdAt: { gte: periodStart, lte: periodEnd },
+        // Исключаем транскрипции, уже привязанные к автоотчётам (createdBy='cron')
+        NOT: {
+          reports: {
+            some: {
+              report: { createdBy: 'cron' }
+            }
+          }
+        }
       },
       include: {
         user: { select: { name: true } },
@@ -193,6 +202,15 @@ export default defineEventHandler(async (event) => {
           generationTimeMs: result.generationTimeMs,
           createdBy: 'cron'
         }
+      })
+
+      // Связываем транскрипции с отчётом (для исключения из будущих автоотчётов)
+      await prisma.reportTranscript.createMany({
+        data: transcripts.map(t => ({
+          id: createId(),
+          reportId,
+          transcriptId: t.id
+        }))
       })
 
       // Отправляем в Telegram группу ресторана

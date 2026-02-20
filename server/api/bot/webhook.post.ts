@@ -11,6 +11,7 @@ function normalizeChatId(id: string): string {
 }
 
 // Поиск ресторана по chatId группы (из settingsComment.telegramChatId)
+// При нахождении — автоматически обновляет chatId на актуальный Bot API формат
 async function findRestaurantByChatId(chatId: string) {
   const normalizedInput = normalizeChatId(chatId)
   console.log(`[bot] findRestaurant: input="${chatId}" norm="${normalizedInput}"`)
@@ -22,7 +23,7 @@ async function findRestaurantByChatId(chatId: string) {
 
   console.log(`[bot] findRestaurant: ${restaurants.length} restaurants to check`)
 
-  return restaurants.find(r => {
+  const found = restaurants.find(r => {
     try {
       const settings = JSON.parse(r.settingsComment!)
       const storedRaw = settings.telegramChatId?.toString() || ''
@@ -32,6 +33,27 @@ async function findRestaurantByChatId(chatId: string) {
       return match
     } catch { return false }
   }) || null
+
+  // Автообновление chatId: если найден ресторан и сохранённый chatId отличается от Bot API chatId,
+  // обновляем на актуальный (chatId из ctx.chat.id — это всегда правильный Bot API формат)
+  if (found) {
+    try {
+      const settings = JSON.parse(found.settingsComment!)
+      const storedRaw = settings.telegramChatId?.toString() || ''
+      if (storedRaw !== chatId) {
+        settings.telegramChatId = chatId
+        await prisma.restaurant.update({
+          where: { id: found.id },
+          data: { settingsComment: JSON.stringify(settings) }
+        })
+        console.log(`[bot] findRestaurant: updated chatId for "${found.name}": "${storedRaw}" → "${chatId}"`)
+      }
+    } catch (err) {
+      console.warn(`[bot] findRestaurant: failed to update chatId:`, err)
+    }
+  }
+
+  return found
 }
 
 // --- КОМАНДЫ И ОБРАБОТЧИКИ ---
@@ -554,7 +576,9 @@ bot.on('callback_query:data', async (ctx) => {
 
         // Отправляем инструкцию в группу и закрепляем
         try {
-          const botChatId = `-${groupResult.chatId}`
+          // Для Bot API суперграуппы нужен формат -100<chatId>
+          const rawChatId = groupResult.chatId.toString()
+          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
           const instructionText =
             `👋 Добро пожаловать в группу отчётов!\n\n` +
             `📝 Как пользоваться:\n` +
@@ -723,12 +747,18 @@ bot.on('callback_query:data', async (ctx) => {
       } catch {}
     }
 
-    const times = ['10:00', '13:00', '17:00', '19:00', '21:00']
+    // Кнопки времени: по 3 в ряд, чтобы помещались в Telegram
+    const timeRows = [
+      ['09:00', '12:00', '15:00'],
+      ['17:00', '19:00', '21:00'],
+    ]
     const kb = new InlineKeyboard()
-    for (const t of times) {
-      kb.text(t === currentTime ? `✅ ${t}` : t, `sched_time:${t}`)
+    for (const row of timeRows) {
+      for (const t of row) {
+        kb.text(t === currentTime ? `✅ ${t}` : t, `sched_time:${t}`)
+      }
+      kb.row()
     }
-    kb.row()
     kb.text('← Назад к дням', 'sched_back')
 
     try {
