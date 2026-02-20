@@ -176,6 +176,8 @@ bot.command('report', async (ctx) => {
     return
   }
 
+  console.log(`[bot] /report: chatId="${chatId}", restaurant="${restaurant.name}"`)
+
   await ctx.replyWithChatAction('typing')
 
   const now = new Date()
@@ -195,6 +197,7 @@ bot.command('report', async (ctx) => {
   })
 
   if (transcripts.length === 0) {
+    console.log(`[bot] /report: no transcripts for last 24h`)
     await ctx.reply('За последние 24 часа нет транскрипций для формирования отчёта.')
     return
   }
@@ -211,9 +214,12 @@ bot.command('report', async (ctx) => {
   })
 
   if (!prompt) {
+    console.log(`[bot] /report: no prompt found`)
     await ctx.reply('Нет доступного промпта для генерации отчёта. Обратитесь к администратору.')
     return
   }
+
+  console.log(`[bot] /report: ${transcripts.length} transcripts, prompt="${prompt.name}"`)
 
   try {
     await ctx.reply(`📊 Генерирую отчёт по ${transcripts.length} транскрипциям...`)
@@ -236,6 +242,8 @@ bot.command('report', async (ctx) => {
       }
     })
 
+    console.log(`[bot] /report: generated in ${result.generationTimeMs}ms, tokens=${result.tokensUsed}, content=${result.content.length} chars`)
+
     // Сохраняем отчёт в БД
     const reportId = createId()
     await prisma.report.create({
@@ -256,21 +264,28 @@ bot.command('report', async (ctx) => {
       }
     })
 
-    // Telegram ограничение: 4096 символов на сообщение
-    const maxLen = 4000
-    if (result.content.length <= maxLen) {
-      await ctx.reply(result.content, { parse_mode: 'Markdown' })
-    } else {
-      const parts = []
-      let remaining = result.content
+    // Отправляем отчёт в чат (с fallback на plain text при ошибке парсинга)
+    const sendChunked = async (text: string, parseMode?: 'HTML') => {
+      const maxLen = 4000
+      const parts: string[] = []
+      let remaining = text
       while (remaining.length > 0) {
         parts.push(remaining.slice(0, maxLen))
         remaining = remaining.slice(maxLen)
       }
       for (const part of parts) {
-        await ctx.reply(part, { parse_mode: 'Markdown' })
+        try {
+          await ctx.reply(part, parseMode ? { parse_mode: parseMode } : {})
+        } catch {
+          // Fallback: отправляем без форматирования
+          await ctx.reply(part)
+        }
       }
     }
+
+    await sendChunked(result.content)
+
+    console.log(`[bot] /report: sent to chat, reportId=${reportId}`)
   } catch (error: any) {
     console.error('[bot] /report error:', error.message)
     await ctx.reply('Ошибка при генерации отчёта. Попробуйте позже.')

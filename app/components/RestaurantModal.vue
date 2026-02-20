@@ -43,17 +43,59 @@
           required
         />
 
-        <!-- Комментарий настроек -->
-        <div>
+        <!-- Расписание отчётов (только при редактировании) -->
+        <div v-if="isEdit && hasSettings" class="space-y-3">
+          <div class="border-t border-gray-200 pt-4">
+            <h3 class="text-sm font-medium text-text mb-3">Расписание отчётов</h3>
+
+            <!-- Дни недели -->
+            <div class="mb-3">
+              <label class="block text-xs text-text-secondary mb-2">Дни отправки</label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="day in weekDays"
+                  :key="day.value"
+                  type="button"
+                  @click="toggleDay(day.value)"
+                  :class="[
+                    'px-3 py-1.5 text-sm rounded-lg border transition-colors',
+                    schedule.days.includes(day.value)
+                      ? 'bg-action text-white border-action'
+                      : 'bg-white text-text-secondary border-gray-300 hover:border-action/50'
+                  ]"
+                >
+                  {{ day.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Время -->
+            <BaseSelect
+              v-model="schedule.time"
+              :options="timeOptions"
+              label="Время отправки (МСК)"
+              placeholder="Выберите время"
+            />
+          </div>
+        </div>
+
+        <!-- Telegram Chat ID (readonly info) -->
+        <div v-if="isEdit && telegramChatId" class="text-sm text-text-secondary">
+          <span class="font-medium text-text">Telegram группа:</span>
+          {{ chatTitle || `ID: ${telegramChatId}` }}
+        </div>
+
+        <!-- Комментарий настроек (для SUPER_ADMIN — raw JSON) -->
+        <div v-if="isSuperAdmin">
           <label for="settingsComment" class="block text-sm font-medium text-text mb-2">
-            Комментарий к настройкам
+            Настройки (JSON)
           </label>
           <textarea
             id="settingsComment"
             v-model="form.settingsComment"
             rows="4"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action focus:border-transparent transition-all"
-            placeholder="Дополнительная информация или настройки..."
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action focus:border-transparent transition-all font-mono text-xs"
+            placeholder="JSON настроек..."
           ></textarea>
         </div>
 
@@ -106,6 +148,52 @@ const { user } = useAuth()
 const isSuperAdmin = computed(() => user.value?.role === 'SUPER_ADMIN')
 const isEdit = computed(() => !!props.restaurant)
 
+// --- Парсинг settingsComment ---
+const parsedSettings = computed(() => {
+  if (!props.restaurant?.settingsComment) return null
+  try {
+    return JSON.parse(props.restaurant.settingsComment)
+  } catch {
+    return null
+  }
+})
+
+const hasSettings = computed(() => !!parsedSettings.value)
+const telegramChatId = computed(() => parsedSettings.value?.telegramChatId || '')
+const chatTitle = computed(() => parsedSettings.value?.chatTitle || '')
+
+// --- Расписание ---
+const weekDays = [
+  { value: 1, label: 'Пн' },
+  { value: 2, label: 'Вт' },
+  { value: 3, label: 'Ср' },
+  { value: 4, label: 'Чт' },
+  { value: 5, label: 'Пт' },
+  { value: 6, label: 'Сб' },
+  { value: 7, label: 'Вс' },
+]
+
+const timeOptions = Array.from({ length: 24 }, (_, i) => {
+  const h = i.toString().padStart(2, '0')
+  return { value: `${h}:00`, label: `${h}:00` }
+})
+
+const schedule = reactive({
+  days: [...(parsedSettings.value?.reportSchedule?.days || [])],
+  time: parsedSettings.value?.reportSchedule?.time || '17:00'
+})
+
+function toggleDay(day: number) {
+  const idx = schedule.days.indexOf(day)
+  if (idx >= 0) {
+    schedule.days.splice(idx, 1)
+  } else {
+    schedule.days.push(day)
+    schedule.days.sort((a, b) => a - b)
+  }
+}
+
+// --- Форма ---
 const form = reactive({
   name: props.restaurant?.name || '',
   settingsComment: props.restaurant?.settingsComment || '',
@@ -133,18 +221,40 @@ onMounted(() => {
   fetchOrganizations()
 })
 
+// Собираем settingsComment перед отправкой
+function buildSettingsComment(): string | null {
+  // Если есть parsed settings — мержим расписание
+  if (parsedSettings.value && isEdit.value) {
+    const settings = { ...parsedSettings.value }
+    settings.reportSchedule = {
+      days: [...schedule.days],
+      time: schedule.time
+    }
+    return JSON.stringify(settings)
+  }
+
+  // Для SUPER_ADMIN — берём raw из textarea
+  if (isSuperAdmin.value && form.settingsComment) {
+    return form.settingsComment
+  }
+
+  return form.settingsComment || null
+}
+
 const handleSubmit = async () => {
   loading.value = true
   error.value = ''
 
   try {
+    const settingsComment = buildSettingsComment()
+
     if (isEdit.value) {
       // Обновление
       await $fetch(`/api/restaurants/${props.restaurant!.id}`, {
         method: 'PATCH',
         body: {
           name: form.name,
-          settingsComment: form.settingsComment || null
+          settingsComment
         }
       })
     } else {
