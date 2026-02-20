@@ -3,8 +3,8 @@ import { createId } from '@paralleldrive/cuid2'
 /**
  * GET /api/cron/reports — Автоматическая генерация отчётов по расписанию
  *
- * Вызывается Vercel Cron каждые 10 минут.
- * Проверяет текущий день недели + время (с точностью до 10 мин) и генерирует отчёты.
+ * Вызывается Vercel Cron 3 раза в день (08:00, 14:00, 18:00 МСК).
+ * Проверяет день недели + час и генерирует отчёты для подходящих ресторанов.
  *
  * Защита: проверяет заголовок Authorization: Bearer <CRON_SECRET>
  */
@@ -29,13 +29,7 @@ export default defineEventHandler(async (event) => {
   const jsDow = mskNow.getUTCDay()
   const currentDow = jsDow === 0 ? 7 : jsDow
 
-  const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
-
-  // Округляем текущие минуты до ближайших 10 (крон запускается каждые 10 мин)
-  const roundedMinute = Math.floor(currentMinute / 10) * 10
-  const currentTimeRounded = `${currentHour.toString().padStart(2, '0')}:${roundedMinute.toString().padStart(2, '0')}`
-
-  console.log(`[cron/reports] Running at MSK ${currentTimeStr}, rounded=${currentTimeRounded}, dow=${currentDow}`)
+  console.log(`[cron/reports] Running at MSK ${currentHour}:${currentMinute.toString().padStart(2, '0')}, dow=${currentDow}`)
 
   // Получаем все рестораны с настройками
   const restaurants = await prisma.restaurant.findMany({
@@ -73,11 +67,9 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    // Проверяем время: округляем расписание до 10 мин и сравниваем
-    const [schedH, schedM] = schedule.time.split(':').map(Number)
-    const schedRoundedMin = Math.floor((schedM || 0) / 10) * 10
-    const schedTimeRounded = `${schedH.toString().padStart(2, '0')}:${schedRoundedMin.toString().padStart(2, '0')}`
-    if (schedTimeRounded !== currentTimeRounded) {
+    // Проверяем час (расписание "14:00" → запускаем когда currentHour === 14)
+    const [schedHour] = schedule.time.split(':').map(Number)
+    if (schedHour !== currentHour) {
       continue
     }
 
