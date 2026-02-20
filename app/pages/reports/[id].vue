@@ -33,6 +33,28 @@
               <span v-if="report.tokensUsed" class="text-xs">{{ report.tokensUsed }} токенов</span>
             </div>
           </div>
+
+          <!-- Отправить в группу -->
+          <button
+            v-if="report.status === 'COMPLETED'"
+            @click="sendToGroup"
+            :disabled="sending"
+            class="flex items-center gap-2 px-4 py-2 bg-action text-white rounded-lg hover:bg-action/90 transition-colors text-sm font-medium disabled:opacity-50 shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+            <span v-if="sending">Отправка...</span>
+            <span v-else>В группу</span>
+          </button>
+        </div>
+
+        <!-- Уведомления -->
+        <div v-if="sendSuccess" class="mt-3 px-4 py-2 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">
+          Отчёт отправлен в Telegram-группу
+        </div>
+        <div v-if="sendError" class="mt-3 px-4 py-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+          {{ sendError }}
         </div>
       </div>
 
@@ -96,6 +118,24 @@ definePageMeta({
 const route = useRoute()
 const loading = ref(true)
 const report = ref<any>(null)
+const sending = ref(false)
+const sendSuccess = ref(false)
+const sendError = ref('')
+
+const sendToGroup = async () => {
+  sending.value = true
+  sendSuccess.value = false
+  sendError.value = ''
+  try {
+    await $fetch(`/api/reports/${route.params.id}/send-to-group`, { method: 'POST' })
+    sendSuccess.value = true
+    setTimeout(() => { sendSuccess.value = false }, 5000)
+  } catch (err: any) {
+    sendError.value = err.data?.message || err.message || 'Ошибка отправки'
+  } finally {
+    sending.value = false
+  }
+}
 
 const fetchReport = async () => {
   loading.value = true
