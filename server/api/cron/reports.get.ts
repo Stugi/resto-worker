@@ -184,7 +184,9 @@ export default defineEventHandler(async (event) => {
       const chatId = settings.telegramChatId
       if (chatId) {
         try {
-          const botChatId = `-${chatId}`
+          // Для Bot API суперграуппы нужен формат -100<chatId>
+          const rawChatId = chatId.toString()
+          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
           const header = `📊 <b>Автоматический отчёт</b>\n${restaurant.name}\n${periodStart.toLocaleDateString('ru-RU')} — ${periodEnd.toLocaleDateString('ru-RU')}\n\n`
 
           const maxLen = 4000 - header.length

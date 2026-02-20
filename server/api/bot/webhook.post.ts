@@ -5,16 +5,31 @@ import { UserRole } from '#shared/constants/roles'
 
 // --- ХЕЛПЕРЫ ---
 
+// Нормализация chatId: MTProto отдаёт "123456789", Bot API для суперграупп "-100123456789"
+function normalizeChatId(id: string): string {
+  return id.replace(/^-100/, '').replace(/^-/, '')
+}
+
 // Поиск ресторана по chatId группы (из settingsComment.telegramChatId)
 async function findRestaurantByChatId(chatId: string) {
+  const normalizedInput = normalizeChatId(chatId)
+  console.log(`[bot] findRestaurant: input="${chatId}" norm="${normalizedInput}"`)
+
   const restaurants = await prisma.restaurant.findMany({
     where: { deletedAt: null, settingsComment: { not: null } },
     select: { id: true, name: true, organizationId: true, settingsComment: true }
   })
+
+  console.log(`[bot] findRestaurant: ${restaurants.length} restaurants to check`)
+
   return restaurants.find(r => {
     try {
       const settings = JSON.parse(r.settingsComment!)
-      return settings.telegramChatId?.toString() === chatId
+      const storedRaw = settings.telegramChatId?.toString() || ''
+      const storedNorm = normalizeChatId(storedRaw)
+      const match = storedNorm === normalizedInput
+      console.log(`[bot] findRestaurant: "${r.name}" stored="${storedRaw}" norm="${storedNorm}" match=${match}`)
+      return match
     } catch { return false }
   }) || null
 }
@@ -1058,14 +1073,19 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     })
 
     // Скачиваем файл из Telegram
+    console.log(`[bot] Voice: downloading file ${fileId}...`)
     const audioBuffer = await downloadTelegramFile(fileId)
+    console.log(`[bot] Voice: file downloaded, size=${audioBuffer.length} bytes`)
 
     // Транскрибируем через Whisper
+    console.log(`[bot] Voice: transcribing audio (${duration}s)...`)
     const result = await transcribeAudio(audioBuffer, `voice_${voiceMessage.id}.ogg`)
 
     if (!result.text || result.text.trim().length === 0) {
       throw new Error('Whisper вернул пустую транскрипцию')
     }
+
+    console.log(`[bot] Voice: transcribed, text=${result.text.length} chars`)
 
     // Сохраняем транскрипцию
     const transcript = await prisma.transcript.create({
@@ -1147,6 +1167,16 @@ async function ensureBotInitialized() {
 // Экспорт обработчика для Nuxt
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
+
+  // Логируем входящие апдейты для отладки
+  console.log(`[webhook] ${JSON.stringify({
+    update_id: body.update_id,
+    chat_id: body.message?.chat?.id,
+    chat_type: body.message?.chat?.type,
+    voice: !!body.message?.voice,
+    audio: !!body.message?.audio,
+    text: body.message?.text?.substring(0, 30)
+  })}`)
 
   try {
     await ensureBotInitialized()
