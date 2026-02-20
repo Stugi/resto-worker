@@ -1,5 +1,5 @@
 /**
- * GET /api/reports — Список отчётов
+ * GET /api/reports — Список отчётов с пагинацией и фильтрами
  *
  * Доступ:
  * - SUPER_ADMIN: все отчёты
@@ -7,15 +7,22 @@
  * - MANAGER: отчёты своего ресторана
  *
  * Query:
- * - restaurantId?: string
- * - limit?: number (по умолчанию 20)
+ * - restaurantId?: string — фильтр по ресторану
+ * - from?: string — дата начала (ISO)
+ * - to?: string — дата конца (ISO)
+ * - page?: number (по умолчанию 1)
+ * - pageSize?: number (по умолчанию 20, макс 100)
  */
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
   const query = getQuery(event)
 
   const restaurantId = query.restaurantId as string | undefined
-  const limit = Math.min(Number(query.limit) || 20, 100)
+  const from = query.from as string | undefined
+  const to = query.to as string | undefined
+  const page = Math.max(Number(query.page) || 1, 1)
+  const pageSize = Math.min(Math.max(Number(query.pageSize) || 20, 1), 100)
+  const skip = (page - 1) * pageSize
 
   let where: any = {}
 
@@ -39,18 +46,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'Доступ запрещен' })
   }
 
-  const reports = await prisma.report.findMany({
-    where,
-    include: {
-      restaurant: { select: { id: true, name: true } },
-      prompt: { select: { id: true, name: true } },
-      _count: { select: { transcripts: true } }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: limit
-  })
+  // Фильтр по дате
+  if (from || to) {
+    where.createdAt = {}
+    if (from) where.createdAt.gte = new Date(from)
+    if (to) {
+      // Конец дня: если передана дата без времени, включаем весь день
+      const toDate = new Date(to)
+      if (to.length === 10) toDate.setHours(23, 59, 59, 999)
+      where.createdAt.lte = toDate
+    }
+  }
 
-  console.log(`[reports] Listed ${reports.length} reports (user=${user.id})`)
+  const [items, total] = await Promise.all([
+    prisma.report.findMany({
+      where,
+      include: {
+        restaurant: { select: { id: true, name: true } },
+        prompt: { select: { id: true, name: true } },
+        _count: { select: { transcripts: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: pageSize
+    }),
+    prisma.report.count({ where })
+  ])
 
-  return reports
+  console.log(`[reports] Listed ${items.length}/${total} reports, page=${page} (user=${user.id})`)
+
+  return { items, total, page, pageSize }
 })

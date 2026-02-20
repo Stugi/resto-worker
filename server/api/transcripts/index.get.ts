@@ -1,5 +1,5 @@
 /**
- * GET /api/transcripts — Список транскрипций
+ * GET /api/transcripts — Список транскрипций с пагинацией и фильтрами
  *
  * Доступ:
  * - SUPER_ADMIN: все транскрипции
@@ -10,7 +10,8 @@
  * - restaurantId?: string — фильтр по ресторану
  * - from?: string — дата начала (ISO)
  * - to?: string — дата конца (ISO)
- * - limit?: number — лимит (по умолчанию 50)
+ * - page?: number (по умолчанию 1)
+ * - pageSize?: number (по умолчанию 20, макс 100)
  */
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -19,7 +20,9 @@ export default defineEventHandler(async (event) => {
   const restaurantId = query.restaurantId as string | undefined
   const from = query.from ? new Date(query.from as string) : undefined
   const to = query.to ? new Date(query.to as string) : undefined
-  const limit = Math.min(Number(query.limit) || 50, 200)
+  const page = Math.max(Number(query.page) || 1, 1)
+  const pageSize = Math.min(Math.max(Number(query.pageSize) || 20, 1), 100)
+  const skip = (page - 1) * pageSize
 
   let where: any = {}
 
@@ -49,21 +52,30 @@ export default defineEventHandler(async (event) => {
   if (from || to) {
     where.createdAt = {}
     if (from) where.createdAt.gte = from
-    if (to) where.createdAt.lte = to
+    if (to) {
+      // Конец дня: если передана дата без времени, включаем весь день
+      const toStr = query.to as string
+      if (toStr.length === 10) to.setHours(23, 59, 59, 999)
+      where.createdAt.lte = to
+    }
   }
 
-  const transcripts = await prisma.transcript.findMany({
-    where,
-    include: {
-      restaurant: { select: { id: true, name: true } },
-      user: { select: { id: true, name: true } },
-      voiceMessage: { select: { id: true, duration: true, status: true } }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: limit
-  })
+  const [items, total] = await Promise.all([
+    prisma.transcript.findMany({
+      where,
+      include: {
+        restaurant: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true } },
+        voiceMessage: { select: { id: true, duration: true, status: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: pageSize
+    }),
+    prisma.transcript.count({ where })
+  ])
 
-  console.log(`[transcripts] Listed ${transcripts.length} transcripts (user=${user.id}, role=${user.role})`)
+  console.log(`[transcripts] Listed ${items.length}/${total} transcripts, page=${page} (user=${user.id}, role=${user.role})`)
 
-  return transcripts
+  return { items, total, page, pageSize }
 })

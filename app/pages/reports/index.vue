@@ -16,6 +16,31 @@
       </BaseButton>
     </div>
 
+    <!-- Фильтры -->
+    <div class="flex flex-col md:flex-row gap-3 mb-6">
+      <div class="w-full md:w-64">
+        <BaseSelect
+          v-model="selectedRestaurant"
+          :options="[{ value: '', label: 'Все рестораны' }, ...restaurants.map(r => ({ value: r.id, label: r.name }))]"
+          placeholder="Все рестораны"
+        />
+      </div>
+      <div class="flex gap-3 flex-1">
+        <input
+          v-model="dateFrom"
+          type="date"
+          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
+          placeholder="От"
+        />
+        <input
+          v-model="dateTo"
+          type="date"
+          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
+          placeholder="До"
+        />
+      </div>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"></div>
@@ -65,6 +90,14 @@
           </svg>
         </div>
       </div>
+
+      <!-- Пагинация -->
+      <BasePagination
+        :page="page"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="goToPage"
+      />
     </div>
 
     <!-- Empty State -->
@@ -76,10 +109,13 @@
       </div>
       <h3 class="text-lg font-medium text-text mb-2">Нет отчётов</h3>
       <p class="text-text-secondary mb-4">
-        Сгенерируйте первый отчёт на основе транскрипций
+        {{ hasActiveFilters ? 'Нет отчётов по заданным фильтрам' : 'Сгенерируйте первый отчёт на основе транскрипций' }}
       </p>
-      <BaseButton @click="openGenerateModal" variant="primary">
+      <BaseButton v-if="!hasActiveFilters" @click="openGenerateModal" variant="primary">
         Сгенерировать отчёт
+      </BaseButton>
+      <BaseButton v-else @click="resetFilters" variant="outline">
+        Сбросить фильтры
       </BaseButton>
     </div>
 
@@ -111,19 +147,64 @@ interface ReportItem {
 const router = useRouter()
 const loading = ref(true)
 const reports = ref<ReportItem[]>([])
+const restaurants = ref<{ id: string; name: string }[]>([])
 const showGenerateModal = ref(false)
+
+// Фильтры
+const selectedRestaurant = ref('')
+const dateFrom = ref('')
+const dateTo = ref('')
+
+// Пагинация
+const page = ref(1)
+const pageSize = 20
+const total = ref(0)
+
+const hasActiveFilters = computed(() =>
+  selectedRestaurant.value !== '' || dateFrom.value !== '' || dateTo.value !== ''
+)
 
 const fetchReports = async () => {
   loading.value = true
   try {
-    const data = await $fetch('/api/reports')
-    reports.value = data as ReportItem[]
+    const params: Record<string, any> = { page: page.value, pageSize }
+    if (selectedRestaurant.value) params.restaurantId = selectedRestaurant.value
+    if (dateFrom.value) params.from = dateFrom.value
+    if (dateTo.value) params.to = dateTo.value
+
+    const data = await $fetch<{ items: ReportItem[]; total: number }>('/api/reports', { params })
+    reports.value = data.items
+    total.value = data.total
   } catch (error) {
     console.error('Error fetching reports:', error)
   } finally {
     loading.value = false
   }
 }
+
+const fetchRestaurants = async () => {
+  try {
+    const data = await $fetch('/api/restaurants')
+    restaurants.value = (data as any[]).map(r => ({ id: r.id, name: r.name }))
+  } catch (e) { /* ignore */ }
+}
+
+const goToPage = (newPage: number) => {
+  page.value = newPage
+  fetchReports()
+}
+
+const resetFilters = () => {
+  selectedRestaurant.value = ''
+  dateFrom.value = ''
+  dateTo.value = ''
+}
+
+// При смене фильтров — сброс на 1 страницу + перезагрузка
+watch([selectedRestaurant, dateFrom, dateTo], () => {
+  page.value = 1
+  fetchReports()
+})
 
 const openReport = (id: string) => {
   router.push(`/reports/${id}`)
@@ -135,7 +216,6 @@ const openGenerateModal = () => {
 
 const handleGenerated = (report: any) => {
   showGenerateModal.value = false
-  // Открываем сгенерированный отчёт
   if (report?.id) {
     router.push(`/reports/${report.id}`)
   } else {
@@ -170,6 +250,7 @@ const formatDate = (date: string) => {
 }
 
 onMounted(() => {
+  fetchRestaurants()
   fetchReports()
 })
 </script>

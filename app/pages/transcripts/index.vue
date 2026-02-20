@@ -10,13 +10,27 @@
           Расшифровки голосовых отчётов менеджеров
         </p>
       </div>
+    </div>
 
-      <!-- Фильтры -->
-      <div class="flex gap-3 items-center flex-wrap">
+    <!-- Фильтры -->
+    <div class="flex flex-col md:flex-row gap-3 mb-6">
+      <div class="w-full md:w-64">
         <BaseSelect
           v-model="selectedRestaurant"
           :options="[{ value: '', label: 'Все рестораны' }, ...restaurants.map(r => ({ value: r.id, label: r.name }))]"
           placeholder="Все рестораны"
+        />
+      </div>
+      <div class="flex gap-3 flex-1">
+        <input
+          v-model="dateFrom"
+          type="date"
+          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
+        />
+        <input
+          v-model="dateTo"
+          type="date"
+          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
         />
       </div>
     </div>
@@ -68,15 +82,13 @@
         </div>
       </div>
 
-      <!-- Load More -->
-      <div v-if="transcripts.length >= limit" class="text-center py-4">
-        <button
-          @click="loadMore"
-          class="px-6 py-2 text-sm font-medium text-action border border-action rounded-lg hover:bg-action/5 transition-colors"
-        >
-          Загрузить ещё
-        </button>
-      </div>
+      <!-- Пагинация -->
+      <BasePagination
+        :page="page"
+        :page-size="pageSize"
+        :total="total"
+        @update:page="goToPage"
+      />
     </div>
 
     <!-- Empty State -->
@@ -88,8 +100,11 @@
       </div>
       <h3 class="text-lg font-medium text-text mb-2">Нет транскрипций</h3>
       <p class="text-text-secondary">
-        Отправьте голосовое сообщение в группу ресторана — бот автоматически его расшифрует
+        {{ hasActiveFilters ? 'Нет транскрипций по заданным фильтрам' : 'Отправьте голосовое сообщение в группу ресторана — бот автоматически его расшифрует' }}
       </p>
+      <BaseButton v-if="hasActiveFilters" @click="resetFilters" variant="outline" class="mt-4">
+        Сбросить фильтры
+      </BaseButton>
     </div>
   </div>
 </template>
@@ -112,18 +127,33 @@ interface TranscriptItem {
 const loading = ref(true)
 const transcripts = ref<TranscriptItem[]>([])
 const restaurants = ref<{ id: string; name: string }[]>([])
-const selectedRestaurant = ref('')
 const expanded = ref<Record<string, boolean>>({})
-const limit = ref(50)
+
+// Фильтры
+const selectedRestaurant = ref('')
+const dateFrom = ref('')
+const dateTo = ref('')
+
+// Пагинация
+const page = ref(1)
+const pageSize = 20
+const total = ref(0)
+
+const hasActiveFilters = computed(() =>
+  selectedRestaurant.value !== '' || dateFrom.value !== '' || dateTo.value !== ''
+)
 
 const fetchTranscripts = async () => {
   loading.value = true
   try {
-    const params: any = { limit: limit.value }
+    const params: Record<string, any> = { page: page.value, pageSize }
     if (selectedRestaurant.value) params.restaurantId = selectedRestaurant.value
+    if (dateFrom.value) params.from = dateFrom.value
+    if (dateTo.value) params.to = dateTo.value
 
-    const data = await $fetch('/api/transcripts', { params })
-    transcripts.value = data as TranscriptItem[]
+    const data = await $fetch<{ items: TranscriptItem[]; total: number }>('/api/transcripts', { params })
+    transcripts.value = data.items
+    total.value = data.total
   } catch (error) {
     console.error('Error fetching transcripts:', error)
   } finally {
@@ -136,6 +166,17 @@ const fetchRestaurants = async () => {
     const data = await $fetch('/api/restaurants')
     restaurants.value = (data as any[]).map(r => ({ id: r.id, name: r.name }))
   } catch (e) { /* ignore */ }
+}
+
+const goToPage = (newPage: number) => {
+  page.value = newPage
+  fetchTranscripts()
+}
+
+const resetFilters = () => {
+  selectedRestaurant.value = ''
+  dateFrom.value = ''
+  dateTo.value = ''
 }
 
 const toggleExpand = (id: string) => {
@@ -158,12 +199,9 @@ const formatDate = (date: string) => {
   })
 }
 
-const loadMore = () => {
-  limit.value += 50
-  fetchTranscripts()
-}
-
-watch(selectedRestaurant, () => {
+// При смене фильтров — сброс на 1 страницу + перезагрузка
+watch([selectedRestaurant, dateFrom, dateTo], () => {
+  page.value = 1
   fetchTranscripts()
 })
 
