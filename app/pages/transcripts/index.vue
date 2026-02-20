@@ -13,15 +13,11 @@
 
       <!-- Фильтры -->
       <div class="flex gap-3 items-center flex-wrap">
-        <select
+        <BaseSelect
           v-model="selectedRestaurant"
-          class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-        >
-          <option value="">Все рестораны</option>
-          <option v-for="r in restaurants" :key="r.id" :value="r.id">
-            {{ r.name }}
-          </option>
-        </select>
+          :options="[{ value: '', label: 'Все рестораны' }, ...restaurants.map(r => ({ value: r.id, label: r.name }))]"
+          placeholder="Все рестораны"
+        />
       </div>
     </div>
 

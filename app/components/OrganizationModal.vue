@@ -29,19 +29,17 @@
                 />
 
                 <!-- Биллинг статус (только при редактировании) -->
-                <div v-if="organization">
-                    <label class="block text-sm font-medium text-text mb-2">
-                        Статус биллинга
-                    </label>
-                    <select
-                        v-model="form.billingStatus"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-                    >
-                        <option value="TRIAL">Пробный период</option>
-                        <option value="ACTIVE">Активна</option>
-                        <option value="DISABLED">Отключена</option>
-                    </select>
-                </div>
+                <BaseSelect
+                    v-if="organization"
+                    v-model="form.billingStatus"
+                    :options="[
+                        { value: 'TRIAL', label: 'Пробный период' },
+                        { value: 'ACTIVE', label: 'Активна' },
+                        { value: 'DISABLED', label: 'Отключена' }
+                    ]"
+                    label="Статус биллинга"
+                    placeholder="Выберите статус"
+                />
 
                 <!-- Error Message -->
                 <div

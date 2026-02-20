@@ -19,21 +19,13 @@
       <!-- Body -->
       <form @submit.prevent="handleGenerate" class="p-6 space-y-4 overflow-y-auto flex-1">
         <!-- Ресторан -->
-        <div>
-          <label class="block text-sm font-medium text-text mb-2">
-            Ресторан
-          </label>
-          <select
-            v-model="form.restaurantId"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-          >
-            <option value="">Выберите ресторан</option>
-            <option v-for="r in restaurants" :key="r.id" :value="r.id">
-              {{ r.name }}
-            </option>
-          </select>
-        </div>
+        <BaseSelect
+          v-model="form.restaurantId"
+          :options="[{ value: '', label: 'Выберите ресторан' }, ...restaurants.map(r => ({ value: r.id, label: r.name }))]"
+          label="Ресторан"
+          placeholder="Выберите ресторан"
+          required
+        />
 
         <!-- Период -->
         <div class="grid grid-cols-2 gap-4">
@@ -62,20 +54,12 @@
         </div>
 
         <!-- Промпт (опционально) -->
-        <div>
-          <label class="block text-sm font-medium text-text mb-2">
-            Шаблон отчёта
-          </label>
-          <select
-            v-model="form.promptId"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-          >
-            <option value="">Автоматически (по умолчанию)</option>
-            <option v-for="p in prompts" :key="p.id" :value="p.id">
-              {{ p.name }} {{ p.isDefault ? '(по умолчанию)' : '' }}
-            </option>
-          </select>
-        </div>
+        <BaseSelect
+          v-model="form.promptId"
+          :options="[{ value: '', label: 'Автоматически (по умолчанию)' }, ...prompts.map(p => ({ value: p.id, label: p.name + (p.isDefault ? ' (по умолчанию)' : '') }))]"
+          label="Шаблон отчёта"
+          placeholder="Автоматически (по умолчанию)"
+        />
 
         <!-- Error -->
         <div

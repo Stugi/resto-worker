@@ -56,40 +56,27 @@
                 />
 
                 <!-- Роль (только для SUPER_ADMIN) -->
-                <div v-if="currentUser?.role === UserRole.SUPER_ADMIN">
-                    <label class="block text-sm font-medium text-text mb-2">
-                        Роль
-                    </label>
-                    <select
-                        v-model="form.role"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-                    >
-                        <option :value="UserRole.SUPER_ADMIN">Супер Админ</option>
-                        <option :value="UserRole.OWNER">Владелец</option>
-                        <option :value="UserRole.MANAGER">Менеджер</option>
-                    </select>
-                </div>
+                <BaseSelect
+                    v-if="currentUser?.role === UserRole.SUPER_ADMIN"
+                    v-model="form.role"
+                    :options="[
+                        { value: UserRole.SUPER_ADMIN, label: 'Супер Админ' },
+                        { value: UserRole.OWNER, label: 'Владелец' },
+                        { value: UserRole.MANAGER, label: 'Менеджер' }
+                    ]"
+                    label="Роль"
+                    placeholder="Выберите роль"
+                />
 
                 <!-- Организация (только для SUPER_ADMIN) -->
-                <div v-if="currentUser?.role === UserRole.SUPER_ADMIN && (form.role === UserRole.OWNER || form.role === UserRole.MANAGER)">
-                    <label class="block text-sm font-medium text-text mb-2">
-                        Организация
-                    </label>
-                    <select
-                        v-model="form.organizationId"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-                        required
-                    >
-                        <option value="">Выберите организацию</option>
-                        <option
-                            v-for="org in organizations"
-                            :key="org.id"
-                            :value="org.id"
-                        >
-                            {{ org.name }}
-                        </option>
-                    </select>
-                </div>
+                <BaseSelect
+                    v-if="currentUser?.role === UserRole.SUPER_ADMIN && (form.role === UserRole.OWNER || form.role === UserRole.MANAGER)"
+                    v-model="form.organizationId"
+                    :options="[{ value: '', label: 'Выберите организацию' }, ...organizations.map(o => ({ value: o.id, label: o.name }))]"
+                    label="Организация"
+                    placeholder="Выберите организацию"
+                    required
+                />
 
                 <!-- Error Message -->
                 <div

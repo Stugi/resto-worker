@@ -25,21 +25,13 @@
         />
 
         <!-- Ресторан -->
-        <div>
-          <label class="block text-sm font-medium text-text mb-2">
-            Ресторан
-          </label>
-          <select
-            v-model="form.restaurantId"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-            :disabled="form.isDefault"
-          >
-            <option value="">Без привязки к ресторану</option>
-            <option v-for="r in restaurants" :key="r.id" :value="r.id">
-              {{ r.name }}
-            </option>
-          </select>
-        </div>
+        <BaseSelect
+          v-model="form.restaurantId"
+          :options="[{ value: '', label: 'Без привязки к ресторану' }, ...restaurants.map(r => ({ value: r.id, label: r.name }))]"
+          label="Ресторан"
+          placeholder="Без привязки к ресторану"
+          :disabled="form.isDefault"
+        />
 
         <!-- По умолчанию -->
         <div v-if="isSuperAdmin" class="flex items-center gap-3">

@@ -3,6 +3,22 @@ import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
 
+// --- ХЕЛПЕРЫ ---
+
+// Поиск ресторана по chatId группы (из settingsComment.telegramChatId)
+async function findRestaurantByChatId(chatId: string) {
+  const restaurants = await prisma.restaurant.findMany({
+    where: { deletedAt: null, settingsComment: { not: null } },
+    select: { id: true, name: true, organizationId: true, settingsComment: true }
+  })
+  return restaurants.find(r => {
+    try {
+      const settings = JSON.parse(r.settingsComment!)
+      return settings.telegramChatId?.toString() === chatId
+    } catch { return false }
+  }) || null
+}
+
 // --- КОМАНДЫ И ОБРАБОТЧИКИ ---
 
 // Команда /start - начало онбординга
@@ -67,31 +83,27 @@ bot.command('start', async (ctx) => {
   )
 })
 
-// Команда /settings - настройка расписания отчётов
+// Команда /settings - настройка расписания отчётов (только в группе)
 bot.command('settings', async (ctx) => {
-  const tgId = ctx.from.id.toString()
-
-  // Работает только в личке
-  if (ctx.chat.type !== 'private') {
-    await ctx.reply('Команда /settings доступна только в личных сообщениях')
+  // Работает только в группе
+  if (ctx.chat.type === 'private') {
+    await ctx.reply('Команда /settings доступна только в группе ресторана')
     return
   }
 
-  const user = await prisma.user.findUnique({
-    where: { telegramId: tgId },
-    include: { restaurant: { select: { id: true, name: true, settingsComment: true } } }
-  })
+  const chatId = ctx.chat.id.toString()
+  const restaurant = await findRestaurantByChatId(chatId)
 
-  if (!user || !user.restaurant) {
-    await ctx.reply('У вас нет привязанного ресторана. Пройдите онбординг: /start')
+  if (!restaurant) {
+    await ctx.reply('Эта группа не привязана к ресторану.')
     return
   }
 
   // Парсим текущее расписание
   let currentSchedule: { days: number[], time: string } = { days: [], time: '17:00' }
-  if (user.restaurant.settingsComment) {
+  if (restaurant.settingsComment) {
     try {
-      const settings = JSON.parse(user.restaurant.settingsComment)
+      const settings = JSON.parse(restaurant.settingsComment)
       if (settings.reportSchedule) {
         currentSchedule = settings.reportSchedule
       }
@@ -124,33 +136,28 @@ bot.command('settings', async (ctx) => {
 
   await ctx.reply(
     `⚙️ <b>Расписание отчётов</b>\n` +
-    `Ресторан: <b>${user.restaurant.name}</b>\n\n` +
+    `Ресторан: <b>${restaurant.name}</b>\n\n` +
     `Выберите дни, в которые нужен автоматический отчёт:` +
     timeInfo,
     { parse_mode: 'HTML', reply_markup: keyboard }
   )
 })
 
-// Команда /report - мгновенный отчёт за последние 24ч
+// Команда /report - мгновенный отчёт за последние 24ч (только в группе)
 bot.command('report', async (ctx) => {
   const tgId = ctx.from.id.toString()
 
-  // Работает только в личке
-  if (ctx.chat.type !== 'private') {
-    await ctx.reply('Команда /report доступна только в личных сообщениях')
+  // Работает только в группе
+  if (ctx.chat.type === 'private') {
+    await ctx.reply('Команда /report доступна только в группе ресторана')
     return
   }
 
-  const user = await prisma.user.findUnique({
-    where: { telegramId: tgId },
-    include: {
-      restaurant: { select: { id: true, name: true } },
-      organization: { select: { id: true, name: true } }
-    }
-  })
+  const chatId = ctx.chat.id.toString()
+  const restaurant = await findRestaurantByChatId(chatId)
 
-  if (!user || !user.restaurant) {
-    await ctx.reply('У вас нет привязанного ресторана. Пройдите онбординг: /start')
+  if (!restaurant) {
+    await ctx.reply('Эта группа не привязана к ресторану.')
     return
   }
 
@@ -162,7 +169,7 @@ bot.command('report', async (ctx) => {
   // Получаем транскрипции за 24ч
   const transcripts = await prisma.transcript.findMany({
     where: {
-      restaurantId: user.restaurant.id,
+      restaurantId: restaurant.id,
       createdAt: { gte: dayAgo, lte: now }
     },
     include: {
@@ -181,7 +188,7 @@ bot.command('report', async (ctx) => {
   const prompt = await prisma.reportPrompt.findFirst({
     where: {
       OR: [
-        { restaurantId: user.restaurant.id, isActive: true, deletedAt: null },
+        { restaurantId: restaurant.id, isActive: true, deletedAt: null },
         { isDefault: true, isActive: true, deletedAt: null }
       ]
     },
@@ -207,7 +214,7 @@ bot.command('report', async (ctx) => {
     const result = await generateReport({
       template: prompt.template,
       variables: {
-        restaurant_name: user.restaurant.name,
+        restaurant_name: restaurant.name,
         period_start: dayAgo.toLocaleDateString('ru-RU'),
         period_end: now.toLocaleDateString('ru-RU'),
         transcripts: transcriptsText
@@ -225,7 +232,7 @@ bot.command('report', async (ctx) => {
         status: 'COMPLETED',
         periodStart: dayAgo,
         periodEnd: now,
-        restaurantId: user.restaurant.id,
+        restaurantId: restaurant.id,
         promptId: prompt.id,
         model: result.model,
         tokensUsed: result.tokensUsed,
@@ -239,7 +246,6 @@ bot.command('report', async (ctx) => {
     if (result.content.length <= maxLen) {
       await ctx.reply(result.content, { parse_mode: 'Markdown' })
     } else {
-      // Разбиваем на части
       const parts = []
       let remaining = result.content
       while (remaining.length > 0) {
@@ -611,17 +617,15 @@ bot.on('callback_query:data', async (ctx) => {
     await ctx.answerCallbackQuery()
     const dayNum = parseInt(data.replace('sched_day:', ''))
 
-    const userForSched = await prisma.user.findUnique({
-      where: { telegramId: tgId },
-      include: { restaurant: { select: { id: true, name: true, settingsComment: true } } }
-    })
-
-    if (!userForSched?.restaurant) return
+    const chatId = ctx.chat?.id.toString()
+    if (!chatId) return
+    const schedRestaurant = await findRestaurantByChatId(chatId)
+    if (!schedRestaurant) return
 
     // Парсим текущие настройки
     let settings: Record<string, any> = {}
-    if (userForSched.restaurant.settingsComment) {
-      try { settings = JSON.parse(userForSched.restaurant.settingsComment) } catch {}
+    if (schedRestaurant.settingsComment) {
+      try { settings = JSON.parse(schedRestaurant.settingsComment) } catch {}
     }
     const schedule = settings.reportSchedule || { days: [], time: '17:00' }
 
@@ -637,7 +641,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     // Сохраняем промежуточное состояние
     await prisma.restaurant.update({
-      where: { id: userForSched.restaurant.id },
+      where: { id: schedRestaurant.id },
       data: { settingsComment: JSON.stringify(settings) }
     })
 
@@ -662,7 +666,7 @@ bot.on('callback_query:data', async (ctx) => {
     try {
       await ctx.editMessageText(
         `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${userForSched.restaurant.name}</b>\n\n` +
+        `Ресторан: <b>${schedRestaurant.name}</b>\n\n` +
         `Выберите дни, в которые нужен автоматический отчёт:` +
         timeInfo,
         { parse_mode: 'HTML', reply_markup: kb }
@@ -676,15 +680,15 @@ bot.on('callback_query:data', async (ctx) => {
   if (data === 'sched_time_menu') {
     await ctx.answerCallbackQuery()
 
-    const userForTime = await prisma.user.findUnique({
-      where: { telegramId: tgId },
-      include: { restaurant: { select: { id: true, settingsComment: true } } }
-    })
+    const chatId = ctx.chat?.id.toString()
+    if (!chatId) return
+    const timeRestaurant = await findRestaurantByChatId(chatId)
+    if (!timeRestaurant) return
 
     let currentTime = '17:00'
-    if (userForTime?.restaurant?.settingsComment) {
+    if (timeRestaurant.settingsComment) {
       try {
-        const s = JSON.parse(userForTime.restaurant.settingsComment)
+        const s = JSON.parse(timeRestaurant.settingsComment)
         if (s.reportSchedule?.time) currentTime = s.reportSchedule.time
       } catch {}
     }
@@ -713,23 +717,21 @@ bot.on('callback_query:data', async (ctx) => {
     await ctx.answerCallbackQuery()
     const selectedTime = data.replace('sched_time:', '')
 
-    const userForTime = await prisma.user.findUnique({
-      where: { telegramId: tgId },
-      include: { restaurant: { select: { id: true, name: true, settingsComment: true } } }
-    })
-
-    if (!userForTime?.restaurant) return
+    const chatId = ctx.chat?.id.toString()
+    if (!chatId) return
+    const selTimeRestaurant = await findRestaurantByChatId(chatId)
+    if (!selTimeRestaurant) return
 
     let settings: Record<string, any> = {}
-    if (userForTime.restaurant.settingsComment) {
-      try { settings = JSON.parse(userForTime.restaurant.settingsComment) } catch {}
+    if (selTimeRestaurant.settingsComment) {
+      try { settings = JSON.parse(selTimeRestaurant.settingsComment) } catch {}
     }
     const schedule = settings.reportSchedule || { days: [], time: '17:00' }
     schedule.time = selectedTime
     settings.reportSchedule = schedule
 
     await prisma.restaurant.update({
-      where: { id: userForTime.restaurant.id },
+      where: { id: selTimeRestaurant.id },
       data: { settingsComment: JSON.stringify(settings) }
     })
 
@@ -754,7 +756,7 @@ bot.on('callback_query:data', async (ctx) => {
     try {
       await ctx.editMessageText(
         `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${userForTime.restaurant.name}</b>\n\n` +
+        `Ресторан: <b>${selTimeRestaurant.name}</b>\n\n` +
         `Выберите дни, в которые нужен автоматический отчёт:` +
         timeInfo,
         { parse_mode: 'HTML', reply_markup: kb }
@@ -768,17 +770,15 @@ bot.on('callback_query:data', async (ctx) => {
   if (data === 'sched_back') {
     await ctx.answerCallbackQuery()
 
-    const userForBack = await prisma.user.findUnique({
-      where: { telegramId: tgId },
-      include: { restaurant: { select: { id: true, name: true, settingsComment: true } } }
-    })
-
-    if (!userForBack?.restaurant) return
+    const chatId = ctx.chat?.id.toString()
+    if (!chatId) return
+    const backRestaurant = await findRestaurantByChatId(chatId)
+    if (!backRestaurant) return
 
     let schedule = { days: [] as number[], time: '17:00' }
-    if (userForBack.restaurant.settingsComment) {
+    if (backRestaurant.settingsComment) {
       try {
-        const s = JSON.parse(userForBack.restaurant.settingsComment)
+        const s = JSON.parse(backRestaurant.settingsComment)
         if (s.reportSchedule) schedule = s.reportSchedule
       } catch {}
     }
@@ -803,7 +803,7 @@ bot.on('callback_query:data', async (ctx) => {
     try {
       await ctx.editMessageText(
         `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${userForBack.restaurant.name}</b>\n\n` +
+        `Ресторан: <b>${backRestaurant.name}</b>\n\n` +
         `Выберите дни, в которые нужен автоматический отчёт:` +
         timeInfo,
         { parse_mode: 'HTML', reply_markup: kb }
@@ -817,17 +817,15 @@ bot.on('callback_query:data', async (ctx) => {
   if (data === 'sched_save') {
     await ctx.answerCallbackQuery({ text: 'Расписание сохранено!' })
 
-    const userForSave = await prisma.user.findUnique({
-      where: { telegramId: tgId },
-      include: { restaurant: { select: { id: true, name: true, settingsComment: true } } }
-    })
-
-    if (!userForSave?.restaurant) return
+    const chatId = ctx.chat?.id.toString()
+    if (!chatId) return
+    const saveRestaurant = await findRestaurantByChatId(chatId)
+    if (!saveRestaurant) return
 
     let schedule = { days: [] as number[], time: '17:00' }
-    if (userForSave.restaurant.settingsComment) {
+    if (saveRestaurant.settingsComment) {
       try {
-        const s = JSON.parse(userForSave.restaurant.settingsComment)
+        const s = JSON.parse(saveRestaurant.settingsComment)
         if (s.reportSchedule) schedule = s.reportSchedule
       } catch {}
     }
@@ -838,7 +836,7 @@ bot.on('callback_query:data', async (ctx) => {
       try {
         await ctx.editMessageText(
           `⚙️ <b>Расписание отчётов отключено</b>\n\n` +
-          `Ресторан: ${userForSave.restaurant.name}\n\n` +
+          `Ресторан: ${saveRestaurant.name}\n\n` +
           `Автоматические отчёты не будут генерироваться.\n` +
           `Чтобы настроить — используй /settings`,
           { parse_mode: 'HTML' }
@@ -848,10 +846,10 @@ bot.on('callback_query:data', async (ctx) => {
       try {
         await ctx.editMessageText(
           `✅ <b>Расписание сохранено!</b>\n\n` +
-          `Ресторан: ${userForSave.restaurant.name}\n` +
+          `Ресторан: ${saveRestaurant.name}\n` +
           `Дни: <b>${schedule.days.map((d: number) => dayNames[d - 1]).join(', ')}</b>\n` +
           `Время: <b>${schedule.time}</b> (МСК)\n\n` +
-          `Отчёты будут автоматически генерироваться и отправляться в эту беседу.\n` +
+          `Отчёты будут автоматически генерироваться и отправляться в эту группу.\n` +
           `Чтобы изменить — используй /settings`,
           { parse_mode: 'HTML' }
         )
@@ -954,19 +952,8 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
 
   console.log(`[bot] Voice message received in chat ${chatId} from user ${tgUserId}`)
 
-  // Ищем ресторан по chatId
-  const restaurants = await prisma.restaurant.findMany({
-    where: { deletedAt: null },
-    select: { id: true, name: true, settingsComment: true, organizationId: true }
-  })
-
-  const restaurant = restaurants.find(r => {
-    if (!r.settingsComment) return false
-    try {
-      const settings = JSON.parse(r.settingsComment)
-      return settings.telegramChatId?.toString() === chatId
-    } catch { return false }
-  })
+  // Ищем ресторан по chatId через хелпер
+  const restaurant = await findRestaurantByChatId(chatId)
 
   if (!restaurant) {
     console.log(`[bot] No restaurant found for chat ${chatId}, ignoring voice message`)

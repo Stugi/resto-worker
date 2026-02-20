@@ -24,22 +24,15 @@
       <!-- Form -->
       <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
         <!-- Организация (только для SUPER_ADMIN при создании) -->
-        <div v-if="isSuperAdmin && !isEdit">
-          <label for="organizationId" class="block text-sm font-medium text-text mb-2">
-            Организация <span class="text-red-500">*</span>
-          </label>
-          <select
-            id="organizationId"
-            v-model="form.organizationId"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action focus:border-transparent transition-all"
-          >
-            <option value="">Выберите организацию</option>
-            <option v-for="org in organizations" :key="org.id" :value="org.id">
-              {{ org.name }}
-            </option>
-          </select>
-        </div>
+        <BaseSelect
+          v-if="isSuperAdmin && !isEdit"
+          id="organizationId"
+          v-model="form.organizationId"
+          :options="[{ value: '', label: 'Выберите организацию' }, ...organizations.map(o => ({ value: o.id, label: o.name }))]"
+          label="Организация"
+          placeholder="Выберите организацию"
+          required
+        />
 
         <!-- Название -->
         <BaseInput
