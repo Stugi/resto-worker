@@ -1,0 +1,71 @@
+/* ============================================
+   RestoWorker — Глобальные стили и тема
+   ============================================ */
+
+/* --- CSS-переменные: светлая тема (по умолчанию) --- */
+:root {
+  /* Фон */
+  --bg: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-card: #ffffff;
+
+  /* Текст */
+  --text: #1a1a1a;
+  --text-secondary: #6b7280;
+
+  /* Borders */
+  --border: #e5e7eb;
+
+  /* Action (основной акцент) */
+  --action: #00dc7f;
+  --action-hover: #00c26f;
+  --action-text: #ffffff;
+
+  /* Статусы */
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+
+  /* Sidebar */
+  --sidebar-bg: #111827;
+  --sidebar-text: #d1d5db;
+  --sidebar-active: #00dc7f;
+}
+
+/* --- Тёмная тема --- */
+[data-theme="dark"] {
+  --bg: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #1e1e1e;
+
+  --text: #f0f0f0;
+  --text-secondary: #9ca3af;
+
+  --border: #2e2e2e;
+
+  --action: #00dc7f;
+  --action-hover: #00f28c;
+  --action-text: #0f0f0f;
+
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #fbbf24;
+
+  --sidebar-bg: #0a0a0a;
+  --sidebar-text: #9ca3af;
+  --sidebar-active: #00dc7f;
+}
+
+/* --- Сброс и базовые стили --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+

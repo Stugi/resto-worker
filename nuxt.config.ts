@@ -29,7 +29,10 @@ export default defineNuxtConfig({
   },
 
   // Глобальные стили
-  css: ['~/assets/css/scrollbar.css'],
+  css: [
+    '~/assets/css/main.css',
+    '~/assets/css/scrollbar.css',
+  ],
 
   // Разрешаем Telegram iframe
   app: {
