@@ -30,60 +30,17 @@
       <!-- Navigation -->
       <nav class="flex-1 overflow-y-auto p-4">
         <ClientOnly>
-          <!-- Основное -->
-          <div class="mb-6">
+          <div
+            v-for="(section, idx) in sections"
+            :key="section.key"
+            :class="idx < sections.length - 1 ? 'mb-6' : ''"
+          >
             <h3 class="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
-              Основное
+              {{ section.label }}
             </h3>
             <div class="space-y-1">
               <NuxtLink
-                v-for="item in mainNavigation"
-                :key="item.path"
-                :to="item.path"
-                @click="$emit('close')"
-                :class="[
-                  'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive(item.path)
-                    ? 'bg-gray-100 text-text'
-                    : 'text-text-secondary hover:bg-gray-50 hover:text-text'
-                ]"
-              >
-                {{ item.label }}
-              </NuxtLink>
-            </div>
-          </div>
-
-          <!-- Отчёты -->
-          <div v-if="analyticsNavigation.length > 0" class="mb-6">
-            <h3 class="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
-              Отчёты
-            </h3>
-            <div class="space-y-1">
-              <NuxtLink
-                v-for="item in analyticsNavigation"
-                :key="item.path"
-                :to="item.path"
-                @click="$emit('close')"
-                :class="[
-                  'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive(item.path)
-                    ? 'bg-gray-100 text-text'
-                    : 'text-text-secondary hover:bg-gray-50 hover:text-text'
-                ]"
-              >
-                {{ item.label }}
-              </NuxtLink>
-            </div>
-          </div>
-
-          <!-- Настройки -->
-          <div v-if="settingsNavigation.length > 0">
-            <h3 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3">
-              Настройки
-            </h3>
-            <div class="space-y-1">
-              <NuxtLink
-                v-for="item in settingsNavigation"
+                v-for="item in section.items"
                 :key="item.path"
                 :to="item.path"
                 @click="$emit('close')"
@@ -157,7 +114,8 @@
 </template>
 
 <script setup lang="ts">
-import { UserRole } from '#shared/constants/roles'
+import { RoleLabels } from '#shared/constants/roles'
+import { getNavigationSections } from '#shared/constants/navigation'
 
 interface Props {
   isOpen: boolean
@@ -183,13 +141,8 @@ const userInitials = computed(() => {
 })
 
 const roleLabel = computed(() => {
-  const roleLabels = {
-    [UserRole.SUPER_ADMIN]: "Супер Админ",
-    [UserRole.OWNER]: "Владелец",
-    [UserRole.MANAGER]: "Менеджер",
-  }
   return user.value?.role
-    ? roleLabels[user.value.role as keyof typeof roleLabels]
+    ? RoleLabels[user.value.role as keyof typeof RoleLabels]
     : ""
 })
 
@@ -197,79 +150,14 @@ const handleLogout = async () => {
   await logout()
 }
 
-// Navigation items based on role - Основное
-const mainNavigation = computed(() => {
+// Навигация — одна computed, всё из конфига
+const sections = computed(() => {
   const role = user.value?.role
-
-  if (role === UserRole.SUPER_ADMIN) {
-    return [
-      { path: '/organizations', label: 'Организации' },
-      { path: '/restaurants', label: 'Рестораны' },
-      { path: '/users', label: 'Пользователи' }
-    ]
-  }
-
-  if (role === UserRole.OWNER) {
-    return [
-      { path: '/restaurants', label: 'Рестораны' },
-      { path: '/users', label: 'Пользователи' }
-    ]
-  }
-
-  return []
-})
-
-// Analytics navigation - Отчёты и статистика
-const analyticsNavigation = computed(() => {
-  const role = user.value?.role
-
-  if (role === UserRole.SUPER_ADMIN) {
-    return [
-      { path: '/transcripts', label: 'Транскрипции' },
-      { path: '/reports', label: 'Отчёты' },
-      { path: '/analytics', label: 'Аналитика' },
-      { path: '/stats', label: 'Статистика' }
-    ]
-  }
-
-  if (role === UserRole.OWNER) {
-    return [
-      { path: '/transcripts', label: 'Транскрипции' },
-      { path: '/reports', label: 'Отчёты' },
-      { path: '/analytics', label: 'Аналитика' }
-    ]
-  }
-
-  if (role === UserRole.MANAGER) {
-    return [
-      { path: '/transcripts', label: 'Транскрипции' },
-      { path: '/reports', label: 'Отчёты' },
-      { path: '/stats', label: 'Статистика' }
-    ]
-  }
-
-  return []
-})
-
-// Settings navigation - Настройки
-const settingsNavigation = computed(() => {
-  const role = user.value?.role
-
-  if (role === UserRole.SUPER_ADMIN) {
-    return [
-      { path: '/admin/tariffs', label: 'Тарифы' },
-      { path: '/admin/prompts', label: 'Промпты' },
-      { path: '/admin/leads', label: 'Лиды' }
-    ]
-  }
-
-  return []
+  if (!role) return []
+  return getNavigationSections(role)
 })
 
 const isActive = (path: string) => {
-  if (path === '/') {
-    return route.path === '/'
-  }
   return route.path.startsWith(path)
 }
 </script>
