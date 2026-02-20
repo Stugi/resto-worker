@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    return users
+    return users.map(u => ({ ...u, phone: u.phone?.toString() ?? null }))
   }
 
   // OWNER видит только пользователей своей организации
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    return users
+    return users.map(u => ({ ...u, phone: u.phone?.toString() ?? null }))
   }
 
   return []

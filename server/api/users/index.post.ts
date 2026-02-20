@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       name: body.name.trim(),
       login: body.login.trim(),
       passwordHash,
-      phone: body.phone?.trim() || null,
+      phone: body.phone ? BigInt(body.phone.replace(/\D/g, '')) : null,
       role: body.role,
       organizationId: body.organizationId || null,
       createdBy: user.login || user.id
@@ -107,5 +107,5 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return newUser
+  return { ...newUser, phone: newUser.phone?.toString() ?? null }
 })

@@ -87,7 +87,7 @@ export default defineEventHandler(async (event) => {
 
   if (body.name) updateData.name = body.name.trim()
   if (body.login) updateData.login = body.login.trim()
-  if (body.phone !== undefined) updateData.phone = body.phone?.trim() || null
+  if (body.phone !== undefined) updateData.phone = body.phone ? BigInt(body.phone.replace(/\D/g, '')) : null
   if (body.role && user.role === UserRole.SUPER_ADMIN) updateData.role = body.role
   if (body.organizationId !== undefined && user.role === UserRole.SUPER_ADMIN) {
     updateData.organizationId = body.organizationId || null
@@ -112,5 +112,5 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  return updatedUser
+  return { ...updatedUser, phone: updatedUser.phone?.toString() ?? null }
 })

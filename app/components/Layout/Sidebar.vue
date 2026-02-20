@@ -201,13 +201,8 @@ const handleLogout = async () => {
 const mainNavigation = computed(() => {
   const role = user.value?.role
 
-  const baseItems = [
-    { path: '/', label: 'Главная' }
-  ]
-
   if (role === UserRole.SUPER_ADMIN) {
     return [
-      ...baseItems,
       { path: '/organizations', label: 'Организации' },
       { path: '/restaurants', label: 'Рестораны' },
       { path: '/users', label: 'Пользователи' }
@@ -216,19 +211,12 @@ const mainNavigation = computed(() => {
 
   if (role === UserRole.OWNER) {
     return [
-      ...baseItems,
       { path: '/restaurants', label: 'Рестораны' },
       { path: '/users', label: 'Пользователи' }
     ]
   }
 
-  if (role === UserRole.MANAGER) {
-    return [
-      ...baseItems
-    ]
-  }
-
-  return baseItems
+  return []
 })
 
 // Analytics navigation - Отчёты и статистика

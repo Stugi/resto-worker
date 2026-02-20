@@ -259,7 +259,31 @@ bot.command('report', async (ctx) => {
 // ШАГ 1: Обработка получения контакта
 bot.on('message:contact', async (ctx) => {
   const tgId = ctx.from.id.toString()
-  const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
+  const user = await prisma.user.findUnique({
+    where: { telegramId: tgId },
+    include: { organization: { select: { name: true } } }
+  })
+
+  // ПЕРВАЯ ПРОВЕРКА: У пользователя уже есть организация — блокируем + убираем клавиатуру
+  if (user?.organizationId) {
+    await ctx.reply(
+      `У тебя уже есть организация: <b>${user.organization?.name || 'Без имени'}</b>\n\n` +
+      `Повторная регистрация невозможна.\n` +
+      `📊 /report — получить отчёт\n` +
+      `⚙️ /settings — расписание отчётов`,
+      { parse_mode: 'HTML', reply_markup: { remove_keyboard: true } }
+    )
+
+    // Сбросить онбординг-состояние если было
+    if (user.botState !== BotState.COMPLETED) {
+      await prisma.user.update({
+        where: { telegramId: tgId },
+        data: { botState: BotState.COMPLETED, tempOrgName: null }
+      })
+    }
+
+    return
+  }
 
   if (!user || user.botState !== BotState.WAITING_CONTACT) {
     return
@@ -292,30 +316,6 @@ bot.on('message:contact', async (ctx) => {
     })
   } catch (err) {
     console.error('[bot] Failed to save lead:', err)
-  }
-
-  // ПРОВЕРКА 1: У текущего пользователя уже есть организация?
-  if (user.organizationId) {
-    const existingOrg = await prisma.organization.findUnique({
-      where: { id: user.organizationId },
-      select: { name: true }
-    })
-
-    await ctx.reply(
-      `У тебя уже есть организация: <b>${existingOrg?.name || 'Без имени'}</b>\n\n` +
-      `Повторная регистрация невозможна.\n` +
-      `📊 /report — получить отчёт\n` +
-      `⚙️ /settings — расписание отчётов`,
-      { parse_mode: 'HTML', reply_markup: { remove_keyboard: true } }
-    )
-
-    // Сбросить онбординг-состояние
-    await prisma.user.update({
-      where: { telegramId: tgId },
-      data: { botState: BotState.COMPLETED, tempOrgName: null }
-    })
-
-    return
   }
 
   // ПРОВЕРКА 2: Этот номер телефона уже привязан к другой организации?
