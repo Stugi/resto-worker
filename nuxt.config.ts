@@ -23,6 +23,11 @@ export default defineNuxtConfig({
     }
   },
 
+  // Transpile vue-datepicker для SSR
+  build: {
+    transpile: ['@vuepic/vue-datepicker']
+  },
+
   // Глобальные стили
   css: ['~/assets/css/scrollbar.css'],
 

@@ -22,16 +22,12 @@
         />
       </div>
       <div class="flex gap-3 flex-1">
-        <input
-          v-model="dateFrom"
-          type="date"
-          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
-        />
-        <input
-          v-model="dateTo"
-          type="date"
-          class="w-full md:w-44 px-4 py-2 border border-gray-300 rounded-lg text-sm text-text outline-none focus:border-action focus:ring-2 focus:ring-action/20 transition-colors"
-        />
+        <div class="w-full md:w-48">
+          <BaseDatePicker v-model="dateFrom" placeholder="Дата от" />
+        </div>
+        <div class="w-full md:w-48">
+          <BaseDatePicker v-model="dateTo" placeholder="Дата до" />
+        </div>
       </div>
     </div>
 

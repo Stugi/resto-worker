@@ -29,28 +29,18 @@
 
         <!-- Период -->
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">
-              Дата начала
-            </label>
-            <input
-              v-model="form.periodStart"
-              type="date"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-text mb-2">
-              Дата конца
-            </label>
-            <input
-              v-model="form.periodEnd"
-              type="date"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
-            />
-          </div>
+          <BaseDatePicker
+            v-model="form.periodStart"
+            label="Дата начала"
+            placeholder="Начало"
+            :clearable="false"
+          />
+          <BaseDatePicker
+            v-model="form.periodEnd"
+            label="Дата конца"
+            placeholder="Конец"
+            :clearable="false"
+          />
         </div>
 
         <!-- Промпт (опционально) -->
