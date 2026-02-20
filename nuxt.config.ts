@@ -33,6 +33,10 @@ export default defineNuxtConfig({
         {
           'http-equiv': 'Content-Security-Policy',
           content: "frame-src https://oauth.telegram.org https://telegram.org;"
+        },
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover'
         }
       ]
     }
