@@ -16,6 +16,7 @@ export interface NavItem {
  */
 export const navigationItems: NavItem[] = [
   // --- Основное ---
+  { path: '/', label: 'Главная', section: 'main', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.MANAGER] },
   { path: '/organizations', label: 'Организации', section: 'main', roles: [UserRole.SUPER_ADMIN] },
   { path: '/restaurants', label: 'Рестораны', section: 'main', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER] },
   { path: '/users', label: 'Пользователи', section: 'main', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER] },
