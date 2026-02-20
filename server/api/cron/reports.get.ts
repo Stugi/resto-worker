@@ -67,13 +67,31 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    // Проверяем час (расписание "14:00" → запускаем когда currentHour === 14)
-    const [schedHour] = schedule.time.split(':').map(Number)
+    // Проверяем час и минуты (запускаем только в первые 15 минут часа,
+    // т.к. cron-job.org вызывает каждые 15 мин)
+    const [schedHour, schedMinute = 0] = schedule.time.split(':').map(Number)
     if (schedHour !== currentHour) {
+      continue
+    }
+    if (Math.abs(currentMinute - schedMinute) > 14) {
       continue
     }
 
     console.log(`[cron/reports] Match: restaurant=${restaurant.name}, schedule=${JSON.stringify(schedule)}`)
+
+    // Дедупликация: не генерировали ли уже автоотчёт в последние 60 минут
+    const recentAutoReport = await prisma.report.findFirst({
+      where: {
+        restaurantId: restaurant.id,
+        createdBy: 'cron',
+        createdAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) }
+      }
+    })
+    if (recentAutoReport) {
+      console.log(`[cron/reports] Skipping ${restaurant.name}: already generated report ${recentAutoReport.id} recently`)
+      results.push({ restaurantId: restaurant.id, restaurantName: restaurant.name, status: 'skipped', error: 'already generated this hour' })
+      continue
+    }
 
     // Проверяем что подписка активна
     const billing = restaurant.organization?.billing
