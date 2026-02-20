@@ -7,6 +7,8 @@
 </template>
 
 <script setup lang="ts">
+const { init } = useTheme()
+
 useHead({
   htmlAttrs: {
     lang: 'ru'
@@ -14,5 +16,9 @@ useHead({
   bodyAttrs: {
     class: 'font-sans antialiased'
   }
+})
+
+onMounted(() => {
+  init()
 })
 </script>

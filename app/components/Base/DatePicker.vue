@@ -72,44 +72,75 @@ const onUpdate = (value: Date | null) => {
 </script>
 
 <style>
-/* Инпут — стилизация под дизайн-систему */
+/* Обёртка инпута — убираем стандартные стили VueDatePicker */
+.dp__input_wrap .dp__input {
+  font-family: inherit !important;
+}
+
+/* Инпут — точное совпадение с BaseSelect */
 .dp-custom-input {
   width: 100% !important;
+  height: auto !important;
   padding: 0.5rem 1rem !important;
-  border: 1px solid #d1d5db !important;
+  padding-left: 2.5rem !important;
+  border: 1px solid var(--border-input) !important;
   border-radius: 0.5rem !important;
-  font-size: 0.875rem !important;
-  color: #1a1a1a !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  color: var(--text) !important;
   outline: none !important;
   transition: border-color 0.15s, box-shadow 0.15s !important;
-  background: white !important;
+  background: var(--bg-card) !important;
+}
+
+.dp-custom-input:hover {
+  border-color: var(--border-input-hover) !important;
 }
 
 .dp-custom-input:focus {
-  border-color: #00dc7f !important;
-  box-shadow: 0 0 0 2px rgba(0, 220, 127, 0.2) !important;
+  border-color: var(--action) !important;
+  box-shadow: 0 0 0 2px var(--action-ring) !important;
 }
 
 .dp-custom-input::placeholder {
-  color: #9ca3af !important;
+  color: var(--muted) !important;
+}
+
+/* Иконка календаря */
+.dp__input_icon {
+  color: var(--muted) !important;
+  left: 0.75rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+/* Кнопка очистки */
+.dp__clear_icon {
+  color: var(--muted) !important;
+  right: 0.75rem !important;
+  width: 1rem !important;
+  height: 1rem !important;
 }
 
 /* Меню — accent цвет */
 .dp-custom-menu {
-  --dp-primary-color: #00dc7f;
-  --dp-primary-text-color: #fff;
-  --dp-secondary-color: #f0fdf4;
-  --dp-border-color: #e5e7eb;
-  --dp-menu-border-color: #e5e7eb;
-  --dp-border-color-hover: #00dc7f;
-  --dp-hover-color: #f0fdf4;
-  --dp-hover-text-color: #1a1a1a;
+  --dp-primary-color: var(--action);
+  --dp-primary-text-color: var(--action-text);
+  --dp-secondary-color: var(--action-light);
+  --dp-border-color: var(--border);
+  --dp-menu-border-color: var(--border);
+  --dp-border-color-hover: var(--action);
+  --dp-hover-color: var(--action-light);
+  --dp-hover-text-color: var(--text);
+  --dp-background-color: var(--bg-card);
+  --dp-text-color: var(--text);
+  --dp-secondary-color: var(--text-secondary);
   --dp-font-size: 0.875rem;
-  border-radius: 0.75rem !important;
+  border-radius: 0.5rem !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 }
 
 .dp-custom-cell.dp__today {
-  border-color: #00dc7f !important;
+  border-color: var(--action) !important;
 }
 </style>

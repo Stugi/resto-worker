@@ -15,11 +15,18 @@
 
   /* Borders */
   --border: #e5e7eb;
+  --border-input: #d1d5db;
+  --border-input-hover: #9ca3af;
 
   /* Action (основной акцент) */
   --action: #00dc7f;
   --action-hover: #00c26f;
   --action-text: #ffffff;
+  --action-light: #f0fdf4;
+  --action-ring: rgba(0, 220, 127, 0.2);
+
+  /* Muted / placeholder */
+  --muted: #9ca3af;
 
   /* Статусы */
   --success: #16a34a;
@@ -42,10 +49,16 @@
   --text-secondary: #9ca3af;
 
   --border: #2e2e2e;
+  --border-input: #3a3a3a;
+  --border-input-hover: #6b7280;
 
   --action: #00dc7f;
   --action-hover: #00f28c;
   --action-text: #0f0f0f;
+  --action-light: rgba(0, 220, 127, 0.1);
+  --action-ring: rgba(0, 220, 127, 0.25);
+
+  --muted: #6b7280;
 
   --success: #22c55e;
   --danger: #ef4444;
