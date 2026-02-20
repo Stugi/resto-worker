@@ -3,8 +3,8 @@ import { createId } from '@paralleldrive/cuid2'
 /**
  * GET /api/cron/reports — Автоматическая генерация отчётов по расписанию
  *
- * Вызывается внешним cron-сервисом каждый час.
- * Проверяет текущий день недели + час и генерирует отчёты для подходящих ресторанов.
+ * Вызывается Vercel Cron каждые 10 минут.
+ * Проверяет текущий день недели + время (с точностью до 10 мин) и генерирует отчёты.
  *
  * Защита: проверяет заголовок Authorization: Bearer <CRON_SECRET>
  */
@@ -29,9 +29,13 @@ export default defineEventHandler(async (event) => {
   const jsDow = mskNow.getUTCDay()
   const currentDow = jsDow === 0 ? 7 : jsDow
 
-  const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:00`
+  const currentTimeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
 
-  console.log(`[cron/reports] Running at MSK ${mskNow.toISOString()}, dow=${currentDow}, hour=${currentHour}:${currentMinute.toString().padStart(2, '0')}`)
+  // Округляем текущие минуты до ближайших 10 (крон запускается каждые 10 мин)
+  const roundedMinute = Math.floor(currentMinute / 10) * 10
+  const currentTimeRounded = `${currentHour.toString().padStart(2, '0')}:${roundedMinute.toString().padStart(2, '0')}`
+
+  console.log(`[cron/reports] Running at MSK ${currentTimeStr}, rounded=${currentTimeRounded}, dow=${currentDow}`)
 
   // Получаем все рестораны с настройками
   const restaurants = await prisma.restaurant.findMany({
@@ -69,9 +73,11 @@ export default defineEventHandler(async (event) => {
       continue
     }
 
-    // Проверяем час (расписание "17:00" → запускаем когда currentHour === 17)
-    const [schedHour] = schedule.time.split(':').map(Number)
-    if (schedHour !== currentHour) {
+    // Проверяем время: округляем расписание до 10 мин и сравниваем
+    const [schedH, schedM] = schedule.time.split(':').map(Number)
+    const schedRoundedMin = Math.floor((schedM || 0) / 10) * 10
+    const schedTimeRounded = `${schedH.toString().padStart(2, '0')}:${schedRoundedMin.toString().padStart(2, '0')}`
+    if (schedTimeRounded !== currentTimeRounded) {
       continue
     }
 

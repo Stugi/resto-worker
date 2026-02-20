@@ -173,9 +173,10 @@ const weekDays = [
   { value: 7, label: 'Вс' },
 ]
 
-const timeOptions = Array.from({ length: 24 }, (_, i) => {
-  const h = i.toString().padStart(2, '0')
-  return { value: `${h}:00`, label: `${h}:00` }
+const timeOptions = Array.from({ length: 24 * 6 }, (_, i) => {
+  const h = Math.floor(i / 6).toString().padStart(2, '0')
+  const m = (i % 6 * 10).toString().padStart(2, '0')
+  return { value: `${h}:${m}`, label: `${h}:${m}` }
 })
 
 const schedule = reactive({
