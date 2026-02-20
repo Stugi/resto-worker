@@ -84,6 +84,33 @@
           </p>
         </div>
 
+        <!-- Превью отчёта -->
+        <div>
+          <BaseButton
+            @click="generatePreview"
+            :loading="previewLoading"
+            loading-text="Генерация..."
+            variant="secondary"
+            size="sm"
+            type="button"
+          >
+            Показать пример отчёта
+          </BaseButton>
+
+          <div
+            v-if="previewContent"
+            class="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg prose prose-sm max-w-none overflow-y-auto max-h-64"
+            v-html="renderedPreview"
+          />
+
+          <div
+            v-if="previewError"
+            class="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm"
+          >
+            {{ previewError }}
+          </div>
+        </div>
+
         <!-- Error Message -->
         <div
           v-if="error"
@@ -143,6 +170,53 @@ const isSuperAdmin = computed(() => user.value?.role === UserRole.SUPER_ADMIN)
 const loading = ref(false)
 const error = ref('')
 const restaurants = ref<{ id: string; name: string }[]>([])
+const previewLoading = ref(false)
+const previewContent = ref('')
+const previewError = ref('')
+
+// Простой Markdown → HTML рендер
+const renderedPreview = computed(() => {
+  let html = previewContent.value
+  // Escape HTML
+  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>')
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  // List items
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>')
+  // Line breaks
+  html = html.replace(/\n/g, '<br>')
+  return html
+})
+
+const generatePreview = async () => {
+  if (!form.template.trim()) {
+    previewError.value = 'Введите шаблон для генерации примера'
+    return
+  }
+
+  previewLoading.value = true
+  previewError.value = ''
+  previewContent.value = ''
+
+  try {
+    const result = await $fetch('/api/prompts/preview', {
+      method: 'POST',
+      body: { template: form.template }
+    }) as any
+
+    previewContent.value = result.content
+  } catch (err: any) {
+    previewError.value = err.data?.message || 'Ошибка генерации примера'
+  } finally {
+    previewLoading.value = false
+  }
+}
 
 const form = reactive({
   name: props.prompt?.name || '',

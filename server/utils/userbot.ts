@@ -57,11 +57,50 @@ export async function getUserbotClient(): Promise<TelegramClient> {
   return client
 }
 
+/**
+ * Генерация названия группы: CosmicAI XX-0001 | Restaurant Name
+ * XX = первые 2 буквы названия организации (uppercase, транслит)
+ * 0001 = порядковый номер ресторана в организации
+ */
+export async function generateGroupTitle(
+  restaurantName: string,
+  organizationId: string,
+  organizationName: string
+): Promise<string> {
+  // Первые 2 буквы организации (транслит + uppercase)
+  const translit: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+    'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+    'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+    'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh', 'э': 'e',
+    'ю': 'yu', 'я': 'ya', 'ы': 'y', 'ъ': '', 'ь': ''
+  }
+
+  const orgLetters = organizationName
+    .toLowerCase()
+    .split('')
+    .map(ch => translit[ch] || ch)
+    .join('')
+    .replace(/[^a-z]/g, '')
+    .slice(0, 2)
+    .toUpperCase() || 'XX'
+
+  // Считаем количество ресторанов в организации для номера
+  const count = await prisma.restaurant.count({
+    where: { organizationId }
+  })
+  const seq = String(count).padStart(4, '0')
+
+  return `CosmicAI ${orgLetters}-${seq} | ${restaurantName}`
+}
+
 // Создание группы для ресторана
 export async function createRestaurantGroup(
   restaurantName: string,
   ownerTelegramId: string,
-  restaurantId: string
+  restaurantId: string,
+  organizationId?: string,
+  organizationName?: string
 ): Promise<GroupResult> {
   const startTime = Date.now()
   let chatId: string | undefined
@@ -76,7 +115,11 @@ export async function createRestaurantGroup(
     }
 
     // Название группы
-    chatTitle = `Отчёты: ${restaurantName}`
+    if (organizationId && organizationName) {
+      chatTitle = await generateGroupTitle(restaurantName, organizationId, organizationName)
+    } else {
+      chatTitle = `CosmicAI | ${restaurantName}`
+    }
 
     // 1. Создаём группу
     const result = await client.invoke(
@@ -194,24 +237,56 @@ export async function createRestaurantGroup(
       })
     }
 
-    // 3. Назначаем владельца и бота админами
+    // 3. Назначаем владельца админом (отдельно, чтобы ошибка не блокировала бота)
     try {
       console.log(`[userbot] Promoting owner ${ownerTelegramId} to admin`)
       await promoteToAdmin(chatId, ownerTelegramId)
-      console.log(`[userbot] Promoting bot @${botUsername} to admin`)
-      await promoteToAdmin(chatId, `@${botUsername}`)
-      console.log('[userbot] Admins promoted successfully')
-
+      console.log('[userbot] Owner promoted successfully')
       await logUserbotAction({
         action: 'PROMOTE_ADMIN',
         userId: ownerTelegramId,
         restaurantId,
         chatId,
         success: true,
-        metadata: { promotedUsers: [ownerTelegramId, botUsername] }
+        metadata: { promotedUser: ownerTelegramId, role: 'owner' }
       })
     } catch (error: any) {
-      console.error('[userbot] Failed to promote admins:', error.message || error)
+      console.error('[userbot] Failed to promote owner:', error.message || error)
+      await logUserbotAction({
+        action: 'PROMOTE_ADMIN',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: false,
+        error: error.message || String(error),
+        metadata: { promotedUser: ownerTelegramId, role: 'owner' }
+      })
+    }
+
+    // 4. Назначаем бота админом (критично для транскрипции!)
+    try {
+      console.log(`[userbot] Promoting bot @${botUsername} to admin`)
+      await promoteToAdmin(chatId, `@${botUsername}`)
+      console.log('[userbot] Bot promoted successfully')
+      await logUserbotAction({
+        action: 'PROMOTE_ADMIN',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: true,
+        metadata: { promotedUser: botUsername, role: 'bot' }
+      })
+    } catch (error: any) {
+      console.error('[userbot] Failed to promote bot:', error.message || error)
+      await logUserbotAction({
+        action: 'PROMOTE_ADMIN',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: false,
+        error: error.message || String(error),
+        metadata: { promotedUser: botUsername, role: 'bot' }
+      })
     }
 
     return {
@@ -256,7 +331,12 @@ async function promoteToAdmin(chatId: string, userIdOrUsername: string): Promise
   const client = await getUserbotClient()
 
   // Резолвим пользователя в InputUser
-  const userEntity = await client.getInputEntity(userIdOrUsername)
+  // Для числовых ID (например "123456789") getInputEntity() не работает —
+  // нужно передать BigInt, чтобы gramjs нашёл пользователя в кеше
+  const isNumericId = /^\d+$/.test(userIdOrUsername)
+  const userEntity = isNumericId
+    ? await client.getInputEntity(BigInt(userIdOrUsername))
+    : await client.getInputEntity(userIdOrUsername)
 
   await client.invoke(
     new Api.messages.EditChatAdmin({
