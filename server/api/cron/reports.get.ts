@@ -105,6 +105,8 @@ export default defineEventHandler(async (event) => {
     const periodStart = lastReport?.periodEnd || new Date(now.getTime() - 24 * 60 * 60 * 1000)
     const periodEnd = now
 
+    console.log(`[cron/reports] ${restaurant.name}: period ${periodStart.toISOString()} — ${periodEnd.toISOString()}`)
+
     // Получаем транскрипции за период
     const transcripts = await prisma.transcript.findMany({
       where: {
@@ -119,6 +121,21 @@ export default defineEventHandler(async (event) => {
     })
 
     if (transcripts.length === 0) {
+      // Уведомляем в группу что транскрипций нет
+      const chatId = settings.telegramChatId
+      if (chatId) {
+        try {
+          const rawChatId = chatId.toString()
+          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+          await bot.api.sendMessage(
+            botChatId,
+            `📊 <b>Автоотчёт</b>\n${restaurant.name}\n\nНовых транскрипций за период нет — отчёт не сформирован.\nОтправляйте голосовые сообщения в группу для сбора данных.`,
+            { parse_mode: 'HTML' }
+          )
+        } catch (notifyErr: any) {
+          console.error(`[cron/reports] Failed to notify no-transcripts: ${notifyErr.message}`)
+        }
+      }
       results.push({ restaurantId: restaurant.id, restaurantName: restaurant.name, status: 'skipped', error: 'no transcripts' })
       continue
     }
