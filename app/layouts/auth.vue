@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-bg-secondary flex items-center justify-center p-4" style="min-height: 100vh; min-height: 100dvh;">
     <div class="w-full max-w-md">
       <!-- Logo and Title -->
       <div class="flex flex-col items-center mb-8">
@@ -14,7 +14,7 @@
         </p>
       </div>
 
-      <div class="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+      <div class="bg-bg-card border border-border rounded-lg p-8 shadow-sm">
         <slot />
       </div>
 

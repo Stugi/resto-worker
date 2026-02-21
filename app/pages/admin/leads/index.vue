@@ -17,13 +17,13 @@
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"></div>
+      <BaseSpinner size="lg" />
     </div>
 
     <!-- Error -->
     <div
       v-if="error"
-      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4"
+      class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded mb-4"
     >
       <p class="text-sm">{{ error }}</p>
     </div>
@@ -31,11 +31,11 @@
     <!-- Desktop: Leads Table -->
     <div
       v-if="leads.length > 0"
-      class="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden"
+      class="hidden md:block bg-bg-card rounded-lg border border-border overflow-hidden"
     >
       <div class="overflow-x-auto">
-        <table class="w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="w-full divide-y divide-border">
+          <thead class="bg-bg-secondary">
             <tr>
               <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                 Телефон
@@ -57,8 +57,8 @@
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="lead in leads" :key="lead.id" class="hover:bg-gray-50">
+          <tbody class="bg-bg-card divide-y divide-border">
+            <tr v-for="lead in leads" :key="lead.id" class="hover:bg-bg-hover">
               <td class="px-4 py-3 text-sm font-mono text-text">
                 {{ formatPhone(lead.phone) }}
               </td>
@@ -77,8 +77,8 @@
                   :class="[
                     'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
                     lead.converted
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : 'bg-amber-50 text-amber-700'
+                      ? 'bg-status-emerald-bg text-status-emerald-text'
+                      : 'bg-status-amber-bg text-status-amber-text'
                   ]"
                 >
                   {{ lead.converted ? 'Конвертирован' : 'Новый' }}
@@ -98,7 +98,7 @@
       <div
         v-for="lead in leads"
         :key="lead.id"
-        class="bg-white rounded-lg border border-gray-200 p-4"
+        class="bg-bg-card rounded-lg border border-border p-4"
       >
         <div class="flex items-center justify-between mb-2">
           <span class="font-mono text-sm font-medium text-text">
@@ -108,8 +108,8 @@
             :class="[
               'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
               lead.converted
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-amber-50 text-amber-700'
+                ? 'bg-status-emerald-bg text-status-emerald-text'
+                : 'bg-status-amber-bg text-status-amber-text'
             ]"
           >
             {{ lead.converted ? 'Конвертирован' : 'Новый' }}

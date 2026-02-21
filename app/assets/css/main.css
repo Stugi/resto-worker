@@ -4,81 +4,158 @@
 
 /* --- CSS-переменные: светлая тема (по умолчанию) --- */
 :root {
-  /* Фон */
-  --bg: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-card: #ffffff;
+    /* Фон */
+    --bg: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-card: #ffffff;
+    --bg-hover: #f3f4f6;
 
-  /* Текст */
-  --text: #1a1a1a;
-  --text-secondary: #6b7280;
+    /* Текст */
+    --text: #1a1a1a;
+    --text-secondary: #6b7280;
 
-  /* Borders */
-  --border: #e5e7eb;
-  --border-input: #d1d5db;
-  --border-input-hover: #9ca3af;
+    /* Borders */
+    --border: #e5e7eb;
+    --border-input: #d1d5db;
+    --border-input-hover: #9ca3af;
 
-  /* Action (основной акцент) */
-  --action: #00dc7f;
-  --action-hover: #00c26f;
-  --action-text: #ffffff;
-  --action-light: #f0fdf4;
-  --action-ring: rgba(0, 220, 127, 0.2);
+    /* Action (основной акцент) */
+    --action: #0e1c16;
+    --action-hover: #1f352b;
+    --action-text: #ffffff;
+    --action-light: #f0fdf4;
+    --action-ring: rgba(0, 220, 127, 0.2);
 
-  /* Muted / placeholder */
-  --muted: #9ca3af;
+    --secondary: #39e49d;
 
-  /* Статусы */
-  --success: #16a34a;
-  --danger: #dc2626;
-  --warning: #f59e0b;
+    /* Muted / placeholder */
+    --muted: #9ca3af;
 
-  /* Sidebar */
-  --sidebar-bg: #111827;
-  --sidebar-text: #d1d5db;
-  --sidebar-active: #00dc7f;
+    /* Статусы */
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #f59e0b;
+
+    /* Статусные фоны (бейджи, алерты) */
+    --red-bg: #fef2f2;
+    --red-text: #b91c1c;
+    --red-border: #fecaca;
+    --red-icon: #dc2626;
+    --green-bg: #f0fdf4;
+    --green-text: #15803d;
+    --green-border: #bbf7d0;
+    --green-icon: #16a34a;
+    --blue-bg: #eff6ff;
+    --blue-text: #1d4ed8;
+    --blue-border: #bfdbfe;
+    --blue-icon: #2563eb;
+    --purple-bg: #faf5ff;
+    --purple-text: #7e22ce;
+    --purple-border: #e9d5ff;
+    --purple-icon: #9333ea;
+    --amber-bg: #fffbeb;
+    --amber-text: #b45309;
+    --amber-border: #fde68a;
+    --amber-icon: #d97706;
+    --emerald-bg: #ecfdf5;
+    --emerald-text: #047857;
+    --emerald-border: #a7f3d0;
+    --emerald-icon: #059669;
+    --emerald-btn: #059669;
+    --emerald-btn-hover: #047857;
+    --yellow-bg: #fefce8;
+    --yellow-icon: #ca8a04;
+
+    /* Sidebar */
+    --sidebar-bg: #111827;
+    --sidebar-text: #d1d5db;
+    --sidebar-active: #00dc7f;
 }
 
 /* --- Тёмная тема --- */
 [data-theme="dark"] {
-  --bg: #0f0f0f;
-  --bg-secondary: #1a1a1a;
-  --bg-card: #1e1e1e;
+    --bg: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-card: #1e1e1e;
+    --bg-hover: #252525;
 
-  --text: #f0f0f0;
-  --text-secondary: #9ca3af;
+    --text: #f0f0f0;
+    --text-secondary: #9ca3af;
 
-  --border: #2e2e2e;
-  --border-input: #3a3a3a;
-  --border-input-hover: #6b7280;
+    --border: #2e2e2e;
+    --border-input: #3a3a3a;
+    --border-input-hover: #6b7280;
 
-  --action: #00dc7f;
-  --action-hover: #00f28c;
-  --action-text: #0f0f0f;
-  --action-light: rgba(0, 220, 127, 0.1);
-  --action-ring: rgba(0, 220, 127, 0.25);
+    --action: #ededed;
+    --action-hover: #edededb4;
+    --action-text: #000000;
+    --action-light: rgba(0, 220, 127, 0.1);
+    --action-ring: rgba(0, 220, 127, 0.25);
 
-  --muted: #6b7280;
+    --muted: #6b7280;
 
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warning: #fbbf24;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #fbbf24;
 
-  --sidebar-bg: #0a0a0a;
-  --sidebar-text: #9ca3af;
-  --sidebar-active: #00dc7f;
+    --red-bg: rgba(239, 68, 68, 0.15);
+    --red-text: #fca5a5;
+    --red-border: rgba(239, 68, 68, 0.25);
+    --red-icon: #f87171;
+    --green-bg: rgba(34, 197, 94, 0.15);
+    --green-text: #86efac;
+    --green-border: rgba(34, 197, 94, 0.25);
+    --green-icon: #4ade80;
+    --blue-bg: rgba(59, 130, 246, 0.15);
+    --blue-text: #93c5fd;
+    --blue-border: rgba(59, 130, 246, 0.25);
+    --blue-icon: #60a5fa;
+    --purple-bg: rgba(168, 85, 247, 0.15);
+    --purple-text: #d8b4fe;
+    --purple-border: rgba(168, 85, 247, 0.25);
+    --purple-icon: #c084fc;
+    --amber-bg: rgba(245, 158, 11, 0.15);
+    --amber-text: #fcd34d;
+    --amber-border: rgba(245, 158, 11, 0.25);
+    --amber-icon: #fbbf24;
+    --emerald-bg: rgba(16, 185, 129, 0.15);
+    --emerald-text: #6ee7b7;
+    --emerald-border: rgba(16, 185, 129, 0.25);
+    --emerald-icon: #34d399;
+    --emerald-btn: #10b981;
+    --emerald-btn-hover: #34d399;
+    --yellow-bg: rgba(234, 179, 8, 0.15);
+    --yellow-icon: #facc15;
+
+    --sidebar-bg: #0a0a0a;
+    --sidebar-text: #9ca3af;
+    --sidebar-active: #00dc7f;
 }
 
 /* --- Сброс и базовые стили --- */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  background: var(--bg);
-  color: var(--text);
-  transition: background 0.2s ease, color 0.2s ease;
+    background: var(--bg);
+    color: var(--text);
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
+/* Фон и цвет текста для всех инпутов */
+input,
+textarea,
+select {
+    background-color: var(--bg-card);
+    color: var(--text);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muted);
+}

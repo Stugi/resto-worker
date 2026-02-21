@@ -10,8 +10,8 @@
         :class="[
           'px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
           page <= 1
-            ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 text-text hover:bg-gray-50 cursor-pointer'
+            ? 'border-border text-muted cursor-not-allowed'
+            : 'border-border-input text-text hover:bg-bg-hover cursor-pointer'
         ]"
       >
         Назад
@@ -22,8 +22,8 @@
         :class="[
           'px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors',
           page >= totalPages
-            ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 text-text hover:bg-gray-50 cursor-pointer'
+            ? 'border-border text-muted cursor-not-allowed'
+            : 'border-border-input text-text hover:bg-bg-hover cursor-pointer'
         ]"
       >
         Вперёд

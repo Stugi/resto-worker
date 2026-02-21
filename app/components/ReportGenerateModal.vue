@@ -5,9 +5,9 @@
     @click.self="$emit('close')"
   >
     <!-- Modal Content -->
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+    <div class="bg-bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-200 shrink-0">
+      <div class="px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-xl font-semibold text-text">
           Сгенерировать отчёт
         </h2>
@@ -54,14 +54,14 @@
         <!-- Error -->
         <div
           v-if="error"
-          class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
+          class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded"
         >
           <p class="text-sm">{{ error }}</p>
         </div>
       </form>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end shrink-0">
+      <div class="px-6 py-4 border-t border-border flex gap-3 justify-end shrink-0">
         <BaseButton
           @click="$emit('close')"
           variant="secondary"

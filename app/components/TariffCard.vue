@@ -1,21 +1,21 @@
 <template>
   <div
     :class="[
-      'bg-white rounded-lg border p-6 hover:shadow-md transition-shadow relative flex flex-col',
-      tariff.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50/30'
+      'bg-bg-card rounded-lg border p-6 hover:shadow-md transition-shadow relative flex flex-col',
+      tariff.isActive ? 'border-border' : 'border-status-red-border bg-status-red-bg'
     ]"
   >
     <!-- Бейджи -->
     <div class="flex items-center gap-2 mb-3 flex-wrap">
       <span
         v-if="!tariff.isActive"
-        class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200"
+        class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-status-red-bg text-status-red-text border border-status-red-border"
       >
         Неактивен
       </span>
       <span
         v-if="tariff.price === 0"
-        class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200"
+        class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-status-green-bg text-status-green-text border border-status-green-border"
       >
         Бесплатный
       </span>
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Подписки -->
-    <div v-if="tariff._count" class="text-xs text-text-secondary mb-4 border-t border-gray-100 pt-3">
+    <div v-if="tariff._count" class="text-xs text-text-secondary mb-4 border-t border-border pt-3">
       Подписок: {{ tariff._count.billings }} | Платежей: {{ tariff._count.payments }}
     </div>
 
@@ -67,13 +67,13 @@
     <div class="flex gap-2">
       <button
         @click="$emit('edit', tariff)"
-        class="flex-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        class="flex-1 px-3 py-2 text-sm font-medium text-text bg-bg-secondary hover:bg-bg-hover rounded-lg transition-colors"
       >
         Редактировать
       </button>
       <button
         @click="$emit('delete', tariff)"
-        class="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+        class="px-3 py-2 text-sm font-medium text-status-red-icon bg-status-red-bg hover:bg-status-red-bg rounded-lg transition-colors"
       >
         Удалить
       </button>

@@ -12,7 +12,7 @@
       :minlength="minlength"
       :placeholder="placeholder"
       :disabled="disabled"
-      class="w-full px-4 py-2 border border-gray-300 rounded-lg transition-colors outline-none focus:border-action focus:ring-2 focus:ring-action/20 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="w-full px-4 py-2 border border-border-input rounded-lg transition-colors outline-none focus:border-action focus:shadow-[0_0_0_2px_var(--action-ring)] disabled:opacity-50 disabled:cursor-not-allowed"
     />
     <p v-if="hint" class="text-xs text-text-secondary mt-1">
       {{ hint }}

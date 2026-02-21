@@ -7,9 +7,9 @@
     </div>
 
     <!-- Placeholder Content -->
-    <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
-      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-bg-card rounded-lg border border-border p-12 text-center">
+      <div class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
@@ -28,10 +28,10 @@
 
     <!-- Future Features Preview -->
     <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="bg-bg-card rounded-lg border border-border p-6">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-status-blue-bg rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-status-blue-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -40,10 +40,10 @@
         <p class="text-sm text-text-secondary">Учёт рабочих часов и смен сотрудников</p>
       </div>
 
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="bg-bg-card rounded-lg border border-border p-6">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-status-green-bg rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-status-green-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
@@ -52,10 +52,10 @@
         <p class="text-sm text-text-secondary">Статистика по выполненным заданиям и поручениям</p>
       </div>
 
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="bg-bg-card rounded-lg border border-border p-6">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="w-10 h-10 bg-status-purple-bg rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-status-purple-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
@@ -64,7 +64,7 @@
         <p class="text-sm text-text-secondary">Показатели производительности и KPI</p>
       </div>
 
-      <div class="bg-white rounded-lg border border-gray-200 p-6">
+      <div class="bg-bg-card rounded-lg border border-border p-6">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
             <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

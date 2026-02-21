@@ -5,9 +5,9 @@
     @click.self="$emit('close')"
   >
     <!-- Modal Content -->
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div class="bg-bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-200 shrink-0">
+      <div class="px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-xl font-semibold text-text">
           {{ prompt ? 'Редактировать промпт' : 'Создать промпт' }}
         </h2>
@@ -39,7 +39,7 @@
             id="isDefault"
             v-model="form.isDefault"
             type="checkbox"
-            class="w-4 h-4 text-action border-gray-300 rounded focus:ring-action"
+            class="w-4 h-4 text-action border-border-input rounded focus:ring-action"
           />
           <label for="isDefault" class="text-sm font-medium text-text">
             Промпт по умолчанию (для всех ресторанов)
@@ -52,7 +52,7 @@
             id="isActive"
             v-model="form.isActive"
             type="checkbox"
-            class="w-4 h-4 text-action border-gray-300 rounded focus:ring-action"
+            class="w-4 h-4 text-action border-border-input rounded focus:ring-action"
           />
           <label for="isActive" class="text-sm font-medium text-text">
             Активен
@@ -67,7 +67,7 @@
           <textarea
             v-model="form.template"
             rows="10"
-            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none resize-y font-mono text-sm"
+            class="w-full px-4 py-3 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none resize-y font-mono text-sm"
             placeholder="Ты — аналитик ресторанного бизнеса. На основе транскрипций голосовых отчетов менеджеров составь еженедельный отчет..."
             required
           />
@@ -91,13 +91,13 @@
 
           <div
             v-if="previewContent"
-            class="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg prose prose-sm max-w-none overflow-y-auto max-h-64"
+            class="mt-3 p-4 bg-bg-secondary border border-border rounded-lg prose prose-sm max-w-none overflow-y-auto max-h-64"
             v-html="renderedPreview"
           />
 
           <div
             v-if="previewError"
-            class="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm"
+            class="mt-3 p-3 bg-status-red-bg border border-status-red-border text-status-red-text rounded text-sm"
           >
             {{ previewError }}
           </div>
@@ -106,14 +106,14 @@
         <!-- Error Message -->
         <div
           v-if="error"
-          class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
+          class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded"
         >
           <p class="text-sm">{{ error }}</p>
         </div>
       </form>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end shrink-0">
+      <div class="px-6 py-4 border-t border-border flex gap-3 justify-end shrink-0">
         <BaseButton
           @click="$emit('close')"
           variant="secondary"

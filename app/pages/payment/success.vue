@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-8 text-center">
+  <div class="min-h-screen flex items-center justify-center bg-bg-secondary p-4">
+    <div class="bg-bg-card rounded-lg shadow-lg max-w-md w-full p-8 text-center">
       <!-- Loading -->
       <div v-if="loading" class="py-8">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-action mx-auto mb-4"></div>
+        <BaseSpinner size="xl" class="mx-auto mb-4" />
         <p class="text-text-secondary">Проверяем оплату...</p>
       </div>
 
       <!-- Success -->
       <div v-else-if="paymentResult?.status === 'COMPLETED'">
-        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 bg-status-green-bg rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-status-green-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -25,7 +25,7 @@
         </p>
         <NuxtLink
           to="/"
-          class="inline-block px-6 py-3 bg-action text-white font-medium rounded-lg hover:bg-action/90 transition-colors"
+          class="inline-block px-6 py-3 bg-action text-action-text font-medium rounded-lg hover:bg-action-hover transition-colors"
         >
           Перейти в панель управления
         </NuxtLink>
@@ -33,8 +33,8 @@
 
       <!-- Still Pending -->
       <div v-else-if="paymentResult?.status === 'PENDING'">
-        <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 bg-status-yellow-bg rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-status-yellow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
@@ -45,13 +45,13 @@
         <div class="flex gap-3 justify-center">
           <button
             @click="checkPayment"
-            class="px-6 py-3 bg-action text-white font-medium rounded-lg hover:bg-action/90 transition-colors"
+            class="px-6 py-3 bg-action text-action-text font-medium rounded-lg hover:bg-action-hover transition-colors"
           >
             Проверить ещё раз
           </button>
           <NuxtLink
             to="/"
-            class="px-6 py-3 bg-gray-100 text-text font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            class="px-6 py-3 bg-bg-secondary text-text font-medium rounded-lg hover:bg-bg-hover transition-colors"
           >
             В панель управления
           </NuxtLink>
@@ -60,8 +60,8 @@
 
       <!-- Error -->
       <div v-else>
-        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-20 h-20 bg-status-red-bg rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-status-red-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
           </svg>
         </div>
@@ -71,7 +71,7 @@
         </p>
         <NuxtLink
           to="/"
-          class="inline-block px-6 py-3 bg-action text-white font-medium rounded-lg hover:bg-action/90 transition-colors"
+          class="inline-block px-6 py-3 bg-action text-action-text font-medium rounded-lg hover:bg-action-hover transition-colors"
         >
           В панель управления
         </NuxtLink>

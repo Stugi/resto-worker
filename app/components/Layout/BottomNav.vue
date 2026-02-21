@@ -13,9 +13,9 @@
     <Transition name="slide-up">
       <div
         v-if="moreOpen && overflow.length > 0"
-        class="fixed bottom-14 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl border-t border-gray-200 pb-[env(safe-area-inset-bottom)]"
+        class="fixed bottom-14 left-0 right-0 z-50 bg-bg-card rounded-t-2xl shadow-xl border-t border-border pb-[env(safe-area-inset-bottom)]"
       >
-        <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3 mb-2" />
+        <div class="w-10 h-1 bg-border-input rounded-full mx-auto mt-3 mb-2" />
         <nav class="px-4 pb-3 space-y-1">
           <NuxtLink
             v-for="item in overflow"
@@ -26,7 +26,7 @@
               'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
               isActive(item.path)
                 ? 'bg-action/10 text-action'
-                : 'text-text-secondary hover:bg-gray-50'
+                : 'text-text-secondary hover:bg-bg-hover'
             ]"
           >
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -40,7 +40,7 @@
 
     <!-- Bottom tab bar -->
     <ClientOnly>
-      <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+      <nav class="fixed bottom-0 left-0 right-0 z-40 bg-bg-card border-t border-border">
         <div class="flex items-center justify-around h-14 px-1" :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }">
           <!-- Main tabs -->
           <NuxtLink
@@ -48,7 +48,7 @@
             :key="item.path"
             :to="item.path"
             class="flex flex-col items-center justify-center flex-1 h-full pt-1 transition-colors"
-            :class="isActive(item.path) ? 'text-action' : 'text-gray-400'"
+            :class="isActive(item.path) ? 'text-action' : 'text-muted'"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="isActive(item.path) ? '2' : '1.5'">
               <path stroke-linecap="round" stroke-linejoin="round" :d="heroicons[item.icon || 'home']" />
@@ -61,7 +61,7 @@
             v-if="overflow.length > 0"
             @click="moreOpen = !moreOpen"
             class="flex flex-col items-center justify-center flex-1 h-full pt-1 transition-colors"
-            :class="moreOpen || isOverflowActive ? 'text-action' : 'text-gray-400'"
+            :class="moreOpen || isOverflowActive ? 'text-action' : 'text-muted'"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="moreOpen ? '2' : '1.5'">
               <path stroke-linecap="round" stroke-linejoin="round" :d="heroicons['more']" />

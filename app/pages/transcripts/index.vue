@@ -41,9 +41,7 @@
 
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-12">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"
-            ></div>
+            <BaseSpinner size="lg" />
         </div>
 
         <!-- Transcripts List -->
@@ -51,7 +49,7 @@
             <div
                 v-for="t in transcripts"
                 :key="t.id"
-                class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-sm transition-shadow"
+                class="bg-bg-card rounded-lg border border-border p-5 hover:shadow-sm transition-shadow"
             >
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex-1 min-w-0">
@@ -64,7 +62,7 @@
                             </span>
                             <span
                                 v-if="t.restaurant"
-                                class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
+                                class="px-2 py-0.5 bg-status-blue-bg text-status-blue-text rounded-full text-xs font-medium"
                             >
                                 {{ t.restaurant.name }}
                             </span>
@@ -116,13 +114,13 @@
         <!-- Empty State -->
         <div
             v-else
-            class="bg-white rounded-lg border border-gray-200 p-12 text-center"
+            class="bg-bg-card rounded-lg border border-border p-12 text-center"
         >
             <div
-                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4"
             >
                 <svg
-                    class="w-8 h-8 text-gray-400"
+                    class="w-8 h-8 text-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -146,7 +144,7 @@
             <BaseButton
                 v-if="hasActiveFilters"
                 @click="resetFilters"
-                variant="outline"
+                variant="primary"
                 class="mt-4"
             >
                 Сбросить фильтры

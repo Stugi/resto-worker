@@ -14,17 +14,17 @@
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"></div>
+      <BaseSpinner size="lg" />
     </div>
 
     <!-- Desktop: Restaurants Table -->
     <div
       v-if="restaurants.length > 0"
-      class="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden"
+      class="hidden md:block bg-bg-card rounded-lg border border-border overflow-hidden"
     >
       <div class="overflow-x-auto">
-        <table class="w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="w-full divide-y divide-border">
+          <thead class="bg-bg-secondary">
             <tr>
               <th class="px-4 py-3 w-24"></th>
               <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
@@ -41,17 +41,17 @@
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="bg-bg-card divide-y divide-border">
             <tr
               v-for="restaurant in restaurants"
               :key="restaurant.id"
-              class="hover:bg-gray-50 transition-colors"
+              class="hover:bg-bg-hover transition-colors"
             >
               <td class="px-4 py-4 whitespace-nowrap">
                 <div class="flex gap-2">
                   <button
                     @click="openEditModal(restaurant)"
-                    class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    class="p-2 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors"
                     title="Редактировать"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@
                   </button>
                   <button
                     @click="openDeleteModal(restaurant)"
-                    class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    class="p-2 text-text-secondary hover:text-status-red-icon hover:bg-status-red-bg rounded-lg transition-colors"
                     title="Удалить"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@
       <div
         v-for="restaurant in restaurants"
         :key="restaurant.id"
-        class="bg-white rounded-lg border border-gray-200 p-4"
+        class="bg-bg-card rounded-lg border border-border p-4"
       >
         <!-- Header with name and actions -->
         <div class="flex items-start justify-between mb-3">
@@ -111,7 +111,7 @@
           <div class="flex gap-2 ml-3">
             <button
               @click="openEditModal(restaurant)"
-              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              class="p-2 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -119,7 +119,7 @@
             </button>
             <button
               @click="openDeleteModal(restaurant)"
-              class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              class="p-2 text-text-secondary hover:text-status-red-icon hover:bg-status-red-bg rounded-lg transition-colors"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -149,10 +149,10 @@
     <!-- Empty State -->
     <div
       v-else-if="!loading"
-      class="bg-white rounded-lg border border-gray-200 p-12 text-center"
+      class="bg-bg-card rounded-lg border border-border p-12 text-center"
     >
-      <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
       </div>

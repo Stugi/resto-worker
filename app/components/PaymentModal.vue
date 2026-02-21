@@ -5,9 +5,9 @@
     @click.self="$emit('close')"
   >
     <!-- Modal Content -->
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div class="bg-bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-200 shrink-0">
+      <div class="px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-xl font-semibold text-text">
           Оплата подписки
         </h2>
@@ -20,7 +20,7 @@
       <div class="p-6 overflow-y-auto flex-1">
         <!-- Loading tariffs -->
         <div v-if="loadingTariffs" class="flex items-center justify-center py-8">
-          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-action"></div>
+          <BaseSpinner />
         </div>
 
         <!-- Tariff Cards -->
@@ -33,7 +33,7 @@
               'border-2 rounded-lg p-5 cursor-pointer transition-all',
               selectedTariff?.id === tariff.id
                 ? 'border-action bg-action/5 shadow-md'
-                : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                : 'border-border hover:border-border-input hover:shadow-sm'
             ]"
           >
             <h3 class="text-lg font-semibold text-text mb-1">
@@ -77,7 +77,7 @@
         <!-- Success message -->
         <div
           v-if="telegramSent"
-          class="mt-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded flex items-center gap-2"
+          class="mt-4 bg-status-emerald-bg border border-status-emerald-border text-status-emerald-text px-4 py-3 rounded flex items-center gap-2"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -88,14 +88,14 @@
         <!-- Error -->
         <div
           v-if="error"
-          class="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
+          class="mt-4 bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded"
         >
           <p class="text-sm">{{ error }}</p>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end shrink-0">
+      <div class="px-6 py-4 border-t border-border flex gap-3 justify-end shrink-0">
         <BaseButton
           @click="$emit('close')"
           variant="secondary"

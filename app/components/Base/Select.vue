@@ -12,16 +12,16 @@
         :class="[
           'w-full flex items-center justify-between px-4 py-2 border rounded-lg transition-colors outline-none text-left',
           isOpen
-            ? 'border-action ring-2 ring-action/20'
-            : 'border-gray-300 hover:border-gray-400',
-          disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'cursor-pointer bg-white'
+            ? 'border-action shadow-[0_0_0_2px_var(--action-ring)]'
+            : 'border-border-input hover:border-border-input-hover',
+          disabled ? 'opacity-50 cursor-not-allowed bg-bg-secondary' : 'cursor-pointer bg-bg-card'
         ]"
       >
-        <span :class="selectedLabel ? 'text-text' : 'text-gray-400'">
+        <span :class="selectedLabel ? 'text-text' : 'text-muted'">
           {{ selectedLabel || placeholder }}
         </span>
         <svg
-          :class="['w-4 h-4 text-gray-400 transition-transform shrink-0 ml-2', isOpen && 'rotate-180']"
+          :class="['w-4 h-4 text-muted transition-transform shrink-0 ml-2', isOpen && 'rotate-180']"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -41,15 +41,15 @@
       >
         <div
           v-if="isOpen"
-          class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+          class="absolute z-50 mt-1 w-full bg-bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-auto"
         >
           <!-- Search -->
-          <div v-if="searchable && normalizedOptions.length > 5" class="p-2 border-b border-gray-100">
+          <div v-if="searchable && normalizedOptions.length > 5" class="p-2 border-b border-border">
             <input
               ref="searchInput"
               v-model="search"
               type="text"
-              class="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md outline-none focus:border-action focus:ring-1 focus:ring-action/20"
+              class="w-full px-3 py-1.5 text-sm border border-border rounded-md outline-none focus:border-action focus:shadow-[0_0_0_1px_var(--action-ring)]"
               placeholder="Поиск..."
               @click.stop
             />
@@ -66,7 +66,7 @@
                 'w-full text-left px-4 py-2 text-sm transition-colors',
                 option.value === modelValue
                   ? 'bg-action/10 text-action font-medium'
-                  : 'text-text hover:bg-gray-50'
+                  : 'text-text hover:bg-bg-hover'
               ]"
             >
               {{ option.label }}

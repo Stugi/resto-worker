@@ -10,14 +10,14 @@
     <!-- Error Message -->
     <div
       v-if="error"
-      class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6"
+      class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded mb-6"
       role="alert"
     >
       <p class="text-sm">{{ error }}</p>
     </div>
 
     <!-- Auth Method Tabs -->
-    <div class="flex border-b border-gray-200 mb-6">
+    <div class="flex border-b border-border mb-6">
       <button
         @click="authMethod = 'login'"
         :class="[
@@ -85,7 +85,7 @@
     <div v-else>
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-action"></div>
+        <BaseSpinner size="sm" class="inline-block" />
         <p class="text-text-secondary mt-4">Авторизация...</p>
       </div>
 

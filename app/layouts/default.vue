@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+  <div class="h-screen flex flex-col bg-bg-secondary overflow-hidden">
     <!-- Header -->
     <LayoutHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 

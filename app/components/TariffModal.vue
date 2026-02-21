@@ -4,9 +4,9 @@
     class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
   >
     <!-- Modal Content -->
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+    <div class="bg-bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-200 shrink-0">
+      <div class="px-6 py-4 border-b border-border shrink-0">
         <h2 class="text-xl font-semibold text-text">
           {{ tariff ? 'Редактировать тариф' : 'Создать тариф' }}
         </h2>
@@ -31,7 +31,7 @@
           <textarea
             v-model="form.description"
             rows="2"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none resize-y text-sm"
+            class="w-full px-4 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none resize-y text-sm"
             placeholder="Описание тарифного плана"
           />
         </div>
@@ -47,7 +47,7 @@
               type="number"
               min="0"
               step="1"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none"
               placeholder="950"
             />
           </div>
@@ -59,14 +59,14 @@
               v-model.number="form.period"
               type="number"
               min="1"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
+              class="w-full px-4 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none"
               placeholder="30"
             />
           </div>
         </div>
 
         <!-- Лимиты -->
-        <div class="border-t border-gray-100 pt-4">
+        <div class="border-t border-border pt-4">
           <h4 class="text-sm font-medium text-text mb-3">Лимиты</h4>
           <div class="grid grid-cols-3 gap-3">
             <div>
@@ -77,7 +77,7 @@
                 v-model.number="form.maxRestaurants"
                 type="number"
                 min="1"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none text-sm"
+                class="w-full px-3 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none text-sm"
               />
             </div>
             <div>
@@ -88,7 +88,7 @@
                 v-model.number="form.maxUsers"
                 type="number"
                 min="1"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none text-sm"
+                class="w-full px-3 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none text-sm"
               />
             </div>
             <div>
@@ -99,7 +99,7 @@
                 v-model.number="form.maxTranscriptions"
                 type="number"
                 min="0"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none text-sm"
+                class="w-full px-3 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none text-sm"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@
             v-model.number="form.sortOrder"
             type="number"
             min="0"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-action/20 focus:border-action outline-none"
+            class="w-full px-4 py-2 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none"
             placeholder="0"
           />
         </div>
@@ -125,7 +125,7 @@
             id="isActive"
             v-model="form.isActive"
             type="checkbox"
-            class="w-4 h-4 text-action border-gray-300 rounded focus:ring-action"
+            class="w-4 h-4 text-action border-border-input rounded focus:ring-action"
           />
           <label for="isActive" class="text-sm font-medium text-text">
             Активен
@@ -135,14 +135,14 @@
         <!-- Error Message -->
         <div
           v-if="error"
-          class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"
+          class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded"
         >
           <p class="text-sm">{{ error }}</p>
         </div>
       </form>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end shrink-0">
+      <div class="px-6 py-4 border-t border-border flex gap-3 justify-end shrink-0">
         <BaseButton
           @click="$emit('close')"
           variant="secondary"

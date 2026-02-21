@@ -20,9 +20,7 @@
 
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-12">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"
-            ></div>
+            <BaseSpinner size="lg" />
         </div>
 
         <!-- Organizations Grid -->
@@ -33,7 +31,7 @@
             <div
                 v-for="org in organizations"
                 :key="org.id"
-                class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                class="bg-bg-card rounded-lg border border-border p-6 hover:shadow-md transition-shadow"
             >
                 <!-- Название -->
                 <h3 class="text-lg font-semibold text-text mb-3">
@@ -57,7 +55,7 @@
                 </div>
 
                 <!-- Подписка и тариф -->
-                <div class="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-100 space-y-2.5">
+                <div class="mb-4 p-3 rounded-lg bg-bg-secondary border border-border space-y-2.5">
                     <!-- Статус + тариф -->
                     <div class="flex items-center justify-between">
                         <span
@@ -84,20 +82,20 @@
 
                     <!-- Дата окончания -->
                     <div v-if="org.billing?.activeUntil || org.billing?.trialEndsAt" class="flex items-center gap-1.5 text-sm">
-                        <svg class="w-4 h-4 flex-shrink-0" :class="isSubscriptionExpired(org.billing) ? 'text-red-500' : 'text-text-secondary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 flex-shrink-0" :class="isSubscriptionExpired(org.billing) ? 'text-status-red-icon' : 'text-text-secondary'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <template v-if="org.billing?.activeUntil">
-                            <span :class="isSubscriptionExpired(org.billing) ? 'text-red-600 font-medium' : 'text-text-secondary'">
+                            <span :class="isSubscriptionExpired(org.billing) ? 'text-status-red-icon font-medium' : 'text-text-secondary'">
                                 Подписка до: {{ formatDate(org.billing.activeUntil) }}
                             </span>
-                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-red-600 font-medium">· Истекла</span>
+                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-status-red-icon font-medium">· Истекла</span>
                         </template>
                         <template v-else-if="org.billing?.trialEndsAt">
-                            <span :class="isSubscriptionExpired(org.billing) ? 'text-red-600 font-medium' : 'text-text-secondary'">
+                            <span :class="isSubscriptionExpired(org.billing) ? 'text-status-red-icon font-medium' : 'text-text-secondary'">
                                 Триал до: {{ formatDate(org.billing.trialEndsAt) }}
                             </span>
-                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-red-600 font-medium">· Истёк</span>
+                            <span v-if="isSubscriptionExpired(org.billing)" class="text-xs text-status-red-icon font-medium">· Истёк</span>
                         </template>
                     </div>
 
@@ -109,7 +107,7 @@
                                 {{ org.billing.transcriptionsUsed ?? 0 }} / {{ org.billing.tariff.maxTranscriptions }}
                             </span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                        <div class="w-full bg-bg-hover rounded-full h-1.5">
                             <div
                                 class="h-1.5 rounded-full transition-all"
                                 :class="getTranscriptionBarClass(org.billing)"
@@ -123,7 +121,7 @@
                 <div v-if="org.billing?.status !== 'ACTIVE'" class="mb-4">
                     <button
                         @click="openPaymentModal(org)"
-                        class="w-full px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+                        class="w-full px-4 py-2 text-sm font-medium text-white bg-status-emerald-btn hover:bg-status-emerald-btn-hover rounded-lg transition-colors"
                     >
                         Оплатить подписку
                     </button>
@@ -133,7 +131,7 @@
                 <div class="flex gap-2 justify-end">
                     <button
                         @click="openEditModal(org)"
-                        class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                        class="p-2 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors"
                         title="Редактировать"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +140,7 @@
                     </button>
                     <button
                         @click="openDeleteModal(org)"
-                        class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        class="p-2 text-text-secondary hover:text-status-red-icon hover:bg-status-red-bg rounded-lg transition-colors"
                         title="Удалить"
                     >
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,13 +154,13 @@
         <!-- Empty State -->
         <div
             v-else
-            class="bg-white rounded-lg border border-gray-200 p-12 text-center"
+            class="bg-bg-card rounded-lg border border-border p-12 text-center"
         >
             <div
-                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4"
             >
                 <svg
-                    class="w-8 h-8 text-gray-400"
+                    class="w-8 h-8 text-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -338,13 +336,13 @@ const handlePaid = () => {
 const getBillingStatusClass = (status?: string) => {
     switch (status) {
         case "TRIAL":
-            return "bg-amber-50 text-amber-700 border border-amber-200";
+            return "bg-status-amber-bg text-status-amber-text border border-status-amber-border";
         case "ACTIVE":
-            return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+            return "bg-status-emerald-bg text-status-emerald-text border border-status-emerald-border";
         case "DISABLED":
-            return "bg-red-50 text-red-700 border border-red-200";
+            return "bg-status-red-bg text-status-red-text border border-status-red-border";
         default:
-            return "bg-gray-100 text-gray-700 border border-gray-200";
+            return "bg-bg-secondary text-text border border-border";
     }
 };
 
@@ -393,9 +391,9 @@ const getTranscriptionPercent = (billing?: Organization["billing"]) => {
 // Цвет прогресс-бара транскрипций
 const getTranscriptionBarClass = (billing?: Organization["billing"]) => {
     const percent = getTranscriptionPercent(billing);
-    if (percent >= 90) return "bg-red-500";
-    if (percent >= 70) return "bg-amber-500";
-    return "bg-emerald-500";
+    if (percent >= 90) return "bg-status-red-bg0";
+    if (percent >= 70) return "bg-status-amber-bg0";
+    return "bg-status-emerald-bg0";
 };
 
 // Загрузка при монтировании

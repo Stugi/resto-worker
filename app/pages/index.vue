@@ -8,17 +8,17 @@
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-action"></div>
+      <BaseSpinner />
     </div>
 
     <template v-else-if="stats">
       <!-- Stat Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
         <!-- Транскрипции сегодня -->
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="bg-bg-card rounded-xl border border-border p-4">
           <div class="flex items-center gap-2 mb-2">
-            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <div class="w-8 h-8 bg-status-blue-bg rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-status-blue-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
             </div>
@@ -31,10 +31,10 @@
         </div>
 
         <!-- Отчёты за неделю -->
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="bg-bg-card rounded-xl border border-border p-4">
           <div class="flex items-center gap-2 mb-2">
-            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <div class="w-8 h-8 bg-status-purple-bg rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-status-purple-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -45,10 +45,10 @@
         </div>
 
         <!-- Рестораны -->
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="bg-bg-card rounded-xl border border-border p-4">
           <div class="flex items-center gap-2 mb-2">
-            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <div class="w-8 h-8 bg-status-green-bg rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-status-green-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- Последний отчёт -->
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="bg-bg-card rounded-xl border border-border p-4">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
               <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
@@ -86,7 +86,7 @@
       </div>
 
       <!-- Week Activity -->
-      <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+      <div class="bg-bg-card rounded-xl border border-border p-5 mb-6">
         <h3 class="text-sm font-semibold text-text mb-4">Транскрипции за неделю</h3>
         <div class="flex items-end gap-2 h-28">
           <div
@@ -97,7 +97,7 @@
             <span class="text-xs text-text-secondary font-medium">{{ day.count }}</span>
             <div
               class="w-full rounded-t-md transition-all"
-              :class="day.count > 0 ? 'bg-action/80' : 'bg-gray-100'"
+              :class="day.count > 0 ? 'bg-action/80' : 'bg-bg-secondary'"
               :style="{ height: barHeight(day.count) }"
             />
             <span class="text-[10px] text-text-secondary">{{ day.day }}</span>
@@ -106,11 +106,11 @@
       </div>
 
       <!-- Restaurants List -->
-      <div class="bg-white rounded-xl border border-gray-200">
-        <div class="px-5 py-4 border-b border-gray-100">
+      <div class="bg-bg-card rounded-xl border border-border">
+        <div class="px-5 py-4 border-b border-border">
           <h3 class="text-sm font-semibold text-text">Рестораны</h3>
         </div>
-        <div class="divide-y divide-gray-100">
+        <div class="divide-y divide-border">
           <div
             v-for="r in stats.restaurants"
             :key="r.id"
@@ -125,14 +125,14 @@
               </NuxtLink>
               <div class="flex items-center gap-2 mt-0.5">
                 <span
-                  :class="r.hasGroup ? 'text-green-600' : 'text-gray-400'"
+                  :class="r.hasGroup ? 'text-status-green-icon' : 'text-muted'"
                   class="text-xs"
                 >
                   {{ r.hasGroup ? '● Группа' : '○ Нет группы' }}
                 </span>
                 <span
                   v-if="r.hasSchedule"
-                  class="text-xs text-blue-600"
+                  class="text-xs text-status-blue-icon"
                 >
                   ● Авто-отчёт
                 </span>
@@ -151,8 +151,8 @@
     </template>
 
     <!-- Error -->
-    <div v-else class="bg-red-50 border border-red-200 rounded-lg p-5 text-center">
-      <p class="text-sm text-red-700">Не удалось загрузить данные</p>
+    <div v-else class="bg-status-red-bg border border-status-red-border rounded-lg p-5 text-center">
+      <p class="text-sm text-status-red-text">Не удалось загрузить данные</p>
       <button @click="fetchStats" class="text-sm text-action hover:underline mt-2">Попробовать снова</button>
     </div>
   </div>

@@ -20,19 +20,17 @@
 
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center py-12">
-            <div
-                class="animate-spin rounded-full h-12 w-12 border-b-2 border-action"
-            ></div>
+            <BaseSpinner size="lg" />
         </div>
 
         <!-- Desktop: Users Table -->
         <div
             v-if="users.length > 0"
-            class="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden"
+            class="hidden md:block bg-bg-card rounded-lg border border-border overflow-hidden"
         >
             <div class="overflow-x-auto">
-                <table class="w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="w-full divide-y divide-border">
+                    <thead class="bg-bg-secondary">
                         <tr>
                             <th class="px-4 py-3 w-24"></th>
                             <th
@@ -63,17 +61,17 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-bg-card divide-y divide-border">
                         <tr
                             v-for="user in users"
                             :key="user.id"
-                            class="hover:bg-gray-50 transition-colors"
+                            class="hover:bg-bg-hover transition-colors"
                         >
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="flex gap-2">
                                     <button
                                         @click="openEditModal(user)"
-                                        class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                                        class="p-2 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors"
                                         title="Редактировать"
                                     >
                                         <svg
@@ -93,7 +91,7 @@
                                     <button
                                         v-if="user.id !== currentUser?.id"
                                         @click="openDeleteModal(user)"
-                                        class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        class="p-2 text-text-secondary hover:text-status-red-icon hover:bg-status-red-bg rounded-lg transition-colors"
                                         title="Удалить"
                                     >
                                         <svg
@@ -157,7 +155,7 @@
             <div
                 v-for="user in users"
                 :key="user.id"
-                class="bg-white rounded-lg border border-gray-200 p-4"
+                class="bg-bg-card rounded-lg border border-border p-4"
             >
                 <!-- Header with name and actions -->
                 <div class="flex items-start justify-between mb-3">
@@ -172,7 +170,7 @@
                     <div class="flex gap-2 ml-3">
                         <button
                             @click="openEditModal(user)"
-                            class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                            class="p-2 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors"
                         >
                             <svg
                                 class="w-5 h-5"
@@ -191,7 +189,7 @@
                         <button
                             v-if="user.id !== currentUser?.id"
                             @click="openDeleteModal(user)"
-                            class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            class="p-2 text-text-secondary hover:text-status-red-icon hover:bg-status-red-bg rounded-lg transition-colors"
                         >
                             <svg
                                 class="w-5 h-5"
@@ -243,13 +241,13 @@
         <!-- Empty State -->
         <div
             v-else
-            class="bg-white rounded-lg border border-gray-200 p-12 text-center"
+            class="bg-bg-card rounded-lg border border-border p-12 text-center"
         >
             <div
-                class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4"
             >
                 <svg
-                    class="w-8 h-8 text-gray-400"
+                    class="w-8 h-8 text-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -339,13 +337,13 @@ const fetchUsers = async () => {
 const getRoleClass = (role: string) => {
     switch (role) {
         case UserRole.SUPER_ADMIN:
-            return "bg-purple-50 text-purple-700 border-purple-200";
+            return "bg-status-purple-bg text-status-purple-text border-status-purple-border";
         case UserRole.OWNER:
-            return "bg-blue-50 text-blue-700 border-blue-200";
+            return "bg-status-blue-bg text-status-blue-text border-status-blue-border";
         case UserRole.MANAGER:
-            return "bg-gray-100 text-gray-800 border-gray-300";
+            return "bg-bg-secondary text-text border-border-input";
         default:
-            return "bg-gray-100 text-gray-700 border-gray-200";
+            return "bg-bg-secondary text-text border-border";
     }
 };
 

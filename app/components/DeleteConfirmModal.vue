@@ -5,9 +5,9 @@
         @click.self="$emit('cancel')"
     >
         <!-- Modal Content -->
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="bg-bg-card rounded-lg shadow-xl max-w-md w-full">
             <!-- Header -->
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-6 py-4 border-b border-border">
                 <h2 class="text-xl font-semibold text-text">
                     Подтверждение удаления
                 </h2>
@@ -18,14 +18,14 @@
                 <p class="text-text-secondary mb-4">
                     {{ message }}
                 </p>
-                <p class="text-sm text-red-600 font-medium">
+                <p class="text-sm text-status-red-icon font-medium">
                     Это действие нельзя отменить.
                 </p>
             </div>
 
             <!-- Footer -->
             <div
-                class="px-6 py-4 border-t border-gray-200 flex gap-3 justify-end"
+                class="px-6 py-4 border-t border-border flex gap-3 justify-end"
             >
                 <BaseButton
                     @click="$emit('cancel')"
@@ -38,7 +38,7 @@
                     @click="$emit('confirm')"
                     :loading="loading"
                     loading-text="Удаление..."
-                    class="bg-red-600 hover:bg-red-700 text-white"
+                    class="!bg-[var(--red-icon)] hover:opacity-90 text-white"
                 >
                     Удалить
                 </BaseButton>

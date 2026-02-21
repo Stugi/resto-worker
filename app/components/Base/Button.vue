@@ -67,26 +67,26 @@ const buttonClasses = computed(() => {
       )
     } else {
       classes.push(
-        'bg-gray-800 text-white',
-        'hover:bg-gray-700',
+        'bg-action text-action-text',
+        'hover:bg-action-hover',
         'shadow-md hover:shadow-lg'
       )
     }
   } else if (props.variant === 'secondary') {
     classes.push(
-      'bg-gray-100 text-gray-900',
-      'hover:bg-gray-200',
-      'border border-gray-300'
+      'bg-bg-secondary text-text',
+      'hover:bg-bg-hover',
+      'border border-border-input'
     )
   } else if (props.variant === 'outline') {
     classes.push(
-      'bg-transparent text-gray-800 border-2 border-gray-800',
-      'hover:bg-gray-800 hover:text-white'
+      'bg-transparent text-text border-2 border-text',
+      'hover:bg-text hover:text-bg-card'
     )
   } else if (props.variant === 'ghost') {
     classes.push(
-      'bg-transparent text-gray-800',
-      'hover:bg-gray-100'
+      'bg-transparent text-text',
+      'hover:bg-bg-hover'
     )
   }
 
