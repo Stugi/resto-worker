@@ -19,6 +19,7 @@
       :input-class-name="inputClassName"
       menu-class-name="dp-custom-menu"
       calendar-cell-class-name="dp-custom-cell"
+      hide-input-icon
     />
   </div>
 </template>
@@ -72,12 +73,20 @@ const onUpdate = (value: Date | null) => {
 </script>
 
 <style>
-/* Обёртка инпута — убираем стандартные стили VueDatePicker */
+/* Сброс обёрток VueDatePicker — убираем лишние padding, radius, border */
+.dp__main {
+  --dp-input-padding: 0 !important;
+}
+
+.dp__input_wrap {
+  padding: 0 !important;
+}
+
 .dp__input_wrap .dp__input {
   font-family: inherit !important;
 }
 
-/* Инпут — точное совпадение с BaseSelect */
+/* Инпут — точное совпадение с BaseInput: px-4 py-2 rounded-lg */
 .dp-custom-input {
   width: 100% !important;
   height: auto !important;
@@ -91,6 +100,7 @@ const onUpdate = (value: Date | null) => {
   outline: none !important;
   transition: border-color 0.15s, box-shadow 0.15s !important;
   background: var(--bg-card) !important;
+  box-sizing: border-box !important;
 }
 
 .dp-custom-input:hover {
@@ -98,7 +108,7 @@ const onUpdate = (value: Date | null) => {
 }
 
 .dp-custom-input:focus {
-  border-color: var(--action) !important;
+  border-color: var(--secondary) !important;
   box-shadow: 0 0 0 2px var(--action-ring) !important;
 }
 
