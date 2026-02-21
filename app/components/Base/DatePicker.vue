@@ -122,64 +122,9 @@ const onUpdate = (value: Date | null) => {
   height: 1rem !important;
 }
 
-/* Меню — accent цвет */
+/* Меню — стили перенесены в main.css для корректной работы с teleport */
 .dp-custom-menu {
-  --dp-primary-color: var(--action);
-  --dp-primary-text-color: var(--action-text);
-  --dp-secondary-color: var(--text-secondary);
-  --dp-border-color: var(--border);
-  --dp-menu-border-color: var(--border);
-  --dp-border-color-hover: var(--action);
-  --dp-hover-color: var(--action-light);
-  --dp-hover-text-color: var(--text);
-  --dp-background-color: var(--bg-card);
-  --dp-surface-color: var(--bg-card);
-  --dp-text-color: var(--text);
-  --dp-disabled-color: var(--muted);
-  --dp-disabled-color-text: var(--muted);
-  --dp-icon-color: var(--muted);
-  --dp-danger-color: var(--red-icon);
-  --dp-highlight-color: var(--action-light);
-  --dp-range-between-dates-background-color: var(--action-light);
-  --dp-range-between-dates-text-color: var(--text);
-  --dp-range-between-border-color: var(--action-light);
-  --dp-font-size: 0.875rem;
   border-radius: 0.5rem !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Фон для всех вложенных элементов меню */
-.dp-custom-menu .dp__menu_inner,
-.dp-custom-menu .dp__calendar_header,
-.dp-custom-menu .dp__calendar,
-.dp-custom-menu .dp__action_row,
-.dp-custom-menu .dp__month_year_wrap,
-.dp-custom-menu .dp__overlay {
-  background-color: var(--bg-card) !important;
-  color: var(--text) !important;
-}
-
-.dp-custom-menu .dp__overlay_cell {
-  color: var(--text) !important;
-}
-
-.dp-custom-menu .dp__overlay_cell:hover {
-  background-color: var(--action-light) !important;
-}
-
-.dp-custom-menu .dp__calendar_header_item {
-  color: var(--text-secondary) !important;
-}
-
-.dp-custom-menu .dp__inner_nav:hover {
-  background-color: var(--bg-hover) !important;
-}
-
-.dp-custom-menu .dp__inner_nav svg {
-  color: var(--text-secondary) !important;
-}
-
-.dp-custom-cell.dp__today {
-  border-color: var(--action) !important;
 }
 </style>

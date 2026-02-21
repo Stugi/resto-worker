@@ -24,7 +24,7 @@
     --action-hover: #1f352b;
     --action-text: #ffffff;
     --action-light: #f0fdf4;
-    --action-ring: rgba(0, 220, 127, 0.2);
+    --action-ring: rgba(160, 216, 193, 0.99);
 
     --secondary: #39e49d;
 
@@ -158,4 +158,46 @@ select {
 input::placeholder,
 textarea::placeholder {
     color: var(--muted);
+}
+
+/* Перебиваем autofill-стили браузера (Chrome ставит светло-голубой фон) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset !important;
+    box-shadow: 0 0 0 1000px var(--bg-card) inset !important;
+    -webkit-text-fill-color: var(--text) !important;
+    caret-color: var(--text) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================
+   VueDatePicker — глобальные переменные
+   (меню рендерится через teleport в <body>)
+   ============================================ */
+.dp__theme_light,
+.dp__theme_dark {
+    --dp-background-color: var(--bg-card) !important;
+    --dp-text-color: var(--text) !important;
+    --dp-hover-color: var(--bg-hover) !important;
+    --dp-hover-text-color: var(--text) !important;
+    --dp-primary-color: var(--action) !important;
+    --dp-primary-text-color: var(--action-text) !important;
+    --dp-secondary-color: var(--text-secondary) !important;
+    --dp-border-color: var(--border) !important;
+    --dp-menu-border-color: var(--border) !important;
+    --dp-border-color-hover: var(--action) !important;
+    --dp-disabled-color: var(--bg-hover) !important;
+    --dp-disabled-color-text: var(--muted) !important;
+    --dp-scroll-bar-background: var(--bg-secondary) !important;
+    --dp-scroll-bar-color: var(--muted) !important;
+    --dp-success-color: var(--success) !important;
+    --dp-success-color-disabled: var(--muted) !important;
+    --dp-icon-color: var(--muted) !important;
+    --dp-danger-color: var(--red-icon) !important;
+    --dp-highlight-color: var(--action-light) !important;
+    --dp-surface-color: var(--bg-card) !important;
+    --dp-font-size: 0.875rem !important;
 }
