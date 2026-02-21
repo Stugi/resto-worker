@@ -90,7 +90,7 @@
                         <button
                             v-if="t.text.length > 300"
                             @click="toggleExpand(t.id)"
-                            class="text-action text-sm font-medium mt-2 hover:underline"
+                            class="text-accent text-sm font-medium mt-2 hover:underline"
                         >
                             {{
                                 expanded[t.id]

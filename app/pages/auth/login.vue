@@ -23,7 +23,7 @@
         :class="[
           'flex-1 py-3 px-4 text-sm font-medium transition-colors',
           authMethod === 'login'
-            ? 'border-b-2 border-action text-action'
+            ? 'border-b-2 border-accent text-accent'
             : 'text-text-secondary hover:text-text'
         ]"
       >
@@ -34,7 +34,7 @@
         :class="[
           'flex-1 py-3 px-4 text-sm font-medium transition-colors',
           authMethod === 'telegram'
-            ? 'border-b-2 border-action text-action'
+            ? 'border-b-2 border-accent text-accent'
             : 'text-text-secondary hover:text-text'
         ]"
       >
@@ -75,7 +75,7 @@
 
       <p class="text-center text-sm text-text-secondary">
         Нет аккаунта?
-        <NuxtLink to="/auth/register" class="text-action hover:underline">
+        <NuxtLink to="/auth/register" class="text-accent hover:underline">
           Зарегистрироваться
         </NuxtLink>
       </p>

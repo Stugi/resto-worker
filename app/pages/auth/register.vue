@@ -78,7 +78,7 @@
 
       <p class="text-center text-sm text-text-secondary">
         Уже есть аккаунт?
-        <NuxtLink to="/auth/login" class="text-action hover:underline">
+        <NuxtLink to="/auth/login" class="text-accent hover:underline">
           Войти
         </NuxtLink>
       </p>

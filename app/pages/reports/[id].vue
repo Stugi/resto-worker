@@ -9,7 +9,7 @@
     <div v-else-if="report">
       <!-- Header -->
       <div class="mb-6">
-        <NuxtLink to="/reports" class="text-sm text-action hover:underline mb-3 inline-block">
+        <NuxtLink to="/reports" class="text-sm text-accent hover:underline mb-3 inline-block">
           &larr; Назад к отчётам
         </NuxtLink>
 
@@ -103,7 +103,7 @@
     <!-- Not Found -->
     <div v-else class="text-center py-12">
       <p class="text-text-secondary">Отчёт не найден</p>
-      <NuxtLink to="/reports" class="text-action hover:underline text-sm mt-2 inline-block">
+      <NuxtLink to="/reports" class="text-accent hover:underline text-sm mt-2 inline-block">
         Вернуться к списку
       </NuxtLink>
     </div>

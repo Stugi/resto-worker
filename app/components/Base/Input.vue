@@ -21,7 +21,7 @@
             :minlength="minlength"
             :placeholder="placeholder"
             :disabled="disabled"
-            class="w-full px-4 py-2 border border-border-input rounded-lg transition-colors outline-none focus:border-secondary focus:shadow-[0_0_0_2px_var(--action-ring)] disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full px-4 py-2 border border-border-input rounded-lg transition-colors outline-none focus:border-accent focus:shadow-[0_0_0_2px_var(--accent-ring)] disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <p v-if="hint" class="text-xs text-text-secondary mt-1">
             {{ hint }}

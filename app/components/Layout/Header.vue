@@ -24,14 +24,14 @@
 
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-10 h-10 bg-gradient-to-br from-secondary to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-action/20"
+                        class="w-10 h-10 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20"
                     >
                         <span class="text-2xl">🍽️</span>
                     </div>
                     <h1
                         class="text-xl md:text-2xl font-semibold tracking-tight text-text"
                     >
-                        RESTO <span class="text-action">WORKER</span>
+                        RESTO <span class="text-accent">WORKER</span>
                     </h1>
                 </div>
             </div>

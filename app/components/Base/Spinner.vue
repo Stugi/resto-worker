@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'animate-spin rounded-full border-b-2 border-secondary',
+      'animate-spin rounded-full border-b-2 border-accent',
       sizeClass
     ]"
   ></div>

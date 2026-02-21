@@ -60,8 +60,8 @@
                   :class="[
                     'px-3 py-1.5 text-sm rounded-lg border transition-colors',
                     schedule.days.includes(day.value)
-                      ? 'bg-action text-action-text border-action'
-                      : 'bg-bg-card text-text-secondary border-border-input hover:border-action/50'
+                      ? 'bg-action text-action-text border-accent'
+                      : 'bg-bg-card text-text-secondary border-border-input hover:border-accent/50'
                   ]"
                 >
                   {{ day.label }}
@@ -94,7 +94,7 @@
             id="settingsComment"
             v-model="form.settingsComment"
             rows="4"
-            class="w-full px-4 py-2 border border-border-input rounded-lg focus:border-action focus:shadow-[0_0_0_2px_var(--action-ring)] transition-all font-mono text-xs outline-none"
+            class="w-full px-4 py-2 border border-border-input rounded-lg focus:border-accent focus:shadow-[0_0_0_2px_var(--accent-ring)] transition-all font-mono text-xs outline-none"
             placeholder="JSON настроек..."
           ></textarea>
         </div>

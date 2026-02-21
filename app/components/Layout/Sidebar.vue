@@ -48,7 +48,7 @@
                         :class="idx < sections.length - 1 ? 'mb-6' : ''"
                     >
                         <h3
-                            class="text-[10px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3"
+                            class="text-[9px] font-semibold text-text-secondary uppercase tracking-wider mb-3 px-3"
                         >
                             {{ section.label }}
                         </h3>
@@ -78,7 +78,7 @@
                 <ClientOnly>
                     <div class="flex items-center gap-3 px-3 py-2">
                         <div
-                            class="w-10 h-10 bg-gradient-to-r from-secondary to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                            class="w-10 h-10 bg-gradient-to-r from-accent to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
                         >
                             {{ userInitials }}
                         </div>

@@ -38,7 +38,7 @@
                         :class="[
                             'border-2 rounded-lg p-5 cursor-pointer transition-all',
                             selectedTariff?.id === tariff.id
-                                ? 'border-action bg-action/5 shadow-md'
+                                ? 'border-accent bg-accent/5 shadow-md'
                                 : 'border-border hover:border-border-input hover:shadow-sm',
                         ]"
                     >

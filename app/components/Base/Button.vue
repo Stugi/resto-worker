@@ -61,8 +61,8 @@ const buttonClasses = computed(() => {
   if (props.variant === 'primary') {
     if (props.gradient) {
       classes.push(
-        'bg-gradient-to-r from-action to-emerald-400 text-white',
-        'hover:from-action/90 hover:to-emerald-400/90',
+        'bg-gradient-to-r from-accent to-emerald-400 text-white',
+        'hover:from-accent/90 hover:to-emerald-400/90',
         'shadow-lg hover:shadow-xl'
       )
     } else {

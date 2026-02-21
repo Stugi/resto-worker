@@ -73,7 +73,7 @@
           <template v-if="stats.lastReport">
             <NuxtLink
               :to="`/reports/${stats.lastReport.id}`"
-              class="text-sm font-medium text-action hover:underline line-clamp-1"
+              class="text-sm font-medium text-accent hover:underline line-clamp-1"
             >
               {{ stats.lastReport.restaurant?.name || 'Отчёт' }}
             </NuxtLink>
@@ -97,7 +97,7 @@
             <span class="text-xs text-text-secondary font-medium">{{ day.count }}</span>
             <div
               class="w-full rounded-t-md transition-all"
-              :class="day.count > 0 ? 'bg-action/80' : 'bg-bg-secondary'"
+              :class="day.count > 0 ? 'bg-accent/80' : 'bg-bg-secondary'"
               :style="{ height: barHeight(day.count) }"
             />
             <span class="text-[10px] text-text-secondary">{{ day.day }}</span>
@@ -119,7 +119,7 @@
             <div class="min-w-0">
               <NuxtLink
                 :to="`/restaurants`"
-                class="text-sm font-medium text-text hover:text-action transition-colors truncate block"
+                class="text-sm font-medium text-text hover:text-accent transition-colors truncate block"
               >
                 {{ r.name }}
               </NuxtLink>
@@ -153,7 +153,7 @@
     <!-- Error -->
     <div v-else class="bg-status-red-bg border border-status-red-border rounded-lg p-5 text-center">
       <p class="text-sm text-status-red-text">Не удалось загрузить данные</p>
-      <button @click="fetchStats" class="text-sm text-action hover:underline mt-2">Попробовать снова</button>
+      <button @click="fetchStats" class="text-sm text-accent hover:underline mt-2">Попробовать снова</button>
     </div>
   </div>
 </template>

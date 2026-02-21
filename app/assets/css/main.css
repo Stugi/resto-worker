@@ -19,14 +19,16 @@
     --border-input: #d1d5db;
     --border-input-hover: #9ca3af;
 
-    /* Action (основной акцент) */
-    --action: #0e1c16;
-    --action-hover: #1f352b;
+    /* Action (кнопки — чёрный/графит) */
+    --action: #1a1a1a;
+    --action-hover: #333333;
     --action-text: #ffffff;
-    --action-light: #f0fdf4;
-    --action-ring: rgba(160, 216, 193, 0.99);
 
-    --secondary: #39e49d;
+    /* Accent (неоново-зелёный — минимальные акценты) */
+    --accent: #00dc7f;
+    --accent-hover: #00c472;
+    --accent-light: rgba(0, 220, 127, 0.08);
+    --accent-ring: rgba(0, 220, 127, 0.3);
 
     /* Muted / placeholder */
     --muted: #9ca3af;
@@ -86,11 +88,16 @@
     --border-input: #3a3a3a;
     --border-input-hover: #6b7280;
 
+    /* Action (кнопки — светлый на тёмном фоне) */
     --action: #ededed;
-    --action-hover: #edededb4;
-    --action-text: #000000;
-    --action-light: rgba(0, 220, 127, 0.1);
-    --action-ring: rgba(0, 220, 127, 0.25);
+    --action-hover: #d4d4d4;
+    --action-text: #0f0f0f;
+
+    /* Accent (тот же неоново-зелёный) */
+    --accent: #00dc7f;
+    --accent-hover: #00c472;
+    --accent-light: rgba(0, 220, 127, 0.1);
+    --accent-ring: rgba(0, 220, 127, 0.25);
 
     --muted: #6b7280;
 
@@ -183,12 +190,12 @@ textarea:-webkit-autofill:focus {
     --dp-text-color: var(--text) !important;
     --dp-hover-color: var(--bg-hover) !important;
     --dp-hover-text-color: var(--text) !important;
-    --dp-primary-color: var(--action) !important;
-    --dp-primary-text-color: var(--action-text) !important;
+    --dp-primary-color: var(--accent) !important;
+    --dp-primary-text-color: #ffffff !important;
     --dp-secondary-color: var(--text-secondary) !important;
     --dp-border-color: var(--border) !important;
     --dp-menu-border-color: var(--border) !important;
-    --dp-border-color-hover: var(--action) !important;
+    --dp-border-color-hover: var(--accent) !important;
     --dp-disabled-color: var(--bg-hover) !important;
     --dp-disabled-color-text: var(--muted) !important;
     --dp-scroll-bar-background: var(--bg-secondary) !important;
@@ -197,7 +204,7 @@ textarea:-webkit-autofill:focus {
     --dp-success-color-disabled: var(--muted) !important;
     --dp-icon-color: var(--muted) !important;
     --dp-danger-color: var(--red-icon) !important;
-    --dp-highlight-color: var(--action-light) !important;
+    --dp-highlight-color: var(--accent-light) !important;
     --dp-surface-color: var(--bg-card) !important;
     --dp-font-size: 0.875rem !important;
 }

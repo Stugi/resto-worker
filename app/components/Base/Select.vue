@@ -16,7 +16,7 @@
                 :class="[
                     'w-full flex items-center justify-between px-4 py-2 border rounded-lg transition-colors outline-none text-left',
                     isOpen
-                        ? 'border-second shadow-[0_0_0_2px_var(--action-ring)]'
+                        ? 'border-accent shadow-[0_0_0_2px_var(--accent-ring)]'
                         : 'border-border-input hover:border-border-input-hover',
                     disabled
                         ? 'opacity-50 cursor-not-allowed bg-bg-secondary'
@@ -66,7 +66,7 @@
                             ref="searchInput"
                             v-model="search"
                             type="text"
-                            class="w-full px-3 py-1.5 text-sm border border-border rounded-md outline-none focus:border-action focus:shadow-[0_0_0_1px_var(--action-ring)]"
+                            class="w-full px-3 py-1.5 text-sm border border-border rounded-md outline-none focus:border-accent focus:shadow-[0_0_0_1px_var(--accent-ring)]"
                             placeholder="Поиск..."
                             @click.stop
                         />
@@ -82,7 +82,7 @@
                             :class="[
                                 'w-full text-left px-4 py-2 text-sm transition-colors',
                                 option.value === modelValue
-                                    ? 'bg-action/10 text-action font-medium'
+                                    ? 'bg-accent/10 text-accent font-medium'
                                     : 'text-text hover:bg-bg-hover',
                             ]"
                         >

@@ -18,14 +18,18 @@ export default {
           DEFAULT: 'var(--text)',
           secondary: 'var(--text-secondary)',
         },
-        // Action (кнопки, ссылки)
+        // Action (кнопки — чёрный/белый)
         action: {
           DEFAULT: 'var(--action)',
           hover: 'var(--action-hover)',
           text: 'var(--action-text)',
         },
-        secondary: {
-          DEFAULT: 'var(--secondary)',
+        // Accent (неоново-зелёный — минимальные акценты)
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          light: 'var(--accent-light)',
+          ring: 'var(--accent-ring)',
         },
         // Фоны
         bg: {

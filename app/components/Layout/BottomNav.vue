@@ -25,7 +25,7 @@
             :class="[
               'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors',
               isActive(item.path)
-                ? 'bg-action/10 text-action'
+                ? 'bg-accent/10 text-accent'
                 : 'text-text-secondary hover:bg-bg-hover'
             ]"
           >
@@ -48,7 +48,7 @@
             :key="item.path"
             :to="item.path"
             class="flex flex-col items-center justify-center flex-1 h-full pt-1 transition-colors"
-            :class="isActive(item.path) ? 'text-action' : 'text-muted'"
+            :class="isActive(item.path) ? 'text-accent' : 'text-muted'"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="isActive(item.path) ? '2' : '1.5'">
               <path stroke-linecap="round" stroke-linejoin="round" :d="heroicons[item.icon || 'home']" />
@@ -61,7 +61,7 @@
             v-if="overflow.length > 0"
             @click="moreOpen = !moreOpen"
             class="flex flex-col items-center justify-center flex-1 h-full pt-1 transition-colors"
-            :class="moreOpen || isOverflowActive ? 'text-action' : 'text-muted'"
+            :class="moreOpen || isOverflowActive ? 'text-accent' : 'text-muted'"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="moreOpen ? '2' : '1.5'">
               <path stroke-linecap="round" stroke-linejoin="round" :d="heroicons['more']" />

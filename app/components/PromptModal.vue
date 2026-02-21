@@ -39,7 +39,7 @@
             id="isDefault"
             v-model="form.isDefault"
             type="checkbox"
-            class="w-4 h-4 text-action border-border-input rounded focus:ring-action"
+            class="w-4 h-4 text-accent border-border-input rounded focus:ring-accent"
           />
           <label for="isDefault" class="text-sm font-medium text-text">
             Промпт по умолчанию (для всех ресторанов)
@@ -52,7 +52,7 @@
             id="isActive"
             v-model="form.isActive"
             type="checkbox"
-            class="w-4 h-4 text-action border-border-input rounded focus:ring-action"
+            class="w-4 h-4 text-accent border-border-input rounded focus:ring-accent"
           />
           <label for="isActive" class="text-sm font-medium text-text">
             Активен
@@ -67,7 +67,7 @@
           <textarea
             v-model="form.template"
             rows="10"
-            class="w-full px-4 py-3 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--action-ring)] focus:border-action outline-none resize-y font-mono text-sm"
+            class="w-full px-4 py-3 border border-border-input rounded-lg focus:shadow-[0_0_0_2px_var(--accent-ring)] focus:border-accent outline-none resize-y font-mono text-sm"
             placeholder="Ты — аналитик ресторанного бизнеса. На основе транскрипций голосовых отчетов менеджеров составь еженедельный отчет..."
             required
           />
