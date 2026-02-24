@@ -1,0 +1,9 @@
+node_modules
+.output
+.nuxt
+.git
+.env
+.env.local
+*.md
+.vscode
+.idea
