@@ -93,6 +93,11 @@ export default {
           bg: 'var(--yellow-bg)',
           icon: 'var(--yellow-icon)',
         },
+        'status-orange': {
+          bg: 'var(--orange-bg)',
+          text: 'var(--orange-text)',
+          icon: 'var(--orange-icon)',
+        },
       },
     },
   },

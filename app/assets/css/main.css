@@ -67,6 +67,9 @@
     --emerald-btn-hover: #047857;
     --yellow-bg: #fefce8;
     --yellow-icon: #ca8a04;
+    --orange-bg: #fff7ed;
+    --orange-text: #ea580c;
+    --orange-icon: #f97316;
 
     /* Sidebar */
     --sidebar-bg: #111827;
@@ -133,6 +136,9 @@
     --emerald-btn-hover: #34d399;
     --yellow-bg: rgba(234, 179, 8, 0.15);
     --yellow-icon: #facc15;
+    --orange-bg: rgba(249, 115, 22, 0.15);
+    --orange-text: #fdba74;
+    --orange-icon: #fb923c;
 
     --sidebar-bg: #0a0a0a;
     --sidebar-text: #9ca3af;
