@@ -1,4 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
+import {
+  MSG_AUTO_REPORT_HEADER, MSG_AUTO_REPORT_NO_DATA, MSG_AUTO_REPORT_OWNER
+} from '../../constants/bot-messages'
 
 /**
  * GET /api/cron/reports — Автоматическая генерация отчётов по расписанию
@@ -154,7 +157,7 @@ export default defineEventHandler(async (event) => {
           const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
           await bot.api.sendMessage(
             botChatId,
-            `📊 <b>Автоотчёт</b>\n${restaurant.name}\n\nНовых транскрипций за период нет — отчёт не сформирован.\nОтправляйте голосовые сообщения в группу для сбора данных.`,
+            MSG_AUTO_REPORT_NO_DATA(restaurant.name),
             { parse_mode: 'HTML' }
           )
         } catch (notifyErr: any) {
@@ -238,7 +241,7 @@ export default defineEventHandler(async (event) => {
           // Для Bot API суперграуппы нужен формат -100<chatId>
           const rawChatId = chatId.toString()
           const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
-          const header = `📊 <b>Автоматический отчёт</b>\n${restaurant.name}\n${periodStart.toLocaleDateString('ru-RU')} — ${periodEnd.toLocaleDateString('ru-RU')}\n\n`
+          const header = MSG_AUTO_REPORT_HEADER(restaurant.name, periodStart.toLocaleDateString('ru-RU'), periodEnd.toLocaleDateString('ru-RU'))
 
           const maxLen = 4000 - header.length
           if (result.content.length <= maxLen) {
@@ -271,12 +274,13 @@ export default defineEventHandler(async (event) => {
 
       if (owner?.telegramId) {
         try {
-          const ownerMsg =
-            `📊 <b>Новый автоотчёт</b>\n\n` +
-            `Ресторан: ${restaurant.name}\n` +
-            `Период: ${periodStart.toLocaleDateString('ru-RU')} — ${periodEnd.toLocaleDateString('ru-RU')}\n` +
-            `Транскрипций: ${transcripts.length}\n\n` +
-            (result.summary || result.content.slice(0, 500))
+          const ownerMsg = MSG_AUTO_REPORT_OWNER(
+            restaurant.name,
+            periodStart.toLocaleDateString('ru-RU'),
+            periodEnd.toLocaleDateString('ru-RU'),
+            transcripts.length,
+            result.summary || result.content.slice(0, 500)
+          )
 
           await bot.api.sendMessage(owner.telegramId, ownerMsg, { parse_mode: 'HTML' })
         } catch (ownerErr: any) {

@@ -11,6 +11,7 @@
  * - organizationId: string
  */
 import { createId } from '@paralleldrive/cuid2'
+import { MSG_PAYMENT_LINK_PLAIN } from '../../constants/bot-messages'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
@@ -112,14 +113,7 @@ export default defineEventHandler(async (event) => {
   })
 
   // Отправляем ссылку в Telegram
-  const message = [
-    '💳 Оплата подписки\n',
-    `Организация: ${organization.name}`,
-    `Тариф: ${tariff.name}`,
-    `Сумма: ${tariff.price.toLocaleString('ru-RU')} ₽`,
-    `Период: ${tariff.period} дней`,
-    `\n👉 Оплатить: ${tinkoffPayment.paymentUrl}`
-  ].join('\n')
+  const message = MSG_PAYMENT_LINK_PLAIN(organization.name, tariff.name, tariff.price, tariff.period, tinkoffPayment.paymentUrl)
 
   try {
     await bot.api.sendMessage(owner.telegramId, message)

@@ -2,6 +2,19 @@ import { InlineKeyboard, Keyboard } from 'grammy'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
+import {
+  MSG_WELCOME, MSG_WELCOME_BACK, MSG_ALREADY_REGISTERED, MSG_PHONE_ALREADY_USED,
+  MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING, MSG_SETUP_COMPLETE,
+  MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION, MSG_SETTINGS_PRIVATE,
+  MSG_REPORT_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START, MSG_USE_START_SHORT,
+  MSG_START_CALLBACK, MSG_SCHEDULE, MSG_SCHEDULE_TIME, MSG_SCHEDULE_SAVED_TOAST,
+  MSG_SCHEDULE_DISABLED, MSG_SCHEDULE_SAVED, MSG_NO_TRANSCRIPTS, MSG_NO_PROMPT,
+  MSG_GENERATING_REPORT, MSG_REPORT_ERROR, MSG_ORG_NOT_FOUND, MSG_TARIFF_NOT_FOUND,
+  MSG_PAYMENT_ERROR, MSG_PAYMENT_SENT, MSG_PAYMENT_LINK, MSG_TRANSCRIPTION_LIMIT,
+  MSG_SUBSCRIPTION_EXPIRED, MSG_BILLING_DISABLED, MSG_TRANSCRIPTION_DONE,
+  MSG_TRANSCRIPTION_ERROR, BTN_SHARE_CONTACT, BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME,
+  BTN_SAVE, BTN_BACK_TO_DAYS
+} from '../../constants/bot-messages'
 
 // --- ХЕЛПЕРЫ ---
 
@@ -78,15 +91,7 @@ bot.command('start', async (ctx) => {
     const orgName = existingUser.organization.name
     const restName = existingUser.restaurant?.name || orgName
 
-    await ctx.reply(
-      `<b>Привет, ${firstName}!</b>\n\n` +
-      `У тебя уже есть организация: <b>${orgName}</b>\n` +
-      `Ресторан: <b>${restName}</b>\n\n` +
-      `📊 /report — получить отчёт за 24ч\n` +
-      `⚙️ /settings — расписание отчётов\n\n` +
-      `<i>Отправляй голосовые в группу для транскрипции!</i>`,
-      { parse_mode: 'HTML' }
-    )
+    await ctx.reply(MSG_WELCOME_BACK(firstName, orgName, restName), { parse_mode: 'HTML' })
     return
   }
 
@@ -104,27 +109,21 @@ bot.command('start', async (ctx) => {
   })
 
   const contactKeyboard = new Keyboard()
-    .requestContact('Поделиться номером')
+    .requestContact(BTN_SHARE_CONTACT)
     .resized()
     .oneTime()
 
-  await ctx.reply(
-    `<b>Добро пожаловать в RestoWorker!</b>\n\n` +
-    `Привет, ${firstName}!\n\n` +
-    `Я помогу настроить систему управления твоим рестораном за пару минут.\n\n` +
-    `<b>Для начала поделись своим номером телефона:</b>`,
-    {
-      parse_mode: 'HTML',
-      reply_markup: contactKeyboard
-    }
-  )
+  await ctx.reply(MSG_WELCOME(firstName), {
+    parse_mode: 'HTML',
+    reply_markup: contactKeyboard
+  })
 })
 
 // Команда /settings - настройка расписания отчётов (только в группе)
 bot.command('settings', async (ctx) => {
   // Работает только в группе
   if (ctx.chat.type === 'private') {
-    await ctx.reply('Команда /settings доступна только в группе ресторана')
+    await ctx.reply(MSG_SETTINGS_PRIVATE)
     return
   }
 
@@ -132,7 +131,7 @@ bot.command('settings', async (ctx) => {
   const restaurant = await findRestaurantByChatId(chatId)
 
   if (!restaurant) {
-    await ctx.reply('Эта группа не привязана к ресторану.')
+    await ctx.reply(MSG_GROUP_NOT_LINKED)
     return
   }
 
@@ -164,20 +163,14 @@ bot.command('settings', async (ctx) => {
   }
   keyboard.row()
 
-  keyboard.text('⏰ Выбрать время', 'sched_time_menu').row()
-  keyboard.text('💾 Сохранить', 'sched_save')
+  keyboard.text(BTN_SELECT_TIME, 'sched_time_menu').row()
+  keyboard.text(BTN_SAVE, 'sched_save')
 
   const timeInfo = currentSchedule.days.length > 0
     ? `\n\nТекущее расписание: ${currentSchedule.days.map(d => dayNames[d - 1]).join(', ')} в ${currentSchedule.time}`
     : '\n\nРасписание не настроено'
 
-  await ctx.reply(
-    `⚙️ <b>Расписание отчётов</b>\n` +
-    `Ресторан: <b>${restaurant.name}</b>\n\n` +
-    `Выберите дни, в которые нужен автоматический отчёт:` +
-    timeInfo,
-    { parse_mode: 'HTML', reply_markup: keyboard }
-  )
+  await ctx.reply(MSG_SCHEDULE(restaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: keyboard })
 })
 
 // Команда /report - мгновенный отчёт за последние 24ч (только в группе)
@@ -186,7 +179,7 @@ bot.command('report', async (ctx) => {
 
   // Работает только в группе
   if (ctx.chat.type === 'private') {
-    await ctx.reply('Команда /report доступна только в группе ресторана')
+    await ctx.reply(MSG_REPORT_PRIVATE)
     return
   }
 
@@ -194,7 +187,7 @@ bot.command('report', async (ctx) => {
   const restaurant = await findRestaurantByChatId(chatId)
 
   if (!restaurant) {
-    await ctx.reply('Эта группа не привязана к ресторану.')
+    await ctx.reply(MSG_GROUP_NOT_LINKED)
     return
   }
 
@@ -220,7 +213,7 @@ bot.command('report', async (ctx) => {
 
   if (transcripts.length === 0) {
     console.log(`[bot] /report: no transcripts for last 24h`)
-    await ctx.reply('За последние 24 часа нет транскрипций для формирования отчёта.')
+    await ctx.reply(MSG_NO_TRANSCRIPTS)
     return
   }
 
@@ -237,14 +230,14 @@ bot.command('report', async (ctx) => {
 
   if (!prompt) {
     console.log(`[bot] /report: no prompt found`)
-    await ctx.reply('Нет доступного промпта для генерации отчёта. Обратитесь к администратору.')
+    await ctx.reply(MSG_NO_PROMPT)
     return
   }
 
   console.log(`[bot] /report: ${transcripts.length} transcripts, prompt="${prompt.name}"`)
 
   try {
-    await ctx.reply(`📊 Генерирую отчёт по ${transcripts.length} транскрипциям...`)
+    await ctx.reply(MSG_GENERATING_REPORT(transcripts.length))
 
     const transcriptsText = transcripts.map((t, i) => {
       const date = t.createdAt.toLocaleDateString('ru-RU')
@@ -310,7 +303,7 @@ bot.command('report', async (ctx) => {
     console.log(`[bot] /report: sent to chat, reportId=${reportId}`)
   } catch (error: any) {
     console.error('[bot] /report error:', error.message)
-    await ctx.reply('Ошибка при генерации отчёта. Попробуйте позже.')
+    await ctx.reply(MSG_REPORT_ERROR)
   }
 })
 
@@ -325,10 +318,7 @@ bot.on('message:contact', async (ctx) => {
   // ПЕРВАЯ ПРОВЕРКА: У пользователя уже есть организация — блокируем + убираем клавиатуру
   if (user?.organizationId) {
     await ctx.reply(
-      `У тебя уже есть организация: <b>${user.organization?.name || 'Без имени'}</b>\n\n` +
-      `Повторная регистрация невозможна.\n` +
-      `📊 /report — получить отчёт\n` +
-      `⚙️ /settings — расписание отчётов`,
+      MSG_ALREADY_REGISTERED(user.organization?.name || 'Без имени'),
       { parse_mode: 'HTML', reply_markup: { remove_keyboard: true } }
     )
 
@@ -387,11 +377,7 @@ bot.on('message:contact', async (ctx) => {
   })
 
   if (existingUser) {
-    await ctx.reply(
-      'Этот номер телефона уже используется в другой организации.\n\n' +
-      'Для регистрации используй другой номер.',
-      { reply_markup: { remove_keyboard: true } }
-    )
+    await ctx.reply(MSG_PHONE_ALREADY_USED, { reply_markup: { remove_keyboard: true } })
 
     await prisma.user.update({
       where: { telegramId: tgId },
@@ -414,15 +400,10 @@ bot.on('message:contact', async (ctx) => {
     }
   })
 
-  await ctx.reply(
-    'Отлично! Номер сохранен.\n\n' +
-    '<b>Как называется твоя сеть ресторанов?</b>\n' +
-    '<i>(например: "Пицца и Суши" или "Мой ресторан")</i>',
-    {
-      parse_mode: 'HTML',
-      reply_markup: { remove_keyboard: true }
-    }
-  )
+  await ctx.reply(MSG_PHONE_SAVED, {
+    parse_mode: 'HTML',
+    reply_markup: { remove_keyboard: true }
+  })
 })
 
 // ШАГ 2: Обработка текстовых сообщений (имя организации)
@@ -432,7 +413,7 @@ bot.on('message:text', async (ctx) => {
   const text = ctx.message.text
 
   if (!user) {
-    return ctx.reply('Напиши /start для начала работы')
+    return ctx.reply(MSG_USE_START)
   }
 
   // Ожидаем название организации
@@ -450,18 +431,14 @@ bot.on('message:text', async (ctx) => {
       .text('2-10 ресторанов', 'scale_10').row()
       .text('Более 11', 'scale_11')
 
-    return ctx.reply(
-      `<b>"${text}"</b> — отличное название!\n\n` +
-      `<b>Сколько у вас сейчас точек?</b>`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: keyboard
-      }
-    )
+    return ctx.reply(MSG_ORG_NAME_CONFIRM(text), {
+      parse_mode: 'HTML',
+      reply_markup: keyboard
+    })
   }
 
   // Неизвестное состояние
-  return ctx.reply('Используй /start для начала')
+  return ctx.reply(MSG_USE_START_SHORT)
 })
 
 // ШАГ 3: Обработка выбора масштаба -> Авто-создание всего
@@ -470,7 +447,7 @@ bot.on('callback_query:data', async (ctx) => {
   const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
 
   if (!user) {
-    await ctx.answerCallbackQuery({ text: 'Начни с /start' })
+    await ctx.answerCallbackQuery({ text: MSG_START_CALLBACK })
     return
   }
 
@@ -483,7 +460,7 @@ bot.on('callback_query:data', async (ctx) => {
     const orgName = user.tempOrgName || 'Мой ресторан'
 
     try {
-      await ctx.reply('Настраиваю систему...')
+      await ctx.reply(MSG_CONFIGURING)
 
       // Ищем триальный тариф
       const trialTariff = await prisma.tariff.findFirst({
@@ -579,13 +556,7 @@ bot.on('callback_query:data', async (ctx) => {
           // Для Bot API суперграуппы нужен формат -100<chatId>
           const rawChatId = groupResult.chatId.toString()
           const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
-          const instructionText =
-            `👋 Добро пожаловать в группу отчётов!\n\n` +
-            `📝 Как пользоваться:\n` +
-            `1. Отправляйте голосовые сообщения с отчётом о работе\n` +
-            `2. Бот автоматически транскрибирует их в текст\n` +
-            `3. На основе транскрипций формируются аналитические отчёты\n\n` +
-            `🎤 Просто запишите голосовое — всё остальное сделаю я!`
+          const instructionText = MSG_GROUP_INSTRUCTION
 
           const instructionMsg = await bot.api.sendMessage(botChatId, instructionText)
           await bot.api.pinChatMessage(botChatId, instructionMsg.message_id)
@@ -627,19 +598,7 @@ bot.on('callback_query:data', async (ctx) => {
           ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} транскрипций`
           : ''
 
-        await ctx.reply(
-          `<b>Все готово!</b>\n\n` +
-          `Организация: <b>${orgName}</b>\n` +
-          `Ресторан: <b>${orgName}</b>\n` +
-          `Группа: <b>${groupResult.chatTitle}</b>\n\n` +
-          `<b>Что делать дальше:</b>\n\n` +
-          `1. Отправляй голосовые отчеты в созданную группу\n` +
-          `2. Я буду транскрибировать их и формировать еженедельные отчеты\n` +
-          `3. Добавляй менеджеров в группу — они тоже смогут отправлять отчеты` +
-          tariffInfo +
-          `\n\n<i>Если есть вопросы — пиши сюда!</i>`,
-          { parse_mode: 'HTML' }
-        )
+        await ctx.reply(MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo), { parse_mode: 'HTML' })
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
@@ -649,18 +608,11 @@ bot.on('callback_query:data', async (ctx) => {
           data: { botState: BotState.COMPLETED }
         })
 
-        await ctx.reply(
-          `<b>Организация "${orgName}" создана!</b>\n\n` +
-          `Группу для отчетов создадим чуть позже.\n\n` +
-          `<i>Если есть вопросы — пиши сюда!</i>`,
-          { parse_mode: 'HTML' }
-        )
+        await ctx.reply(MSG_SETUP_NO_GROUP(orgName), { parse_mode: 'HTML' })
       }
     } catch (error: any) {
       console.error('Ошибка создания организации:', error)
-      await ctx.reply(
-        'Произошла ошибка при настройке. Попробуй еще раз: /start'
-      )
+      await ctx.reply(MSG_SETUP_ERROR)
     }
 
     return
@@ -710,21 +662,15 @@ bot.on('callback_query:data', async (ctx) => {
       kb.text(schedule.days.includes(d) ? `✅ ${dayNames[d - 1]}` : dayNames[d - 1], `sched_day:${d}`)
     }
     kb.row()
-    kb.text('⏰ Выбрать время', 'sched_time_menu').row()
-    kb.text('💾 Сохранить', 'sched_save')
+    kb.text(BTN_SELECT_TIME, 'sched_time_menu').row()
+    kb.text(BTN_SAVE, 'sched_save')
 
     const timeInfo = schedule.days.length > 0
       ? `\n\nТекущее расписание: ${schedule.days.map((d: number) => dayNames[d - 1]).join(', ')} в ${schedule.time}`
       : '\n\nРасписание не настроено'
 
     try {
-      await ctx.editMessageText(
-        `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${schedRestaurant.name}</b>\n\n` +
-        `Выберите дни, в которые нужен автоматический отчёт:` +
-        timeInfo,
-        { parse_mode: 'HTML', reply_markup: kb }
-      )
+      await ctx.editMessageText(MSG_SCHEDULE(schedRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
     } catch {}
 
     return
@@ -759,14 +705,10 @@ bot.on('callback_query:data', async (ctx) => {
       }
       kb.row()
     }
-    kb.text('← Назад к дням', 'sched_back')
+    kb.text(BTN_BACK_TO_DAYS, 'sched_back')
 
     try {
-      await ctx.editMessageText(
-        `⏰ <b>Выберите время отправки отчёта:</b>\n\n` +
-        `Текущее время: <b>${currentTime}</b> (МСК)`,
-        { parse_mode: 'HTML', reply_markup: kb }
-      )
+      await ctx.editMessageText(MSG_SCHEDULE_TIME(currentTime), { parse_mode: 'HTML', reply_markup: kb })
     } catch {}
 
     return
@@ -806,21 +748,15 @@ bot.on('callback_query:data', async (ctx) => {
       kb.text(schedule.days.includes(d) ? `✅ ${dayNames[d - 1]}` : dayNames[d - 1], `sched_day:${d}`)
     }
     kb.row()
-    kb.text('⏰ Выбрать время', 'sched_time_menu').row()
-    kb.text('💾 Сохранить', 'sched_save')
+    kb.text(BTN_SELECT_TIME, 'sched_time_menu').row()
+    kb.text(BTN_SAVE, 'sched_save')
 
     const timeInfo = schedule.days.length > 0
       ? `\n\nТекущее расписание: ${schedule.days.map((d: number) => dayNames[d - 1]).join(', ')} в ${selectedTime}`
       : '\n\nРасписание не настроено'
 
     try {
-      await ctx.editMessageText(
-        `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${selTimeRestaurant.name}</b>\n\n` +
-        `Выберите дни, в которые нужен автоматический отчёт:` +
-        timeInfo,
-        { parse_mode: 'HTML', reply_markup: kb }
-      )
+      await ctx.editMessageText(MSG_SCHEDULE(selTimeRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
     } catch {}
 
     return
@@ -853,21 +789,15 @@ bot.on('callback_query:data', async (ctx) => {
       kb.text(schedule.days.includes(d) ? `✅ ${dayNames[d - 1]}` : dayNames[d - 1], `sched_day:${d}`)
     }
     kb.row()
-    kb.text('⏰ Выбрать время', 'sched_time_menu').row()
-    kb.text('💾 Сохранить', 'sched_save')
+    kb.text(BTN_SELECT_TIME, 'sched_time_menu').row()
+    kb.text(BTN_SAVE, 'sched_save')
 
     const timeInfo = schedule.days.length > 0
       ? `\n\nТекущее расписание: ${schedule.days.map((d: number) => dayNames[d - 1]).join(', ')} в ${schedule.time}`
       : '\n\nРасписание не настроено'
 
     try {
-      await ctx.editMessageText(
-        `⚙️ <b>Расписание отчётов</b>\n` +
-        `Ресторан: <b>${backRestaurant.name}</b>\n\n` +
-        `Выберите дни, в которые нужен автоматический отчёт:` +
-        timeInfo,
-        { parse_mode: 'HTML', reply_markup: kb }
-      )
+      await ctx.editMessageText(MSG_SCHEDULE(backRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
     } catch {}
 
     return
@@ -875,7 +805,7 @@ bot.on('callback_query:data', async (ctx) => {
 
   // Сохранение расписания
   if (data === 'sched_save') {
-    await ctx.answerCallbackQuery({ text: 'Расписание сохранено!' })
+    await ctx.answerCallbackQuery({ text: MSG_SCHEDULE_SAVED_TOAST })
 
     const chatId = ctx.chat?.id.toString()
     if (!chatId) return
@@ -895,22 +825,14 @@ bot.on('callback_query:data', async (ctx) => {
     if (schedule.days.length === 0) {
       try {
         await ctx.editMessageText(
-          `⚙️ <b>Расписание отчётов отключено</b>\n\n` +
-          `Ресторан: ${saveRestaurant.name}\n\n` +
-          `Автоматические отчёты не будут генерироваться.\n` +
-          `Чтобы настроить — используй /settings`,
+          MSG_SCHEDULE_DISABLED(saveRestaurant.name),
           { parse_mode: 'HTML' }
         )
       } catch {}
     } else {
       try {
         await ctx.editMessageText(
-          `✅ <b>Расписание сохранено!</b>\n\n` +
-          `Ресторан: ${saveRestaurant.name}\n` +
-          `Дни: <b>${schedule.days.map((d: number) => dayNames[d - 1]).join(', ')}</b>\n` +
-          `Время: <b>${schedule.time}</b> (МСК)\n\n` +
-          `Отчёты будут автоматически генерироваться и отправляться в эту группу.\n` +
-          `Чтобы изменить — используй /settings`,
+          MSG_SCHEDULE_SAVED(saveRestaurant.name, schedule.days.map((d: number) => dayNames[d - 1]).join(', '), schedule.time),
           { parse_mode: 'HTML' }
         )
       } catch {}
@@ -932,7 +854,7 @@ bot.on('callback_query:data', async (ctx) => {
       })
 
       if (!org) {
-        await ctx.reply('Организация не найдена')
+        await ctx.reply(MSG_ORG_NOT_FOUND)
         return
       }
 
@@ -943,7 +865,7 @@ bot.on('callback_query:data', async (ctx) => {
       })
 
       if (!tariff) {
-        await ctx.reply('Тариф не найден. Обратитесь к администратору.')
+        await ctx.reply(MSG_TARIFF_NOT_FOUND)
         return
       }
 
@@ -977,20 +899,14 @@ bot.on('callback_query:data', async (ctx) => {
       // Отправляем ссылку на оплату пользователю в личку
       await bot.api.sendMessage(
         tgId,
-        `💳 <b>Оплата подписки</b>\n\n` +
-        `Организация: ${org.name}\n` +
-        `Тариф: ${tariff.name}\n` +
-        `Сумма: ${tariff.price} ₽\n\n` +
-        `<a href="${tinkoff.paymentUrl}">Перейти к оплате →</a>`,
+        MSG_PAYMENT_LINK(org.name, tariff.name, tariff.price, tinkoff.paymentUrl),
         { parse_mode: 'HTML' }
       )
 
-      await ctx.editMessageText(
-        'Ссылка на оплату отправлена вам в личные сообщения 💬'
-      )
+      await ctx.editMessageText(MSG_PAYMENT_SENT)
     } catch (error: any) {
       console.error('[bot] Buy subscription error:', error.message)
-      await ctx.reply('Произошла ошибка при создании платежа. Попробуйте позже.')
+      await ctx.reply(MSG_PAYMENT_ERROR)
     }
 
     return
@@ -1036,8 +952,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     if (billing.transcriptionsUsed >= maxTranscriptions) {
       console.log(`[bot] Transcription limit reached for org ${restaurant.organizationId}: ${billing.transcriptionsUsed}/${maxTranscriptions}`)
       await ctx.reply(
-        'Достигнут лимит транскрипций для текущего тарифа.\n' +
-        'Обратитесь к администратору для продления подписки.',
+        MSG_TRANSCRIPTION_LIMIT,
         { reply_to_message_id: ctx.message.message_id }
       )
       return
@@ -1047,10 +962,10 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     const now = new Date()
     if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < now) {
       const buyKeyboard = new InlineKeyboard()
-        .text('💳 Купить подписку', `buy_subscription:${restaurant.organizationId}`)
+        .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 
       await ctx.reply(
-        'Подписка истекла. Хотите оформить подписку за 950₽ на 250 транскрипций?',
+        MSG_SUBSCRIPTION_EXPIRED,
         {
           reply_to_message_id: ctx.message.message_id,
           reply_markup: buyKeyboard
@@ -1060,10 +975,10 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     }
     if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < now) {
       const buyKeyboard = new InlineKeyboard()
-        .text('💳 Купить подписку', `buy_subscription:${restaurant.organizationId}`)
+        .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 
       await ctx.reply(
-        'Подписка истекла. Хотите оформить подписку за 950₽ на 250 транскрипций?',
+        MSG_SUBSCRIPTION_EXPIRED,
         {
           reply_to_message_id: ctx.message.message_id,
           reply_markup: buyKeyboard
@@ -1073,7 +988,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     }
     if (billing.status === 'DISABLED') {
       await ctx.reply(
-        'Подписка отключена. Обратитесь к администратору.',
+        MSG_BILLING_DISABLED,
         { reply_to_message_id: ctx.message.message_id }
       )
       return
@@ -1167,7 +1082,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
       : result.text
 
     await ctx.reply(
-      `Транскрипция (${duration}с):\n\n${preview}`,
+      MSG_TRANSCRIPTION_DONE(duration, preview),
       { reply_to_message_id: ctx.message.message_id }
     )
 
@@ -1192,7 +1107,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     })
 
     await ctx.reply(
-      'Не удалось обработать голосовое сообщение. Попробуйте ещё раз.',
+      MSG_TRANSCRIPTION_ERROR,
       { reply_to_message_id: ctx.message.message_id }
     )
   }

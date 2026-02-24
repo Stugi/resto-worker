@@ -1,3 +1,7 @@
+import {
+  MSG_REPORT_HEADER, MSG_REPORT_SENT, MSG_REPORT_SEND_ERROR
+} from '../../../constants/bot-messages'
+
 /**
  * POST /api/reports/:id/send-to-group — Отправить отчёт в Telegram группу
  *
@@ -65,7 +69,7 @@ export default defineEventHandler(async (event) => {
     ? new Date(report.periodEnd).toLocaleDateString('ru-RU')
     : ''
 
-  const header = `📊 <b>Отчёт</b>\n${report.restaurant?.name || ''}\n${periodStart} — ${periodEnd}\n\n`
+  const header = MSG_REPORT_HEADER(report.restaurant?.name || '', periodStart, periodEnd)
 
   try {
     const maxLen = 4000 - header.length
@@ -84,12 +88,12 @@ export default defineEventHandler(async (event) => {
 
     console.log(`[reports] Report ${id} sent to chat ${chatId} by ${user.login || user.id}`)
 
-    return { ok: true, message: 'Отчёт отправлен в группу' }
+    return { ok: true, message: MSG_REPORT_SENT }
   } catch (err: any) {
     console.error(`[reports] Failed to send report ${id} to chat ${chatId}: ${err.message}`)
     throw createError({
       statusCode: 502,
-      message: `Не удалось отправить в группу: ${err.message}`
+      message: MSG_REPORT_SEND_ERROR(err.message)
     })
   }
 })
