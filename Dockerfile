@@ -17,11 +17,18 @@ COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
 # --ignore-scripts чтобы не запускать postinstall (nuxt prepare)
-# на этапе deps ещё нет исходников, и oxc-parser не найдёт musl-binding
+# npm ci с lock-файлом от macOS не ставит linux-musl optional deps
 RUN npm ci --ignore-scripts
 
-# Доустанавливаем platform-specific native bindings для Alpine (musl)
-RUN npm rebuild
+# Явно ставим native bindings для Alpine Linux (musl)
+RUN npm install --no-save \
+    @oxc-parser/binding-linux-x64-musl@0.112.0 \
+    @oxc-transform/binding-linux-x64-musl@0.112.0 \
+    @oxc-minify/binding-linux-x64-musl@0.112.0 \
+    @rollup/rollup-linux-x64-musl@4.57.1
+
+# Пересобираем нативные модули (bcrypt и др.) под Alpine
+RUN npm rebuild --ignore-scripts
 
 # --- Builder ---
 FROM base AS builder
