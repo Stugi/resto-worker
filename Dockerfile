@@ -25,7 +25,8 @@ RUN npm install --no-save \
     @oxc-parser/binding-linux-x64-musl@0.112.0 \
     @oxc-transform/binding-linux-x64-musl@0.112.0 \
     @oxc-minify/binding-linux-x64-musl@0.112.0 \
-    @rollup/rollup-linux-x64-musl@4.57.1
+    @rollup/rollup-linux-x64-musl@4.57.1 \
+    @esbuild/linux-x64@0.27.3
 
 # Пересобираем нативные модули (bcrypt и др.) под Alpine
 RUN npm rebuild --ignore-scripts
