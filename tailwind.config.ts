@@ -12,6 +12,9 @@ export default {
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
+      },
       colors: {
         // Текст
         text: {

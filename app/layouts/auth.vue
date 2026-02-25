@@ -3,11 +3,11 @@
     <div class="w-full max-w-md">
       <!-- Logo and Title -->
       <div class="flex flex-col items-center mb-8">
-        <div class="w-16 h-16 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20 mb-4">
+        <div class="w-16 h-16 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center ring-1 ring-accent/20 mb-4" style="box-shadow: 0 0 20px rgba(0,220,127,0.35), 0 4px 8px rgba(0,220,127,0.25);">
           <span class="text-4xl">🍽️</span>
         </div>
         <h1 class="text-3xl md:text-4xl font-semibold tracking-tight text-text mb-2">
-          RESTO <span class="text-accent">WORKER</span>
+          RESTO <span class="bg-gradient-to-r from-accent to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(0,220,127,0.6)]">WORKER</span>
         </h1>
         <p class="text-text-secondary">
           Restaurant Management System

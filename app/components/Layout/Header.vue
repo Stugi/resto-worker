@@ -24,14 +24,15 @@
 
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-10 h-10 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20"
+                        class="w-10 h-10 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center ring-1 ring-accent/20"
+                        style="box-shadow: 0 0 15px rgba(0,220,127,0.3), 0 4px 6px rgba(0,220,127,0.2);"
                     >
                         <span class="text-2xl">🍽️</span>
                     </div>
                     <h1
                         class="text-xl md:text-2xl font-semibold tracking-tight text-text"
                     >
-                        RESTO <span class="text-accent">WORKER</span>
+                        RESTO <span class="bg-gradient-to-r from-accent to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(0,220,127,0.6)]">WORKER</span>
                     </h1>
                 </div>
             </div>
