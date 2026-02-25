@@ -6,7 +6,24 @@
         <h1 class="text-2xl md:text-3xl font-bold text-text mb-1">Аналитика</h1>
         <p class="text-text-secondary text-sm">Классификация отзывов и тренды</p>
       </div>
-      <ChartsPeriodFilter v-model="period" />
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Фильтр по ресторану -->
+        <select
+          v-if="restaurants.length > 1"
+          v-model="restaurantId"
+          class="px-3 py-1.5 text-xs font-medium border border-border rounded-lg bg-bg-card text-text focus:outline-none focus:ring-1 focus:ring-accent"
+        >
+          <option value="">Все рестораны</option>
+          <option
+            v-for="r in restaurants"
+            :key="r.id"
+            :value="r.id"
+          >
+            {{ r.name }}
+          </option>
+        </select>
+        <ChartsPeriodFilter v-model="period" />
+      </div>
     </div>
 
     <!-- Loading -->
@@ -63,7 +80,7 @@
         </svg>
         <p class="text-sm text-text">
           <strong>{{ data.totalUnclassified }}</strong> транскрипций ещё не классифицированы.
-          Они будут обработаны при следующем голосовом сообщении или через backfill-скрипт.
+          Они будут классифицированы при следующем автоматическом формировании отчёта.
         </p>
       </div>
     </template>
@@ -78,17 +95,25 @@ definePageMeta({
 })
 
 const period = ref<AnalyticsPeriod>('month')
+const restaurantId = ref('')
 const loading = ref(true)
 const error = ref<string | null>(null)
 const data = ref<AnalyticsResponse | null>(null)
+const restaurants = ref<{ id: string; name: string }[]>([])
 
 const fetchData = async () => {
   loading.value = true
   error.value = null
   try {
-    data.value = await $fetch<AnalyticsResponse>('/api/dashboard/analytics', {
-      params: { period: period.value }
-    })
+    const params: Record<string, string> = { period: period.value }
+    if (restaurantId.value) {
+      params.restaurantId = restaurantId.value
+    }
+    data.value = await $fetch<AnalyticsResponse>('/api/dashboard/analytics', { params })
+    // Обновляем список ресторанов из первого ответа
+    if (data.value.restaurants && data.value.restaurants.length > 0) {
+      restaurants.value = data.value.restaurants
+    }
   } catch (err: any) {
     console.error('Analytics fetch error:', err)
     error.value = err?.data?.message || 'Не удалось загрузить аналитику'
@@ -98,8 +123,8 @@ const fetchData = async () => {
   }
 }
 
-// Реактивная перезагрузка при смене периода
-watch(period, () => {
+// Реактивная перезагрузка при смене периода или ресторана
+watch([period, restaurantId], () => {
   fetchData()
 })
 

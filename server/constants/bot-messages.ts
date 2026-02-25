@@ -68,13 +68,12 @@ export const MSG_SETUP_COMPLETE = (orgName: string, groupTitle: string, tariffIn
   `2. Сотрудники записывают голосовые с обратной связью от гостей\n` +
   `3. CosmicMind AI расшифрует, структурирует и сохранит отзывы\n` +
   `4. Вы получите еженедельный отчёт по сервису` +
-  tariffInfo +
-  `\n\n<i>Если есть вопросы — пишите сюда!</i>`
+  tariffInfo
 
 export const MSG_SETUP_NO_GROUP = (orgName: string) =>
   `<b>Организация "${orgName}" создана!</b>\n\n` +
-  `Группу для отчетов создадим чуть позже.\n\n` +
-  `<i>Если есть вопросы — пиши сюда!</i>`
+  `Группу для отчетов создадим чуть позже.\n\n`
+
 
 export const MSG_SETUP_ERROR = 'Произошла ошибка при настройке. Попробуй еще раз: /start'
 
@@ -169,6 +168,9 @@ export const MSG_REPORT_HEADER = (restaurantName: string, periodStart: string, p
 
 export const MSG_AUTO_REPORT_HEADER = (restaurantName: string, periodStart: string, periodEnd: string) =>
   `📊 <b>Автоматический отчёт</b>\n${restaurantName}\n${periodStart} — ${periodEnd}\n\n`
+
+export const MSG_AUTO_DISH_ANALYSIS_HEADER = (restaurantName: string, periodStart: string, periodEnd: string) =>
+  `🍽 <b>Анализ блюд по негативным отзывам</b>\n${restaurantName}\n${periodStart} — ${periodEnd}\n\n`
 
 export const MSG_AUTO_REPORT_NO_DATA = (restaurantName: string) =>
   `📊 <b>Автоотчёт</b>\n${restaurantName}\n\n` +

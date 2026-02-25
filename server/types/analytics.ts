@@ -62,6 +62,9 @@ export interface AnalyticsResponse {
     hours: number[]
   }[]
 
+  // Рестораны (для фильтра)
+  restaurants: { id: string; name: string }[]
+
   // Метаданные
   period: AnalyticsPeriod
   periodStart: string

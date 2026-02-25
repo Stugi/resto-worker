@@ -118,7 +118,7 @@ export async function generateReport(params: {
     messages: [
       {
         role: 'system',
-        content: 'Ты — аналитик ресторанного бизнеса. Составляй чёткие, структурированные отчёты в формате Markdown. Используй заголовки, списки, выделение жирным для ключевых цифр и выводов.'
+        content: 'Ты — аналитик ресторанного бизнеса. Составляй чёткие, структурированные отчёты в формате чистого текста для публикации в Telegram. НЕ используй Markdown-разметку (###, **, *, ```, и т.д.). Используй emoji для визуального выделения секций. Используй простые тире или точки для списков. Выделяй ключевые цифры словами, а не форматированием.'
       },
       {
         role: 'user',
@@ -257,6 +257,202 @@ problemTypes — массив ключевых слов проблем:
     severity: Math.min(5, Math.max(1, Math.round(parsed.severity || 1))),
     problemTypes: Array.isArray(parsed.problemTypes) ? parsed.problemTypes : []
   }
+}
+
+/**
+ * Batch-классификация массива транскрипций одним GPT-вызовом
+ *
+ * Группирует в чанки по BATCH_SIZE, для каждого чанка один GPT-вызов.
+ * Возвращает Map<transcriptId, ClassificationResult>
+ */
+const BATCH_SIZE = 15
+
+export async function batchClassifyTranscripts(
+  transcripts: { id: string; text: string }[]
+): Promise<Map<string, { sentiment: string; category: string; subcategory: string | null; dishes: string[]; severity: number; problemTypes: string[] }>> {
+  const client = getClient()
+  const resultMap = new Map<string, { sentiment: string; category: string; subcategory: string | null; dishes: string[]; severity: number; problemTypes: string[] }>()
+
+  if (transcripts.length === 0) return resultMap
+
+  // Разбиваем на чанки
+  const chunks: { id: string; text: string }[][] = []
+  for (let i = 0; i < transcripts.length; i += BATCH_SIZE) {
+    chunks.push(transcripts.slice(i, i + BATCH_SIZE))
+  }
+
+  console.log(`[openai] Batch classifying ${transcripts.length} transcripts in ${chunks.length} chunk(s)`)
+
+  for (const chunk of chunks) {
+    const startTime = Date.now()
+
+    // Формируем нумерованный текст
+    const numberedText = chunk.map((t, i) => `[${i + 1}] ${t.text}`).join('\n\n')
+
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.1,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `Ты — классификатор отзывов в ресторанном бизнесе. Тебе дан список отзывов, пронумерованных [1], [2], ... Проанализируй КАЖДЫЙ отзыв и верни JSON.
+
+Формат ответа:
+{
+  "results": [
+    {
+      "index": 1,
+      "sentiment": "positive|negative|neutral|mixed",
+      "category": "food|service|atmosphere|loyalty|wow",
+      "subcategory": "temperature|taste|foreign_object|cooking|quality" или null,
+      "dishes": ["название блюда"],
+      "severity": 1-5,
+      "problemTypes": ["cold_food", "hair_found", ...]
+    },
+    ...
+  ]
+}
+
+Правила:
+- sentiment: positive (хвалят), negative (жалуются), neutral (информационное), mixed (и позитив, и негатив)
+- category: food (еда/напитки), service (сервис), atmosphere (атмосфера), loyalty (бонусы/скидки), wow (общее впечатление)
+- subcategory: ТОЛЬКО для category="food": temperature, taste, foreign_object, cooking, quality. Для остальных = null
+- dishes: конкретные блюда (пустой массив если нет)
+- severity: 1=мелочь, 2=незначительно, 3=заметно, 4=серьёзно, 5=критично (санитария, отравление)
+- problemTypes: cold_food, hair_found, insect, slow_service, rude_staff, wrong_order, dirty_table, loud_music, broken_ac, bonus_not_applied, boring_presentation (пустой для позитивных)
+
+ВАЖНО: Верни результат для КАЖДОГО отзыва. Отвечай ТОЛЬКО JSON.`
+          },
+          {
+            role: 'user',
+            content: numberedText
+          }
+        ],
+        max_tokens: chunk.length * 150
+      })
+
+      const durationMs = Date.now() - startTime
+      const raw = response.choices[0]?.message?.content || '{}'
+      const parsed = JSON.parse(raw)
+
+      console.log(`[openai] Batch chunk classified in ${durationMs}ms, tokens: ${response.usage?.total_tokens || 0}`)
+
+      if (Array.isArray(parsed.results)) {
+        for (const item of parsed.results) {
+          const idx = (item.index || 0) - 1
+          if (idx >= 0 && idx < chunk.length) {
+            const t = chunk[idx]
+            resultMap.set(t.id, {
+              sentiment: ['positive', 'negative', 'neutral', 'mixed'].includes(item.sentiment)
+                ? item.sentiment : 'neutral',
+              category: ['food', 'service', 'atmosphere', 'loyalty', 'wow'].includes(item.category)
+                ? item.category : 'service',
+              subcategory: item.category === 'food' ? (item.subcategory || null) : null,
+              dishes: Array.isArray(item.dishes) ? item.dishes : [],
+              severity: Math.min(5, Math.max(1, Math.round(item.severity || 1))),
+              problemTypes: Array.isArray(item.problemTypes) ? item.problemTypes : []
+            })
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error(`[openai] Batch classification chunk failed: ${err.message}`)
+      // Пропускаем чанк — транскрипции останутся без классификации
+    }
+  }
+
+  console.log(`[openai] Batch classification complete: ${resultMap.size}/${transcripts.length} classified`)
+  return resultMap
+}
+
+/**
+ * Промпт 3: Анализ блюд с негативными отзывами
+ *
+ * Принимает concatenated reviews, возвращает текстовый анализ блюд для Telegram
+ */
+export async function analyzeDishesNegative(
+  reviews: string
+): Promise<{ content: string; tokensUsed: number; generationTimeMs: number }> {
+  const client = getClient()
+  const startTime = Date.now()
+
+  console.log(`[openai] Analyzing dishes negative feedback: ${reviews.length} chars`)
+
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.3,
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a restaurant quality analyst. Analyze guest reviews and identify dishes with negative feedback.'
+      },
+      {
+        role: 'user',
+        content: `You will be analyzing restaurant guest reviews to identify dishes that received negative feedback, specifically regarding their quality and taste. This analysis will help the restaurant improve its menu and overall customer satisfaction. Here are the reviews you will be analyzing:
+
+<reviews>
+${reviews}
+</reviews>
+
+Follow these steps to complete the analysis:
+
+1. Carefully read through all the reviews provided.
+2. Identify any mentions of specific dishes in the reviews.
+3. For each mentioned dish, determine if the feedback is negative, focusing specifically on comments about quality and taste.
+4. When identifying negative feedback, look for:
+   - Explicit statements of dissatisfaction
+   - Words indicating poor taste or quality (e.g., "bland", "overcooked", "stale")
+   - Comparisons that suggest the dish was below expectations
+5. For each dish with negative feedback, note:
+   - The name of the dish
+   - The specific criticism(s) related to quality and taste
+   - Any suggestions for improvement, if provided
+6. Compile a list of all dishes that received negative feedback, along with a brief summary of the criticisms for each.
+7. If a dish is mentioned multiple times with similar criticisms, group these together in your summary.
+
+Present your findings in the following format:
+
+Название блюда:
+Замечания:
+
+Repeat the above structure for each dish with negative feedback. Remember to focus only on negative feedback related to quality and taste. Do not include positive feedback or comments unrelated to food quality in your analysis. Prepare your answer in the format for publication in a telegram post. You can use emoji, but only in the descriptive part of the post. No need to highlight paragraphs, especially using the symbols "*" to highlight paragraphs.`
+      }
+    ],
+    max_tokens: 3000
+  })
+
+  const generationTimeMs = Date.now() - startTime
+  const content = response.choices[0]?.message?.content || ''
+  const tokensUsed = response.usage?.total_tokens || 0
+
+  console.log(`[openai] Dish analysis completed in ${generationTimeMs}ms, tokens: ${tokensUsed}`)
+
+  return { content, tokensUsed, generationTimeMs }
+}
+
+/**
+ * Убрать Markdown-форматирование из GPT-ответа
+ *
+ * Промпты 2 и 4 из пользовательской спецификации — реализованы через regex
+ * вместо GPT-вызова (быстрее, бесплатно, детерминировано)
+ *
+ * Чистит: заголовки (#), жирный (**), курсив (*_), код (```), лишние пустые строки
+ */
+export function stripGptFormatting(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, '')       // Убрать блоки кода
+    .replace(/`([^`]+)`/g, '$1')          // Убрать inline code, оставить текст
+    .replace(/^#{1,6}\s*/gm, '')          // Убрать # ## ### заголовки (в начале строки)
+    .replace(/\*\*([^*]+)\*\*/g, '$1')    // Убрать **жирный**, оставить текст
+    .replace(/\*([^*]+)\*/g, '$1')        // Убрать *курсив*, оставить текст
+    .replace(/__([^_]+)__/g, '$1')        // Убрать __жирный__, оставить текст
+    .replace(/_([^_]+)_/g, '$1')          // Убрать _курсив_, оставить текст
+    .replace(/^\s*[-*+]\s+/gm, '— ')     // Маркеры списков (-, *, +) → тире
+    .replace(/^\s*\d+\.\s+/gm, (m) => m.trimStart()) // Убрать лишние отступы у нумерованных списков
+    .replace(/\n{3,}/g, '\n\n')           // Убрать лишние пустые строки (3+ → 2)
+    .trim()
 }
 
 /**

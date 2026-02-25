@@ -7,6 +7,7 @@ model Report {
   title           String              // Название отчёта ("Отчёт за 10-16 фев 2026")
   content         String   @db.Text   // Текст отчёта (Markdown)
   summary         String?  @db.Text   // Краткая выжимка
+  dishAnalysis    String?  @db.Text   // Анализ блюд по негативу (Промпт 3)
   status          ReportStatus @default(GENERATING)
 
   // Период

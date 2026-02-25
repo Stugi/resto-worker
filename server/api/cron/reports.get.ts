@@ -1,6 +1,8 @@
 import { createId } from '@paralleldrive/cuid2'
+import { batchClassifyTranscripts, analyzeDishesNegative, stripGptFormatting } from '../../utils/openai'
 import {
-  MSG_AUTO_REPORT_HEADER, MSG_AUTO_REPORT_NO_DATA, MSG_AUTO_REPORT_OWNER
+  MSG_AUTO_REPORT_HEADER, MSG_AUTO_REPORT_NO_DATA, MSG_AUTO_REPORT_OWNER,
+  MSG_AUTO_DISH_ANALYSIS_HEADER
 } from '../../constants/bot-messages'
 
 /**
@@ -185,7 +187,39 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-      // Формируем текст транскрипций
+      // ---- STEP A: Batch-классификация всех неклассифицированных транскрипций ----
+      const unclassified = transcripts.filter((t: any) => !t.classifiedAt)
+      if (unclassified.length > 0) {
+        console.log(`[cron/reports] Batch classifying ${unclassified.length} transcripts for ${restaurant.name}...`)
+        try {
+          const classificationMap = await batchClassifyTranscripts(
+            unclassified.map(t => ({ id: t.id, text: t.text }))
+          )
+          for (const t of unclassified) {
+            const classification = classificationMap.get(t.id)
+            if (classification) {
+              await prisma.transcript.update({
+                where: { id: t.id },
+                data: {
+                  sentiment: classification.sentiment,
+                  category: classification.category,
+                  subcategory: classification.subcategory,
+                  dishes: JSON.stringify(classification.dishes),
+                  severity: classification.severity,
+                  problemTypes: JSON.stringify(classification.problemTypes),
+                  classifiedAt: new Date()
+                }
+              })
+            }
+          }
+          console.log(`[cron/reports] Batch classification done: ${classificationMap.size}/${unclassified.length}`)
+        } catch (classErr: any) {
+          console.error(`[cron/reports] Batch classification failed for ${restaurant.name}: ${classErr.message}`)
+          // Продолжаем — отчёт всё равно генерируется
+        }
+      }
+
+      // ---- Формируем текст транскрипций ----
       const transcriptsText = transcripts.map((t, i) => {
         const date = t.createdAt.toLocaleDateString('ru-RU')
         const time = t.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -194,7 +228,7 @@ export default defineEventHandler(async (event) => {
         return `--- Отчёт #${i + 1} (${date} ${time}, ${author}, ${duration}) ---\n${t.text}`
       }).join('\n\n')
 
-      // Генерируем отчёт
+      // ---- STEP B: Промпт 1 — основной отчёт (generateReport) ----
       const result = await generateReport({
         template: prompt.template,
         variables: {
@@ -205,22 +239,43 @@ export default defineEventHandler(async (event) => {
         }
       })
 
-      // Сохраняем в БД
+      // ---- STEP C: Промпт 2 — чистка форматирования (regex) ----
+      const cleanReport = stripGptFormatting(result.content)
+      const cleanSummary = result.summary ? stripGptFormatting(result.summary) : ''
+
+      // ---- STEP D: Промпт 3 — анализ блюд по негативу ----
+      let cleanDishAnalysis = ''
+      let dishTokensUsed = 0
+      let dishTimeMs = 0
+      try {
+        const dishResult = await analyzeDishesNegative(transcriptsText)
+        // ---- STEP E: Промпт 4 — чистка форматирования (regex) ----
+        cleanDishAnalysis = stripGptFormatting(dishResult.content)
+        dishTokensUsed = dishResult.tokensUsed
+        dishTimeMs = dishResult.generationTimeMs
+        console.log(`[cron/reports] Dish analysis done for ${restaurant.name}: ${cleanDishAnalysis.length} chars`)
+      } catch (dishErr: any) {
+        console.error(`[cron/reports] Dish analysis failed for ${restaurant.name}: ${dishErr.message}`)
+        // Продолжаем — основной отчёт всё равно отправляется
+      }
+
+      // ---- Сохраняем в БД ----
       const reportId = createId()
       await prisma.report.create({
         data: {
           id: reportId,
           title: `Автоотчёт за ${periodStart.toLocaleDateString('ru-RU')} — ${periodEnd.toLocaleDateString('ru-RU')}`,
-          content: result.content,
-          summary: result.summary,
+          content: cleanReport,
+          summary: cleanSummary,
+          dishAnalysis: cleanDishAnalysis || null,
           status: 'COMPLETED',
           periodStart,
           periodEnd,
           restaurantId: restaurant.id,
           promptId: prompt.id,
           model: result.model,
-          tokensUsed: result.tokensUsed,
-          generationTimeMs: result.generationTimeMs,
+          tokensUsed: result.tokensUsed + dishTokensUsed,
+          generationTimeMs: result.generationTimeMs + dishTimeMs,
           createdBy: 'cron'
         }
       })
@@ -234,22 +289,23 @@ export default defineEventHandler(async (event) => {
         }))
       })
 
-      // Отправляем в Telegram группу ресторана
+      // ---- Отправляем в Telegram группу ресторана ----
       const chatId = settings.telegramChatId
       if (chatId) {
-        try {
-          // Для Bot API суперграуппы нужен формат -100<chatId>
-          const rawChatId = chatId.toString()
-          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
-          const header = MSG_AUTO_REPORT_HEADER(restaurant.name, periodStart.toLocaleDateString('ru-RU'), periodEnd.toLocaleDateString('ru-RU'))
+        const rawChatId = chatId.toString()
+        const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+        const periodStartStr = periodStart.toLocaleDateString('ru-RU')
+        const periodEndStr = periodEnd.toLocaleDateString('ru-RU')
 
+        // Сообщение 1: Основной отчёт
+        try {
+          const header = MSG_AUTO_REPORT_HEADER(restaurant.name, periodStartStr, periodEndStr)
           const maxLen = 4000 - header.length
-          if (result.content.length <= maxLen) {
-            await bot.api.sendMessage(botChatId, header + result.content, { parse_mode: 'HTML' })
+          if (cleanReport.length <= maxLen) {
+            await bot.api.sendMessage(botChatId, header + cleanReport, { parse_mode: 'HTML' })
           } else {
-            // Отправляем заголовок + части
-            await bot.api.sendMessage(botChatId, header + result.content.slice(0, maxLen), { parse_mode: 'HTML' })
-            let remaining = result.content.slice(maxLen)
+            await bot.api.sendMessage(botChatId, header + cleanReport.slice(0, maxLen), { parse_mode: 'HTML' })
+            let remaining = cleanReport.slice(maxLen)
             while (remaining.length > 0) {
               const part = remaining.slice(0, 4000)
               remaining = remaining.slice(4000)
@@ -259,6 +315,28 @@ export default defineEventHandler(async (event) => {
           console.log(`[cron/reports] Report sent to chat ${chatId} for ${restaurant.name}`)
         } catch (sendErr: any) {
           console.error(`[cron/reports] Failed to send report to Telegram: ${sendErr.message}`)
+        }
+
+        // Сообщение 2: Анализ блюд по негативу
+        if (cleanDishAnalysis && cleanDishAnalysis.trim().length > 0) {
+          try {
+            const dishHeader = MSG_AUTO_DISH_ANALYSIS_HEADER(restaurant.name, periodStartStr, periodEndStr)
+            const maxDishLen = 4000 - dishHeader.length
+            if (cleanDishAnalysis.length <= maxDishLen) {
+              await bot.api.sendMessage(botChatId, dishHeader + cleanDishAnalysis, { parse_mode: 'HTML' })
+            } else {
+              await bot.api.sendMessage(botChatId, dishHeader + cleanDishAnalysis.slice(0, maxDishLen), { parse_mode: 'HTML' })
+              let remaining = cleanDishAnalysis.slice(maxDishLen)
+              while (remaining.length > 0) {
+                const part = remaining.slice(0, 4000)
+                remaining = remaining.slice(4000)
+                await bot.api.sendMessage(botChatId, part)
+              }
+            }
+            console.log(`[cron/reports] Dish analysis sent to chat ${chatId} for ${restaurant.name}`)
+          } catch (dishSendErr: any) {
+            console.error(`[cron/reports] Failed to send dish analysis to Telegram: ${dishSendErr.message}`)
+          }
         }
       }
 
@@ -279,7 +357,7 @@ export default defineEventHandler(async (event) => {
             periodStart.toLocaleDateString('ru-RU'),
             periodEnd.toLocaleDateString('ru-RU'),
             transcripts.length,
-            result.summary || result.content.slice(0, 500)
+            cleanSummary || cleanReport.slice(0, 500)
           )
 
           await bot.api.sendMessage(owner.telegramId, ownerMsg, { parse_mode: 'HTML' })

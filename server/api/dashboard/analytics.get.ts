@@ -94,6 +94,7 @@ export default defineEventHandler(async (event) => {
     prevCount,
     totalUsers,
     allTranscripts, // для тепловой карты
+    restaurants, // для фильтра по ресторану
   ] = await Promise.all([
     // Все классифицированные транскрипции за период
     prisma.transcript.findMany({
@@ -131,6 +132,16 @@ export default defineEventHandler(async (event) => {
     prisma.transcript.findMany({
       where: baseFilter,
       select: { createdAt: true, classifiedAt: true }
+    }),
+
+    // Рестораны для фильтра
+    prisma.restaurant.findMany({
+      where: {
+        deletedAt: null,
+        ...(orgId ? { organizationId: orgId } : {})
+      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' }
     })
   ])
 
@@ -332,7 +343,7 @@ export default defineEventHandler(async (event) => {
   }))
 
   // --- Ответ ---
-  const response: AnalyticsResponse = {
+  return {
     kpi,
     negativeStructure,
     foodCategories,
@@ -340,12 +351,11 @@ export default defineEventHandler(async (event) => {
     managers,
     dishes,
     heatmap,
+    restaurants: restaurants.map(r => ({ id: r.id, name: r.name })),
     period,
     periodStart: periodStart.toISOString(),
     periodEnd: periodEnd.toISOString(),
     totalClassified: totalReviews,
     totalUnclassified
   }
-
-  return response
 })
