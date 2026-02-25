@@ -165,6 +165,101 @@ export async function generateReport(params: {
 }
 
 /**
+ * Классифицировать транскрипцию отзыва через GPT-4o-mini
+ *
+ * Возвращает структурированные данные: sentiment, category, subcategory, dishes, severity, problemTypes
+ * Стоимость: ~$0.001 за вызов (input ~300 tokens + output ~100 tokens)
+ */
+export async function classifyTranscript(text: string): Promise<{
+  sentiment: string
+  category: string
+  subcategory: string | null
+  dishes: string[]
+  severity: number
+  problemTypes: string[]
+}> {
+  const client = getClient()
+  const startTime = Date.now()
+
+  console.log(`[openai] Classifying transcript: ${text.length} chars`)
+
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.1,
+    response_format: { type: 'json_object' },
+    messages: [
+      {
+        role: 'system',
+        content: `Ты — классификатор отзывов в ресторанном бизнесе. Проанализируй текст голосового сообщения сотрудника ресторана и верни JSON.
+
+Правила классификации:
+
+sentiment — общий тон сообщения:
+- "positive" — хвалят, благодарят, доволен
+- "negative" — жалуются, ругают, недоволен
+- "neutral" — информационное, без оценки
+- "mixed" — есть и позитив, и негатив
+
+category — основная категория проблемы/отзыва:
+- "food" — еда и напитки (качество, вкус, температура, инородные предметы)
+- "service" — сервис (скорость обслуживания, вежливость, ошибки в заказе)
+- "atmosphere" — атмосфера (чистота, музыка, температура в зале, туалет)
+- "loyalty" — программа лояльности (бонусы, скидки, акции)
+- "wow" — эффект вау (подача, креатив, впечатления, общее впечатление)
+
+subcategory — только если category="food":
+- "temperature" — блюдо холодное/горячее
+- "taste" — невкусно, пересолено, недосолено
+- "foreign_object" — волос, насекомое, посторонний предмет
+- "cooking" — неправильная прожарка, сырое, подгорело
+- "quality" — несвежие ингредиенты, низкое качество
+
+Для остальных категорий subcategory = null.
+
+dishes — массив названий конкретных блюд, упомянутых в тексте (пустой массив если нет).
+
+severity — серьёзность от 1 до 5:
+1 = мелкое замечание
+2 = незначительная проблема
+3 = заметная проблема, стоит обратить внимание
+4 = серьёзная проблема, требует немедленного внимания
+5 = критический инцидент (санитарные нарушения, отравление, травма)
+
+problemTypes — массив ключевых слов проблем:
+Примеры: "cold_food", "hair_found", "insect", "slow_service", "rude_staff", "wrong_order", "dirty_table", "loud_music", "broken_ac", "bonus_not_applied", "boring_presentation"
+Пустой массив для позитивных отзывов.
+
+ВАЖНО: Отвечай ТОЛЬКО валидным JSON, без markdown и комментариев.`
+      },
+      {
+        role: 'user',
+        content: text
+      }
+    ],
+    max_tokens: 500
+  })
+
+  const durationMs = Date.now() - startTime
+  const raw = response.choices[0]?.message?.content || '{}'
+
+  console.log(`[openai] Classification completed in ${durationMs}ms`)
+
+  const parsed = JSON.parse(raw)
+
+  // Валидация и нормализация
+  return {
+    sentiment: ['positive', 'negative', 'neutral', 'mixed'].includes(parsed.sentiment)
+      ? parsed.sentiment : 'neutral',
+    category: ['food', 'service', 'atmosphere', 'loyalty', 'wow'].includes(parsed.category)
+      ? parsed.category : 'service',
+    subcategory: parsed.category === 'food' ? (parsed.subcategory || null) : null,
+    dishes: Array.isArray(parsed.dishes) ? parsed.dishes : [],
+    severity: Math.min(5, Math.max(1, Math.round(parsed.severity || 1))),
+    problemTypes: Array.isArray(parsed.problemTypes) ? parsed.problemTypes : []
+  }
+}
+
+/**
  * Скачать файл из Telegram по file_id
  * Telegram Bot API: getFile → file_path → download
  */

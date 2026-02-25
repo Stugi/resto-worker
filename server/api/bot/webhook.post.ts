@@ -2,6 +2,7 @@ import { InlineKeyboard, Keyboard } from 'grammy'
 import { createId } from '@paralleldrive/cuid2'
 import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
+import { classifyTranscript } from '../../utils/openai'
 import {
   MSG_WELCOME, MSG_WELCOME_BACK, MSG_ALREADY_REGISTERED, MSG_PHONE_ALREADY_USED,
   MSG_CONTACT_REQUEST, MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING,
@@ -1022,6 +1023,27 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
         userId: user?.id || null
       }
     })
+
+    // GPT-классификация транскрипции (не блокирует основной flow)
+    try {
+      const classification = await classifyTranscript(result.text)
+      await prisma.transcript.update({
+        where: { id: transcript.id },
+        data: {
+          sentiment: classification.sentiment,
+          category: classification.category,
+          subcategory: classification.subcategory,
+          dishes: JSON.stringify(classification.dishes),
+          severity: classification.severity,
+          problemTypes: JSON.stringify(classification.problemTypes),
+          classifiedAt: new Date()
+        }
+      })
+      console.log(`[bot] Classification saved: sentiment=${classification.sentiment}, category=${classification.category}, severity=${classification.severity}`)
+    } catch (classErr: any) {
+      console.error(`[bot] Classification failed for transcript ${transcript.id}: ${classErr.message}`)
+      // Не блокируем — транскрипция уже сохранена
+    }
 
     // Обновляем статус голосового
     await prisma.voiceMessage.update({

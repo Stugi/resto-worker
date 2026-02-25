@@ -25,7 +25,7 @@ export default defineNuxtConfig({
 
   // Transpile vue-datepicker для SSR
   build: {
-    transpile: ['@vuepic/vue-datepicker']
+    transpile: ['@vuepic/vue-datepicker', 'vue3-apexcharts']
   },
 
   // Глобальные стили

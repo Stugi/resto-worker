@@ -29,7 +29,7 @@ export const navigationItems: NavItem[] = [
   // --- Отчёты ---
   { path: '/transcripts', label: 'Транскрипции', section: 'analytics', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.MANAGER], icon: 'microphone', priority: 1 },
   { path: '/reports', label: 'Отчёты', section: 'analytics', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.MANAGER], icon: 'document', priority: 2 },
-  // { path: '/analytics',   label: 'Аналитика',    section: 'analytics', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER] },
+  { path: '/analytics', label: 'Аналитика', section: 'analytics', roles: [UserRole.SUPER_ADMIN, UserRole.OWNER], icon: 'chart', priority: 2.5 },
   // { path: '/stats',       label: 'Статистика',   section: 'analytics', roles: [UserRole.SUPER_ADMIN, UserRole.MANAGER] },
 
   // --- Настройки ---

@@ -8,6 +8,15 @@ model Transcript {
   language        String?              // Определённый язык (ru, en...)
   durationMs      Int?                 // Время обработки Whisper (мс)
 
+  // GPT-классификация отзыва
+  sentiment       String?              // positive | negative | neutral | mixed
+  category        String?              // food | service | atmosphere | loyalty | wow
+  subcategory     String?              // temperature | taste | foreign_object | cooking | quality (только для food)
+  dishes          String?  @db.Text    // JSON: ["Стейк рибай", "Ролл Верона"]
+  severity        Int?                 // 1-5 (1=мелочь, 5=критический инцидент)
+  problemTypes    String?  @db.Text    // JSON: ["cold_food", "hair_found"]
+  classifiedAt    DateTime?            // Когда классифицирован (null = ещё нет)
+
   // Связи
   voiceMessageId  String   @unique
   voiceMessage    VoiceMessage @relation(fields: [voiceMessageId], references: [id])
@@ -25,4 +34,7 @@ model Transcript {
 
   @@index([restaurantId])
   @@index([createdAt])
+  @@index([sentiment])
+  @@index([category])
+  @@index([restaurantId, createdAt, sentiment])
 }
