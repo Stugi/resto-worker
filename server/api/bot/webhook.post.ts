@@ -4,16 +4,17 @@ import { BotState } from '../../types/bot'
 import { UserRole } from '#shared/constants/roles'
 import {
   MSG_WELCOME, MSG_WELCOME_BACK, MSG_ALREADY_REGISTERED, MSG_PHONE_ALREADY_USED,
-  MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING, MSG_SETUP_COMPLETE,
-  MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION, MSG_SETTINGS_PRIVATE,
-  MSG_REPORT_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START, MSG_USE_START_SHORT,
-  MSG_START_CALLBACK, MSG_SCHEDULE, MSG_SCHEDULE_TIME, MSG_SCHEDULE_SAVED_TOAST,
-  MSG_SCHEDULE_DISABLED, MSG_SCHEDULE_SAVED, MSG_NO_TRANSCRIPTS, MSG_NO_PROMPT,
-  MSG_GENERATING_REPORT, MSG_REPORT_ERROR, MSG_ORG_NOT_FOUND, MSG_TARIFF_NOT_FOUND,
-  MSG_PAYMENT_ERROR, MSG_PAYMENT_SENT, MSG_PAYMENT_LINK, MSG_TRANSCRIPTION_LIMIT,
-  MSG_SUBSCRIPTION_EXPIRED, MSG_BILLING_DISABLED, MSG_TRANSCRIPTION_DONE,
-  MSG_TRANSCRIPTION_ERROR, BTN_SHARE_CONTACT, BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME,
-  BTN_SAVE, BTN_BACK_TO_DAYS
+  MSG_CONTACT_REQUEST, MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING,
+  MSG_SETUP_COMPLETE, MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION,
+  MSG_SETTINGS_PRIVATE, MSG_REPORT_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START,
+  MSG_USE_START_SHORT, MSG_START_CALLBACK, MSG_SCHEDULE, MSG_SCHEDULE_TIME,
+  MSG_SCHEDULE_SAVED_TOAST, MSG_SCHEDULE_DISABLED, MSG_SCHEDULE_SAVED,
+  MSG_NO_TRANSCRIPTS, MSG_NO_PROMPT, MSG_GENERATING_REPORT, MSG_REPORT_ERROR,
+  MSG_ORG_NOT_FOUND, MSG_TARIFF_NOT_FOUND, MSG_PAYMENT_ERROR, MSG_PAYMENT_SENT,
+  MSG_PAYMENT_LINK, MSG_TRANSCRIPTION_LIMIT, MSG_SUBSCRIPTION_EXPIRED,
+  MSG_BILLING_DISABLED, MSG_TRANSCRIPTION_DONE, MSG_TRANSCRIPTION_ERROR,
+  MSG_EXAMPLE_REPORT, BTN_START, BTN_LETS_GO, BTN_SHARE_CONTACT,
+  BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME, BTN_SAVE, BTN_BACK_TO_DAYS
 } from '../../constants/bot-messages'
 
 // --- ХЕЛПЕРЫ ---
@@ -98,24 +99,24 @@ bot.command('start', async (ctx) => {
   // Новый пользователь или без организации — запускаем онбординг
   await prisma.user.upsert({
     where: { telegramId: tgId },
-    update: { botState: BotState.WAITING_CONTACT },
+    update: { botState: BotState.WAITING_START },
     create: {
       id: createId(),
       telegramId: tgId,
-      botState: BotState.WAITING_CONTACT,
+      botState: BotState.WAITING_START,
       role: UserRole.OWNER,
       createdBy: 'telegram_bot'
     }
   })
 
-  const contactKeyboard = new Keyboard()
-    .requestContact(BTN_SHARE_CONTACT)
+  const startKeyboard = new Keyboard()
+    .text(BTN_START)
     .resized()
     .oneTime()
 
   await ctx.reply(MSG_WELCOME(firstName), {
     parse_mode: 'HTML',
-    reply_markup: contactKeyboard
+    reply_markup: startKeyboard
   })
 })
 
@@ -416,7 +417,25 @@ bot.on('message:text', async (ctx) => {
     return ctx.reply(MSG_USE_START)
   }
 
-  // Ожидаем название организации
+  // Обработка кнопки СТАРТ
+  if (user.botState === BotState.WAITING_START && text === BTN_START) {
+    await prisma.user.update({
+      where: { telegramId: tgId },
+      data: { botState: BotState.WAITING_CONTACT }
+    })
+
+    const contactKeyboard = new Keyboard()
+      .requestContact(BTN_SHARE_CONTACT)
+      .resized()
+      .oneTime()
+
+    return ctx.reply(MSG_CONTACT_REQUEST, {
+      parse_mode: 'HTML',
+      reply_markup: contactKeyboard
+    })
+  }
+
+  // Ожидаем название ресторана
   if (user.botState === BotState.WAITING_NAME) {
     await prisma.user.update({
       where: { telegramId: tgId },
@@ -453,8 +472,32 @@ bot.on('callback_query:data', async (ctx) => {
 
   const data = ctx.callbackQuery.data
 
-  // Обработка выбора масштаба
+  // Обработка выбора масштаба → показать пример отчёта
   if (data.startsWith('scale_') && user.botState === BotState.WAITING_SCALE) {
+    await ctx.answerCallbackQuery()
+
+    // Отправляем пример отчёта
+    await ctx.reply(MSG_EXAMPLE_REPORT, { parse_mode: 'HTML' })
+
+    // Кнопка "Поехали"
+    const confirmKeyboard = new InlineKeyboard()
+      .text(BTN_LETS_GO, 'lets_go')
+
+    await ctx.reply('👆 Готовы запустить систему в вашем ресторане?', {
+      reply_markup: confirmKeyboard
+    })
+
+    // Переход в WAITING_CONFIRM
+    await prisma.user.update({
+      where: { telegramId: tgId },
+      data: { botState: BotState.WAITING_CONFIRM }
+    })
+
+    return
+  }
+
+  // Обработка кнопки "Поехали" → создание орг/ресторана/группы
+  if (data === 'lets_go' && user.botState === BotState.WAITING_CONFIRM) {
     await ctx.answerCallbackQuery()
 
     const orgName = user.tempOrgName || 'Мой ресторан'
@@ -492,7 +535,6 @@ bot.on('callback_query:data', async (ctx) => {
           }
         })
 
-        // Ресторан создается автоматически с именем организации
         const restaurant = await tx.restaurant.create({
           data: {
             id: createId(),
@@ -502,7 +544,6 @@ bot.on('callback_query:data', async (ctx) => {
           }
         })
 
-        // Обновляем пользователя
         await tx.user.update({
           where: { telegramId: tgId },
           data: {
@@ -553,12 +594,14 @@ bot.on('callback_query:data', async (ctx) => {
 
         // Отправляем инструкцию в группу и закрепляем
         try {
-          // Для Bot API суперграуппы нужен формат -100<chatId>
           const rawChatId = groupResult.chatId.toString()
           const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
-          const instructionText = MSG_GROUP_INSTRUCTION
 
-          const instructionMsg = await bot.api.sendMessage(botChatId, instructionText)
+          const instructionMsg = await bot.api.sendMessage(
+            botChatId,
+            MSG_GROUP_INSTRUCTION(orgName),
+            { parse_mode: 'HTML' }
+          )
           await bot.api.pinChatMessage(botChatId, instructionMsg.message_id)
           console.log(`[bot] Instruction sent and pinned in group ${groupResult.chatId}`)
         } catch (instrErr: any) {
@@ -580,18 +623,6 @@ bot.on('callback_query:data', async (ctx) => {
             })
           } catch {}
         }
-
-        // TODO: раскомментировать когда будет готова админка
-        // const adminUrl = process.env.APP_URL || 'https://restoworker.ru'
-        // const password = `rw_${tgId.slice(-6)}`
-        // await ctx.reply(
-        //   `<b>Данные для входа в админ-панель:</b>\n\n` +
-        //   `Ссылка: ${adminUrl}\n` +
-        //   `Логин: owner_${tgId.slice(-6)}\n` +
-        //   `Пароль: ${password}\n\n` +
-        //   `<i>Сохрани эти данные!</i>`,
-        //   { parse_mode: 'HTML' }
-        // )
 
         // Формируем инфо о тарифе
         const tariffInfo = trialTariff
