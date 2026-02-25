@@ -26,3 +26,4 @@ logs
 .history/
 .agents/
 .claude/
+docs/reports/*

@@ -6,16 +6,20 @@ import {
   MSG_WELCOME, MSG_WELCOME_BACK, MSG_ALREADY_REGISTERED, MSG_PHONE_ALREADY_USED,
   MSG_CONTACT_REQUEST, MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING,
   MSG_SETUP_COMPLETE, MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION,
-  MSG_SETTINGS_PRIVATE, MSG_REPORT_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START,
+  MSG_SETTINGS_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START,
   MSG_USE_START_SHORT, MSG_START_CALLBACK, MSG_SCHEDULE, MSG_SCHEDULE_TIME,
   MSG_SCHEDULE_SAVED_TOAST, MSG_SCHEDULE_DISABLED, MSG_SCHEDULE_SAVED,
-  MSG_NO_TRANSCRIPTS, MSG_NO_PROMPT, MSG_GENERATING_REPORT, MSG_REPORT_ERROR,
   MSG_ORG_NOT_FOUND, MSG_TARIFF_NOT_FOUND, MSG_PAYMENT_ERROR, MSG_PAYMENT_SENT,
   MSG_PAYMENT_LINK, MSG_TRANSCRIPTION_LIMIT, MSG_SUBSCRIPTION_EXPIRED,
   MSG_BILLING_DISABLED, MSG_TRANSCRIPTION_DONE, MSG_TRANSCRIPTION_ERROR,
   MSG_EXAMPLE_REPORT, BTN_START, BTN_LETS_GO, BTN_SHARE_CONTACT,
-  BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME, BTN_SAVE, BTN_BACK_TO_DAYS
+  BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME, BTN_SAVE, BTN_BACK_TO_DAYS,
+  MSG_HELP, MSG_HELP_SENT, MSG_HELP_FORWARDED,
+  MSG_SUPPORT_REPLY_SENT, MSG_SUPPORT_REPLY_ERROR
 } from '../../constants/bot-messages'
+
+// Telegram ID администратора для пересылки сообщений поддержки
+const SUPPORT_CHAT_ID = process.env.SUPPORT_CHAT_ID || '1003948911'
 
 // --- ХЕЛПЕРЫ ---
 
@@ -120,6 +124,19 @@ bot.command('start', async (ctx) => {
   })
 })
 
+// Команда /help - поддержка (только в личке)
+bot.command('help', async (ctx) => {
+  if (ctx.chat.type !== 'private') return
+
+  const tgId = ctx.from.id.toString()
+  await prisma.user.updateMany({
+    where: { telegramId: tgId },
+    data: { botState: 'WAITING_HELP' }
+  })
+
+  await ctx.reply(MSG_HELP, { parse_mode: 'HTML' })
+})
+
 // Команда /settings - настройка расписания отчётов (только в группе)
 bot.command('settings', async (ctx) => {
   // Работает только в группе
@@ -172,140 +189,6 @@ bot.command('settings', async (ctx) => {
     : '\n\nРасписание не настроено'
 
   await ctx.reply(MSG_SCHEDULE(restaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: keyboard })
-})
-
-// Команда /report - мгновенный отчёт за последние 24ч (только в группе)
-bot.command('report', async (ctx) => {
-  const tgId = ctx.from.id.toString()
-
-  // Работает только в группе
-  if (ctx.chat.type === 'private') {
-    await ctx.reply(MSG_REPORT_PRIVATE)
-    return
-  }
-
-  const chatId = ctx.chat.id.toString()
-  const restaurant = await findRestaurantByChatId(chatId)
-
-  if (!restaurant) {
-    await ctx.reply(MSG_GROUP_NOT_LINKED)
-    return
-  }
-
-  console.log(`[bot] /report: chatId="${chatId}", restaurant="${restaurant.name}"`)
-
-  await ctx.replyWithChatAction('typing')
-
-  const now = new Date()
-  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
-  // Получаем транскрипции за 24ч
-  const transcripts = await prisma.transcript.findMany({
-    where: {
-      restaurantId: restaurant.id,
-      createdAt: { gte: dayAgo, lte: now }
-    },
-    include: {
-      user: { select: { name: true } },
-      voiceMessage: { select: { duration: true } }
-    },
-    orderBy: { createdAt: 'asc' }
-  })
-
-  if (transcripts.length === 0) {
-    console.log(`[bot] /report: no transcripts for last 24h`)
-    await ctx.reply(MSG_NO_TRANSCRIPTS)
-    return
-  }
-
-  // Ищем промпт
-  const prompt = await prisma.reportPrompt.findFirst({
-    where: {
-      OR: [
-        { restaurantId: restaurant.id, isActive: true, deletedAt: null },
-        { isDefault: true, isActive: true, deletedAt: null }
-      ]
-    },
-    orderBy: { isDefault: 'asc' }
-  })
-
-  if (!prompt) {
-    console.log(`[bot] /report: no prompt found`)
-    await ctx.reply(MSG_NO_PROMPT)
-    return
-  }
-
-  console.log(`[bot] /report: ${transcripts.length} transcripts, prompt="${prompt.name}"`)
-
-  try {
-    await ctx.reply(MSG_GENERATING_REPORT(transcripts.length))
-
-    const transcriptsText = transcripts.map((t, i) => {
-      const date = t.createdAt.toLocaleDateString('ru-RU')
-      const time = t.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-      const author = t.user?.name || 'Неизвестный'
-      const duration = t.voiceMessage?.duration ? `${t.voiceMessage.duration}с` : ''
-      return `--- Отчёт #${i + 1} (${date} ${time}, ${author}, ${duration}) ---\n${t.text}`
-    }).join('\n\n')
-
-    const result = await generateReport({
-      template: prompt.template,
-      variables: {
-        restaurant_name: restaurant.name,
-        period_start: dayAgo.toLocaleDateString('ru-RU'),
-        period_end: now.toLocaleDateString('ru-RU'),
-        transcripts: transcriptsText
-      }
-    })
-
-    console.log(`[bot] /report: generated in ${result.generationTimeMs}ms, tokens=${result.tokensUsed}, content=${result.content.length} chars`)
-
-    // Сохраняем отчёт в БД
-    const reportId = createId()
-    await prisma.report.create({
-      data: {
-        id: reportId,
-        title: `Отчёт за ${dayAgo.toLocaleDateString('ru-RU')} — ${now.toLocaleDateString('ru-RU')}`,
-        content: result.content,
-        summary: result.summary,
-        status: 'COMPLETED',
-        periodStart: dayAgo,
-        periodEnd: now,
-        restaurantId: restaurant.id,
-        promptId: prompt.id,
-        model: result.model,
-        tokensUsed: result.tokensUsed,
-        generationTimeMs: result.generationTimeMs,
-        createdBy: tgId
-      }
-    })
-
-    // Отправляем отчёт в чат (с fallback на plain text при ошибке парсинга)
-    const sendChunked = async (text: string, parseMode?: 'HTML') => {
-      const maxLen = 4000
-      const parts: string[] = []
-      let remaining = text
-      while (remaining.length > 0) {
-        parts.push(remaining.slice(0, maxLen))
-        remaining = remaining.slice(maxLen)
-      }
-      for (const part of parts) {
-        try {
-          await ctx.reply(part, parseMode ? { parse_mode: parseMode } : {})
-        } catch {
-          // Fallback: отправляем без форматирования
-          await ctx.reply(part)
-        }
-      }
-    }
-
-    await sendChunked(result.content)
-
-    console.log(`[bot] /report: sent to chat, reportId=${reportId}`)
-  } catch (error: any) {
-    console.error('[bot] /report error:', error.message)
-    await ctx.reply(MSG_REPORT_ERROR)
-  }
 })
 
 // ШАГ 1: Обработка получения контакта
@@ -454,6 +337,49 @@ bot.on('message:text', async (ctx) => {
       parse_mode: 'HTML',
       reply_markup: keyboard
     })
+  }
+
+  // Обработка сообщения в поддержку
+  if (user.botState === 'WAITING_HELP' && ctx.chat.type === 'private') {
+    // Пересылаем сообщение администратору
+    try {
+      const userName = ctx.from.first_name + (ctx.from.last_name ? ` ${ctx.from.last_name}` : '')
+      const orgName = user.organizationId
+        ? (await prisma.organization.findUnique({ where: { id: user.organizationId }, select: { name: true } }))?.name
+        : undefined
+
+      // Отправляем инфо-заголовок
+      await bot.api.sendMessage(
+        SUPPORT_CHAT_ID,
+        MSG_HELP_FORWARDED(userName, tgId, orgName || undefined),
+        { parse_mode: 'HTML' }
+      )
+
+      // Пересылаем оригинальное сообщение
+      await ctx.forwardMessage(SUPPORT_CHAT_ID)
+    } catch (fwdErr: any) {
+      console.error(`[bot] Failed to forward help message: ${fwdErr.message}`)
+    }
+
+    // Сбрасываем состояние
+    await prisma.user.update({
+      where: { telegramId: tgId },
+      data: { botState: BotState.COMPLETED }
+    })
+
+    return ctx.reply(MSG_HELP_SENT)
+  }
+
+  // Обработка ответа администратора на сообщение пользователя
+  if (tgId === SUPPORT_CHAT_ID && ctx.message.reply_to_message?.forward_from) {
+    const targetUserId = ctx.message.reply_to_message.forward_from.id.toString()
+    try {
+      await bot.api.sendMessage(targetUserId, `💬 <b>Ответ поддержки:</b>\n\n${text}`, { parse_mode: 'HTML' })
+      return ctx.reply(MSG_SUPPORT_REPLY_SENT)
+    } catch (replyErr: any) {
+      console.error(`[bot] Failed to send support reply: ${replyErr.message}`)
+      return ctx.reply(MSG_SUPPORT_REPLY_ERROR)
+    }
   }
 
   // Неизвестное состояние
@@ -629,7 +555,19 @@ bot.on('callback_query:data', async (ctx) => {
           ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} транскрипций`
           : ''
 
-        await ctx.reply(MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo), { parse_mode: 'HTML' })
+        const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
+
+        // Отправляем в личку владельцу
+        await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
+
+        // Дублируем в группу ресторана
+        try {
+          const rawChatId2 = groupResult.chatId.toString()
+          const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-100${rawChatId2}`
+          await bot.api.sendMessage(botChatId2, setupCompleteMsg, { parse_mode: 'HTML' })
+        } catch (grpErr: any) {
+          console.warn(`[bot] Failed to send setup complete to group: ${grpErr.message}`)
+        }
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
@@ -666,14 +604,8 @@ bot.on('callback_query:data', async (ctx) => {
     }
     const schedule = settings.reportSchedule || { days: [], time: '17:00' }
 
-    // Toggle день
-    const idx = schedule.days.indexOf(dayNum)
-    if (idx >= 0) {
-      schedule.days.splice(idx, 1)
-    } else {
-      schedule.days.push(dayNum)
-      schedule.days.sort((a: number, b: number) => a - b)
-    }
+    // Выбор одного дня (заменяет предыдущий)
+    schedule.days = [dayNum]
     settings.reportSchedule = schedule
 
     // Сохраняем промежуточное состояние
