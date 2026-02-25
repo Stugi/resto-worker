@@ -10,7 +10,7 @@
 set -e
 
 APP_DIR="/opt/cosmicmind"
-REPO_URL="https://github.com/ArinaStu/resto-worker.git"  # <-- Поменяй на свой репозиторий
+REPO_URL="https://github.com/Stugi/resto-worker.git"
 COMPOSE_FILE="docker-compose.production.yml"
 
 echo ""
