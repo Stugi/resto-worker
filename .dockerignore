@@ -7,3 +7,7 @@ node_modules
 *.md
 .vscode
 .idea
+nginx
+certbot
+backups
+scripts

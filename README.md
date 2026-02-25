@@ -1,134 +1,141 @@
-# RESTO Worker 🍽️
+# CosmicMind AI 🍽️
 
-Restaurant Management System - система управления ресторанами с аналитикой и биллингом.
+Система управления ресторанами с AI-аналитикой голосовых отзывов, Telegram-ботом и автоматическими отчётами.
 
 ## Технологии
 
 - **Frontend**: Nuxt 4, Vue 3, Tailwind CSS, shadcn-vue
-- **Backend**: Nuxt Server API, Prisma ORM
-- **Database**: PostgreSQL (Neon)
-- **Auth**: Session-based authentication
+- **Backend**: Nuxt Server API (Nitro), Prisma ORM
+- **Database**: PostgreSQL 16 (Docker / Neon)
+- **Telegram**: Grammy (бот) + GramJS (userbot, MTProto)
+- **AI**: OpenAI Whisper (транскрипция) + GPT-4o-mini (отчёты)
+- **Платежи**: Тинькофф Касса
+- **Auth**: Session-based (httpOnly cookies)
+- **Deploy**: Docker Compose + nginx + SSL (VPS Timeweb Cloud)
 
 ## Быстрый старт
 
 ### 1. Установка зависимостей
 
 ```bash
-yarn install
+npm install
 ```
 
-### 2. Настройка базы данных (Neon)
+### 2. Настройка базы данных
 
-1. Перейдите на [neon.tech](https://neon.tech) и создайте аккаунт
-2. Создайте новый проект:
-   - **Name**: `resto-worker-dev`
-   - **Region**: Europe (Frankfurt/Amsterdam) или ближайший
-   - **Postgres version**: 16
-3. Скопируйте **Connection String** из Neon Console
-4. Создайте `.env` файл (на основе `.env.example`):
+**Вариант A: Docker (рекомендуется)**
+
+```bash
+docker compose up -d db
+```
+
+PostgreSQL будет доступен на `localhost:5432`.
+
+**Вариант B: Neon (облако)**
+
+1. Перейдите на [neon.tech](https://neon.tech) и создайте проект
+2. Скопируйте Connection String
+
+### 3. Настройка окружения
 
 ```bash
 cp .env.example .env
 ```
 
-5. Вставьте ваш connection string в `.env`:
+Заполните `.env` — см. [документацию по переменным окружения](docs/архитектура.md#переменные-окружения).
 
-```env
-DATABASE_URL="postgresql://user:password@ep-xxx.region.aws.neon.tech/neondb?sslmode=require"
-```
-
-### 3. Запуск миграций
+### 4. Запуск миграций
 
 ```bash
-# Применить миграции к базе данных
-yarn prisma migrate dev --name init
-
-# Сгенерировать Prisma Client
-yarn prisma generate
+npx prisma generate
+npx prisma db push
 ```
 
-### 4. Запуск dev сервера
+### 5. Запуск dev сервера
 
 ```bash
-yarn dev
+npm run dev
 ```
 
 Приложение будет доступно на `http://localhost:3000`
 
+### 6. Docker (полный стек)
+
+```bash
+# Разработка (app + PostgreSQL)
+docker compose up
+
+# Production (app + PostgreSQL + nginx + SSL)
+docker compose -f docker-compose.production.yml up -d --build
+```
+
 ## Структура проекта
 
 ```
-/app
-  /components    # Vue компоненты
-  /pages         # Страницы приложения
-  /layouts       # Layouts
-  /composables   # Composables
-  /stores        # Pinia stores
+resto-worker/
+  app/                        # Фронтенд (Nuxt pages + components)
+    components/               # Vue компоненты
+    pages/                    # Страницы приложения
+    layouts/                  # Layouts
+    composables/              # Composables
 
-/server
-  /api           # API endpoints
-  /middleware    # Server middleware
-  /utils         # Server utilities
+  server/                     # Бэкенд (Nitro)
+    api/                      # API endpoints
+    constants/                # Константы (сообщения бота и др.)
+    utils/                    # Server utilities (auth, prisma, openai, userbot)
 
-/prisma
-  schema.prisma  # Database schema
+  prisma/
+    schema/                   # Multi-file Prisma schema (13 файлов)
+
+  docs/                       # Документация
 ```
 
 ## Доступные команды
 
 ```bash
 # Development
-yarn dev          # Запуск dev сервера
-yarn build        # Build для production
-yarn preview      # Preview production build
+npm run dev          # Запуск dev сервера
+npm run build        # Build для production
+npm run preview      # Preview production build
 
 # Database
-yarn prisma migrate dev    # Создать и применить миграцию
-yarn prisma generate       # Сгенерировать Prisma Client
-yarn prisma studio         # Открыть Prisma Studio (UI для БД)
-yarn prisma db push        # Синхронизировать schema с БД (для dev)
+npx prisma generate       # Сгенерировать Prisma Client
+npx prisma db push        # Синхронизировать schema с БД
+npx prisma studio         # Открыть Prisma Studio (UI для БД)
+npx prisma migrate deploy # Применить миграции (production)
 
-# Prisma Studio (Database GUI)
-yarn prisma studio
-```
-
-## База данных
-
-Проект использует PostgreSQL через [Neon](https://neon.tech) - serverless PostgreSQL с:
-- ✅ Бесплатный tier для разработки
-- ✅ Автоматические бэкапы
-- ✅ Branching для тестирования
-- ✅ Instant provisioning
-
-### Альтернатива: Локальный PostgreSQL
-
-Если хотите использовать локальную БД:
-
-```bash
-# macOS (через Homebrew)
-brew install postgresql@16
-brew services start postgresql@16
-
-# Создать базу данных
-createdb resto_worker
-
-# Обновить .env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/resto_worker?schema=public"
+# Telegram Bot
+npm run bot:set-webhook -- <URL>  # Установить webhook
 ```
 
 ## Роли пользователей (RBAC)
 
-- **SUPER_ADMIN** - полный доступ ко всей системе
-- **OWNER** - владелец организации, управление своими ресторанами
-- **MANAGER** - менеджер конкретного ресторана
+- **SUPER_ADMIN** — полный доступ ко всей системе
+- **OWNER** — владелец организации, управление своими ресторанами
+- **MANAGER** — менеджер конкретного ресторана
 
-## План разработки
+## Документация
 
-Подробный план реализации находится в [.cloude/plan.md](./.cloude/plan.md)
+| Документ | Описание |
+|---|---|
+| [Архитектура](docs/архитектура.md) | Стек, структура проекта, API паттерны |
+| [Инфраструктура](docs/инфраструктура.md) | Хостинг, БД, AI, риски, стоимость |
+| [Деплой на Timeweb](docs/деплой-timeweb.md) | Пошаговый гайд по деплою на Timeweb Cloud |
+| [API справочник](docs/api-справочник.md) | Описание всех API эндпоинтов |
+| [Telegram бот](docs/telegram-бот.md) | Логика бота, команды, онбординг |
+| [Настройка Telegram бота](docs/настройка-telegram-бота.md) | Создание бота, webhook, userbot |
+| [Настройка Neon](docs/настройка-neon.md) | Подключение к Neon PostgreSQL |
+| [Команды](docs/команды.md) | Полный список команд разработки |
+| [План разработки](.claude/plan.md) | Roadmap и текущий статус |
 
-## Дополнительная информация
+## Деплой
 
-- [Nuxt Documentation](https://nuxt.com/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Neon Documentation](https://neon.tech/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
+Подробная инструкция: **[Деплой на VPS (Timeweb Cloud)](docs/деплой-timeweb.md)**
+
+Кратко:
+1. VPS-сервер на Timeweb Cloud (Ubuntu, ~800₽/мес)
+2. Подключиться по SSH и запустить `./scripts/deploy.sh`
+3. Заполнить `.env` и запустить `./scripts/start.sh`
+4. Настроить DNS + webhook Telegram бота
+
+Всё работает на одном сервере: app + PostgreSQL + nginx + SSL.

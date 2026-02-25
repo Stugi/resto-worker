@@ -27,3 +27,7 @@ logs
 .agents/
 .claude/
 docs/reports/*
+
+# Deployment artifacts (создаются на сервере)
+certbot/
+backups/

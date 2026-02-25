@@ -4,5 +4,5 @@ set -e
 echo "🔄 Applying database migrations..."
 npx prisma migrate deploy
 
-echo "🚀 Starting RestoWorker server..."
+echo "🚀 Starting CosmicMind AI server..."
 exec node .output/server/index.mjs
