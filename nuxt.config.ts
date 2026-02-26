@@ -19,7 +19,7 @@ export default defineNuxtConfig({
     // Public keys (доступны на клиенте)
     public: {
       apiBase: '/api',
-      telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || 'resto_worker_bot'
+      telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || ''
     }
   },
 

@@ -116,7 +116,7 @@ const password = ref('')
 
 // Telegram Bot Username (from runtime config)
 const config = useRuntimeConfig()
-const TELEGRAM_BOT_USERNAME = config.public.telegramBotUsername || 'resto_worker_bot'
+const TELEGRAM_BOT_USERNAME = config.public.telegramBotUsername || ''
 
 // Login Handler
 const handleLoginSubmit = async () => {
