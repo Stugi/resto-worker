@@ -122,7 +122,6 @@ export default defineEventHandler(async (event) => {
     // Кол-во активных пользователей-менеджеров
     prisma.user.count({
       where: {
-        deletedAt: null,
         ...(orgId ? { organizationId: orgId } : {}),
         role: { in: ['MANAGER', 'OWNER'] }
       }

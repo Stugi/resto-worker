@@ -12,8 +12,7 @@ export default defineEventHandler(async (event) => {
   // Ищем пользователя по логину
   const user = await prisma.user.findFirst({
     where: {
-      login: body.login.toLowerCase().trim(),
-      deletedAt: null
+      login: body.login.toLowerCase().trim()
     },
     include: {
       organization: {

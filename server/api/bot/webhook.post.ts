@@ -255,7 +255,6 @@ bot.on('message:contact', async (ctx) => {
     where: {
       phone: phoneBigInt,
       organizationId: { not: null },
-      deletedAt: null,
       telegramId: { not: tgId } // Исключаем самого себя
     }
   })
@@ -409,7 +408,7 @@ bot.on('callback_query:data', async (ctx) => {
     const confirmKeyboard = new InlineKeyboard()
       .text(BTN_LETS_GO, 'lets_go')
 
-    await ctx.reply('👆 Готовы запустить систему в вашем ресторане?', {
+    await ctx.reply('👇 Готовы запустить систему в вашем ресторане?', {
       reply_markup: confirmKeyboard
     })
 
@@ -513,6 +512,7 @@ bot.on('callback_query:data', async (ctx) => {
             settingsComment: JSON.stringify({
               telegramChatId: groupResult.chatId,
               chatTitle: groupResult.chatTitle,
+              inviteLink: groupResult.inviteLink || null,
               createdByUserbot: true
             })
           }
@@ -521,7 +521,13 @@ bot.on('callback_query:data', async (ctx) => {
         // Отправляем инструкцию в группу и закрепляем
         try {
           const rawChatId = groupResult.chatId.toString()
-          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+          // Для basic group (created via CreateChat) — chatId без минуса, формат Bot API: -chatId
+          // Для supergroup/channel — chatId с минусом или нужен префикс -100
+          const botChatId = rawChatId.startsWith('-')
+            ? rawChatId
+            : `-${rawChatId}`
+
+          console.log(`[bot] Sending instruction to group. rawChatId=${rawChatId}, botChatId=${botChatId}`)
 
           const instructionMsg = await bot.api.sendMessage(
             botChatId,
@@ -555,16 +561,17 @@ bot.on('callback_query:data', async (ctx) => {
           ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} транскрипций`
           : ''
 
-        const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
+        const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
 
-        // Отправляем в личку владельцу
+        // Отправляем в личку владельцу (с invite-ссылкой)
         await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
 
-        // Дублируем в группу ресторана
+        // Дублируем в группу ресторана (без invite-ссылки — участники уже в группе)
         try {
           const rawChatId2 = groupResult.chatId.toString()
-          const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-100${rawChatId2}`
-          await bot.api.sendMessage(botChatId2, setupCompleteMsg, { parse_mode: 'HTML' })
+          const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-${rawChatId2}`
+          const groupSetupMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
+          await bot.api.sendMessage(botChatId2, groupSetupMsg, { parse_mode: 'HTML' })
         } catch (grpErr: any) {
           console.warn(`[bot] Failed to send setup complete to group: ${grpErr.message}`)
         }

@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
 
   // Формируем сообщение
   const rawChatId = chatId.toString()
-  const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+  const botChatId = rawChatId.startsWith('-') ? rawChatId : `-${rawChatId}`
 
   const periodStart = report.periodStart
     ? new Date(report.periodStart).toLocaleDateString('ru-RU')

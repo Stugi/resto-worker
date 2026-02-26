@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   // Проверяем существование пользователя
   const existingUser = await prisma.user.findUnique({
-    where: { id, deletedAt: null }
+    where: { id }
   })
 
   if (!existingUser) {
@@ -57,13 +57,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // Soft delete
-  await prisma.user.update({
-    where: { id },
-    data: {
-      deletedAt: new Date(),
-      deletedBy: user.login || user.id
-    }
+  // Hard delete
+  await prisma.user.delete({
+    where: { id }
   })
 
   return { success: true, message: 'Пользователь удален' }

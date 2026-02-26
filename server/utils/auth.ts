@@ -59,7 +59,7 @@ export async function getUserFromSession(event: H3Event) {
 
   // Получаем пользователя из БД
   const user = await prisma.user.findUnique({
-    where: { id: userId, deletedAt: null },
+    where: { id: userId },
     include: {
       organization: {
         include: {

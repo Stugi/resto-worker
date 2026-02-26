@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
   // SUPER_ADMIN видит всех пользователей
   if (user.role === UserRole.SUPER_ADMIN) {
     const users = await prisma.user.findMany({
-      where: { deletedAt: null },
       include: {
         organization: {
           select: {
@@ -42,8 +41,7 @@ export default defineEventHandler(async (event) => {
 
     const users = await prisma.user.findMany({
       where: {
-        organizationId: user.organizationId,
-        deletedAt: null
+        organizationId: user.organizationId
       },
       include: {
         organization: {

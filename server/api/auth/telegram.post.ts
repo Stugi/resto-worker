@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
   // Ищем пользователя по telegramId
   let user = await prisma.user.findUnique({
-    where: { telegramId, deletedAt: null },
+    where: { telegramId },
     include: {
       organization: {
         include: {

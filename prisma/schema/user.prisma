@@ -29,8 +29,6 @@ model User {
   createdBy String?
   updatedAt DateTime  @updatedAt
   updatedBy String?
-  deletedAt DateTime?
-  deletedBy String?
 
   @@index([organizationId])
 }

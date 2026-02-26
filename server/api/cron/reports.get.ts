@@ -156,7 +156,7 @@ export default defineEventHandler(async (event) => {
       if (chatId) {
         try {
           const rawChatId = chatId.toString()
-          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+          const botChatId = rawChatId.startsWith('-') ? rawChatId : `-${rawChatId}`
           await bot.api.sendMessage(
             botChatId,
             MSG_AUTO_REPORT_NO_DATA(restaurant.name),
@@ -293,7 +293,7 @@ export default defineEventHandler(async (event) => {
       const chatId = settings.telegramChatId
       if (chatId) {
         const rawChatId = chatId.toString()
-        const botChatId = rawChatId.startsWith('-') ? rawChatId : `-100${rawChatId}`
+        const botChatId = rawChatId.startsWith('-') ? rawChatId : `-${rawChatId}`
         const periodStartStr = periodStart.toLocaleDateString('ru-RU')
         const periodEndStr = periodEnd.toLocaleDateString('ru-RU')
 
@@ -345,8 +345,7 @@ export default defineEventHandler(async (event) => {
         where: {
           organizationId: restaurant.organizationId,
           role: 'OWNER',
-          telegramId: { not: null },
-          deletedAt: null
+          telegramId: { not: null }
         }
       })
 

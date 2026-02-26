@@ -14,6 +14,7 @@ interface GroupResult {
   success: boolean
   chatId?: string
   chatTitle?: string
+  inviteLink?: string
   error?: string
 }
 
@@ -289,10 +290,43 @@ export async function createRestaurantGroup(
       })
     }
 
+    // 5. Генерируем invite-ссылку для группы
+    let inviteLink: string | undefined
+    try {
+      console.log(`[userbot] Exporting invite link for chat ${chatId}`)
+      const inviteResult = await client.invoke(
+        new Api.messages.ExportChatInvite({
+          peer: new Api.InputPeerChat({ chatId: BigInt(chatId) })
+        })
+      )
+      inviteLink = (inviteResult as any).link
+      console.log(`[userbot] Invite link generated: ${inviteLink}`)
+
+      await logUserbotAction({
+        action: 'EXPORT_INVITE_LINK',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: true,
+        metadata: { inviteLink }
+      })
+    } catch (error: any) {
+      console.warn(`[userbot] Failed to export invite link: ${error.message}`)
+      await logUserbotAction({
+        action: 'EXPORT_INVITE_LINK',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: false,
+        error: error.message || String(error)
+      })
+    }
+
     return {
       success: true,
       chatId,
-      chatTitle
+      chatTitle,
+      inviteLink
     }
   } catch (error: any) {
     // Обработка Telegram Flood Wait

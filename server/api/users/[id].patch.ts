@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   // Проверяем существование пользователя
   const existingUser = await prisma.user.findUnique({
-    where: { id, deletedAt: null }
+    where: { id }
   })
 
   if (!existingUser) {

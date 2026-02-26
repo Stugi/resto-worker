@@ -59,8 +59,7 @@ export default defineEventHandler(async (event) => {
   const owner = await prisma.user.findFirst({
     where: {
       organizationId: body.organizationId,
-      telegramId: { not: null },
-      deletedAt: null
+      telegramId: { not: null }
     },
     orderBy: { createdAt: 'asc' }
   })

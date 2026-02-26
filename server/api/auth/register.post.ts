@@ -28,8 +28,7 @@ export default defineEventHandler(async (event) => {
   // Проверяем, существует ли пользователь
   const existingUser = await prisma.user.findFirst({
     where: {
-      login,
-      deletedAt: null
+      login
     }
   })
 
