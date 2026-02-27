@@ -1,5 +1,3 @@
-import { UserRole } from '#shared/constants/roles'
-
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const body = await readBody<TelegramAuthData>(event)
@@ -53,26 +51,11 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  // Если пользователя нет - создаем нового
+  // Пользователь должен быть создан через онбординг в боте
   if (!user) {
-    // Формируем имя
-    const name = [body.first_name, body.last_name].filter(Boolean).join(' ')
-
-    user = await prisma.user.create({
-      data: {
-        telegramId,
-        name: name || 'Telegram User',
-        role: UserRole.MANAGER, // По умолчанию создаем как MANAGER
-        createdBy: 'telegram-auth'
-      },
-      include: {
-        organization: {
-          include: {
-            billing: true
-          }
-        },
-        restaurant: true
-      }
+    throw createError({
+      statusCode: 403,
+      message: 'Аккаунт не найден. Пройдите регистрацию через Telegram-бота.'
     })
   }
 
