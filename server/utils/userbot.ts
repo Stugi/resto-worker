@@ -101,7 +101,8 @@ export async function createRestaurantGroup(
   ownerTelegramId: string,
   restaurantId: string,
   organizationId?: string,
-  organizationName?: string
+  organizationName?: string,
+  ownerPhone?: string
 ): Promise<GroupResult> {
   const startTime = Date.now()
   let chatId: string | undefined
@@ -122,16 +123,36 @@ export async function createRestaurantGroup(
       chatTitle = `CosmicAI | ${restaurantName}`
     }
 
-    // 0. Резолвим пользователя (gramjs требует InputUser, а не просто ID)
+    // 0. Резолвим пользователя (gramjs требует InputUser с access_hash)
     let ownerEntity
     try {
       ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
-      console.log('[userbot] Owner entity resolved:', ownerEntity?.className)
+      console.log('[userbot] Owner entity resolved from cache:', ownerEntity?.className)
     } catch {
-      console.log('[userbot] Entity not in cache, trying getEntity...')
-      const entity = await client.getEntity(BigInt(ownerTelegramId))
-      ownerEntity = await client.getInputEntity(entity)
-      console.log('[userbot] Owner entity resolved via getEntity:', ownerEntity?.className)
+      console.log('[userbot] Entity not in cache, importing contact...')
+      if (!ownerPhone) {
+        throw new GroupCreationError('Телефон владельца не указан, не удалось резолвить пользователя')
+      }
+      // Импортируем контакт чтобы получить access_hash
+      const importResult = await client.invoke(
+        new Api.contacts.ImportContacts({
+          contacts: [
+            new Api.InputPhoneContact({
+              clientId: BigInt(0),
+              phone: ownerPhone,
+              firstName: 'Owner',
+              lastName: ''
+            })
+          ]
+        })
+      )
+      console.log('[userbot] ImportContacts result: users=', importResult.users?.length)
+      if (importResult.users && importResult.users.length > 0) {
+        ownerEntity = await client.getInputEntity(importResult.users[0])
+        console.log('[userbot] Owner entity resolved via ImportContacts:', ownerEntity?.className)
+      } else {
+        throw new GroupCreationError('Не удалось найти пользователя по номеру телефона')
+      }
     }
 
     // 1. Создаём группу

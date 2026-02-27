@@ -486,7 +486,8 @@ bot.on('callback_query:data', async (ctx) => {
           tgId,
           restaurant.id,
           org.id,
-          orgName
+          orgName,
+          lead?.phone?.toString()
         )
 
         if (!groupResult.success) {
