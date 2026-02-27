@@ -27,12 +27,13 @@ export default {
           hover: 'var(--action-hover)',
           text: 'var(--action-text)',
         },
-        // Accent (неоново-зелёный — минимальные акценты)
+        // Accent (оранж→зелёный градиент)
         accent: {
           DEFAULT: 'var(--accent)',
           hover: 'var(--accent-hover)',
           light: 'var(--accent-light)',
           ring: 'var(--accent-ring)',
+          end: 'var(--accent-end)',
         },
         // Фоны
         bg: {
