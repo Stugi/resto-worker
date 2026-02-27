@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height: 100vh; min-height: 100dvh;">
+  <div>
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

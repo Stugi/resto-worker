@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-bg-secondary flex items-center justify-center p-4" style="min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center;">
+  <div class="h-dvh bg-bg-secondary flex items-center justify-center p-4 overflow-y-auto" style="height: 100dvh; display: flex; align-items: center; justify-content: center;">
     <div class="w-full max-w-md mx-auto">
       <!-- Logo and Title -->
       <div class="flex flex-col items-center mb-8">
