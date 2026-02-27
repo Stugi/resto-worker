@@ -1,3 +1,4 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json"
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "prisma migrate deploy --schema prisma/schema && nuxt build"
 }
