@@ -8,20 +8,13 @@
       </div>
       <div class="flex items-center gap-3 flex-wrap">
         <!-- Фильтр по ресторану -->
-        <select
+        <BaseSelect
           v-if="restaurants.length > 1"
           v-model="restaurantId"
-          class="px-3 py-1.5 text-xs font-medium border border-border rounded-lg bg-bg-card text-text focus:outline-none focus:ring-1 focus:ring-accent"
-        >
-          <option value="">Все рестораны</option>
-          <option
-            v-for="r in restaurants"
-            :key="r.id"
-            :value="r.id"
-          >
-            {{ r.name }}
-          </option>
-        </select>
+          :options="restaurantOptions"
+          placeholder="Все рестораны"
+          :searchable="false"
+        />
         <ChartsPeriodFilter v-model="period" />
       </div>
     </div>
@@ -100,6 +93,10 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const data = ref<AnalyticsResponse | null>(null)
 const restaurants = ref<{ id: string; name: string }[]>([])
+
+const restaurantOptions = computed(() =>
+  restaurants.value.map(r => ({ value: r.id, label: r.name }))
+)
 
 const fetchData = async () => {
   loading.value = true
