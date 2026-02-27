@@ -23,6 +23,6 @@ export default defineEventHandler(async (event) => {
   // Преобразуем BigInt в строку для JSON-сериализации
   return leads.map(lead => ({
     ...lead,
-    phone: lead.phone.toString()
+    phone: lead.phone?.toString() || null
   }))
 })
