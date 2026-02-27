@@ -15,7 +15,8 @@ import {
   MSG_EXAMPLE_REPORT, BTN_START, BTN_LETS_GO, BTN_SHARE_CONTACT,
   BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME, BTN_SAVE, BTN_BACK_TO_DAYS,
   MSG_HELP, MSG_HELP_SENT, MSG_HELP_FORWARDED,
-  MSG_SUPPORT_REPLY_SENT, MSG_SUPPORT_REPLY_ERROR
+  MSG_SUPPORT_REPLY_SENT, MSG_SUPPORT_REPLY_ERROR,
+  MSG_GROUP_LINKED, MSG_GROUP_ALREADY_LINKED
 } from '../../constants/bot-messages'
 
 // Telegram ID администратора для пересылки сообщений поддержки
@@ -540,8 +541,9 @@ bot.on('callback_query:data', async (ctx) => {
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
-        // Группа не создалась, но организация и User готовы
-        await ctx.reply(MSG_SETUP_NO_GROUP(orgName), { parse_mode: 'HTML' })
+        // Группа не создалась, но организация и User готовы — даём инструкцию по ручной привязке
+        const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'CosmicMindBot'
+        await ctx.reply(MSG_SETUP_NO_GROUP(orgName, botUsername), { parse_mode: 'HTML' })
       }
     } catch (error: any) {
       console.error('Ошибка создания организации:', error)
@@ -847,6 +849,106 @@ bot.on('callback_query:data', async (ctx) => {
 
 })
 
+// --- АВТОПРИВЯЗКА ГРУППЫ (ручной fallback) ---
+// Когда бота добавляют в группу — проверяем, есть ли у добавившего ресторан без группы
+bot.on('my_chat_member', async (ctx) => {
+  const update = ctx.myChatMember
+
+  // Реагируем только на добавление в группу/супергруппу
+  const chatType = update.chat.type
+  if (chatType !== 'group' && chatType !== 'supergroup') return
+
+  // Проверяем, что бот стал участником (был left/kicked, стал member/administrator)
+  const oldStatus = update.old_chat_member.status
+  const newStatus = update.new_chat_member.status
+
+  const wasOut = oldStatus === 'left' || oldStatus === 'kicked'
+  const isNowIn = newStatus === 'member' || newStatus === 'administrator'
+
+  if (!wasOut || !isNowIn) return
+
+  const addedByUserId = ctx.from.id.toString()
+  const chatId = update.chat.id.toString()
+  const chatTitle = update.chat.title || 'Группа'
+
+  console.log(`[bot] my_chat_member: bot added to "${chatTitle}" (${chatId}) by user ${addedByUserId}`)
+
+  try {
+    // 1. Находим пользователя (владельца), который добавил бота
+    const addedByUser = await prisma.user.findUnique({
+      where: { telegramId: addedByUserId },
+      include: {
+        restaurant: { select: { id: true, name: true, settingsComment: true, organizationId: true } },
+        organization: { select: { id: true, name: true } }
+      }
+    })
+
+    if (!addedByUser || !addedByUser.restaurant) {
+      console.log(`[bot] my_chat_member: user ${addedByUserId} not found or has no restaurant, ignoring`)
+      return
+    }
+
+    // 2. Проверяем, нет ли уже привязанной группы
+    const restaurant = addedByUser.restaurant
+    if (restaurant.settingsComment) {
+      try {
+        const settings = JSON.parse(restaurant.settingsComment)
+        if (settings.telegramChatId) {
+          console.log(`[bot] my_chat_member: restaurant "${restaurant.name}" already has group ${settings.telegramChatId}`)
+          try {
+            await bot.api.sendMessage(addedByUserId, MSG_GROUP_ALREADY_LINKED, { parse_mode: 'HTML' })
+          } catch (e: any) {
+            console.warn(`[bot] my_chat_member: failed to notify user: ${e.message}`)
+          }
+          return
+        }
+      } catch { /* settingsComment is not valid JSON, treat as no group */ }
+    }
+
+    // 3. Привязываем группу к ресторану
+    const settingsData = {
+      telegramChatId: chatId,
+      chatTitle,
+      inviteLink: null,
+      createdByUserbot: false
+    }
+
+    await prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: { settingsComment: JSON.stringify(settingsData) }
+    })
+
+    console.log(`[bot] my_chat_member: linked group "${chatTitle}" (${chatId}) to restaurant "${restaurant.name}"`)
+
+    // 4. Отправляем инструкцию в группу и закрепляем
+    const restaurantName = restaurant.name
+    try {
+      const instructionMsg = await bot.api.sendMessage(
+        chatId,
+        MSG_GROUP_INSTRUCTION(restaurantName),
+        { parse_mode: 'HTML' }
+      )
+      await bot.api.pinChatMessage(chatId, instructionMsg.message_id)
+      console.log(`[bot] my_chat_member: instruction sent and pinned in group ${chatId}`)
+    } catch (instrErr: any) {
+      console.warn(`[bot] my_chat_member: failed to send/pin instruction: ${instrErr.message}`)
+    }
+
+    // 5. Уведомляем владельца в личке
+    try {
+      await bot.api.sendMessage(
+        addedByUserId,
+        MSG_GROUP_LINKED(restaurantName, chatTitle),
+        { parse_mode: 'HTML' }
+      )
+    } catch (dmErr: any) {
+      console.warn(`[bot] my_chat_member: failed to DM user: ${dmErr.message}`)
+    }
+  } catch (error: any) {
+    console.error(`[bot] my_chat_member error:`, error.message || error)
+  }
+})
+
 // --- ГОЛОСОВЫЕ СООБЩЕНИЯ В ГРУППЕ ---
 
 // Обработка голосовых (voice) и аудио (audio) сообщений
@@ -1064,11 +1166,15 @@ export default defineEventHandler(async (event) => {
   // Логируем входящие апдейты для отладки
   console.log(`[webhook] ${JSON.stringify({
     update_id: body.update_id,
-    chat_id: body.message?.chat?.id,
-    chat_type: body.message?.chat?.type,
+    chat_id: body.message?.chat?.id || body.my_chat_member?.chat?.id,
+    chat_type: body.message?.chat?.type || body.my_chat_member?.chat?.type,
     voice: !!body.message?.voice,
     audio: !!body.message?.audio,
-    text: body.message?.text?.substring(0, 30)
+    text: body.message?.text?.substring(0, 30),
+    my_chat_member: body.my_chat_member ? {
+      from: body.my_chat_member.from?.id,
+      new_status: body.my_chat_member.new_chat_member?.status
+    } : undefined
   })}`)
 
   try {

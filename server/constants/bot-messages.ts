@@ -74,9 +74,15 @@ export const MSG_SETUP_COMPLETE = (orgName: string, groupTitle: string, tariffIn
   `5. Вы получите автоматический отчёт по сервису` +
   tariffInfo
 
-export const MSG_SETUP_NO_GROUP = (orgName: string) =>
-  `<b>Организация "${orgName}" создана!</b>\n\n` +
-  `Группу для отчетов создадим чуть позже.\n\n`
+export const MSG_SETUP_NO_GROUP = (orgName: string, botUsername?: string) =>
+  `<b>Организация "${orgName}" создана! ✅</b>\n\n` +
+  `Автоматическое создание группы не удалось, но вы можете создать её самостоятельно.\n\n` +
+  `<b>Как подключить группу за 2 минуты:</b>\n\n` +
+  `1️⃣ Создайте новую группу в Telegram\n` +
+  `2️⃣ Добавьте в группу бота @${botUsername || 'CosmicMindBot'}\n` +
+  `3️⃣ Бот автоматически привяжет группу к вашему ресторану\n\n` +
+  `После этого бот отправит инструкции прямо в группу.\n\n` +
+  `<i>Если бот не определяет группу — убедитесь, что вы добавили именно @${botUsername || 'CosmicMindBot'}</i>`
 
 
 export const MSG_SETUP_ERROR = 'Произошла ошибка при настройке. Попробуй еще раз: /start'
@@ -108,6 +114,17 @@ export const MSG_GROUP_INSTRUCTION = (restaurantName: string) =>
 export const MSG_SETTINGS_PRIVATE = 'Команда /settings доступна только в группе ресторана'
 export const MSG_REPORT_PRIVATE = 'Команда /report доступна только в группе ресторана'
 export const MSG_GROUP_NOT_LINKED = 'Эта группа не привязана к ресторану.'
+
+export const MSG_GROUP_LINKED = (orgName: string, groupTitle: string) =>
+  `<b>Группа привязана! ✅</b>\n\n` +
+  `Ресторан: <b>${orgName}</b>\n` +
+  `Группа: <b>${groupTitle}</b>\n\n` +
+  `Инструкции отправлены и закреплены в группе.\n` +
+  `Добавьте в группу сотрудников и начинайте отправлять голосовые с обратной связью от гостей.`
+
+export const MSG_GROUP_ALREADY_LINKED =
+  'У вашего ресторана уже есть привязанная группа.\n\n' +
+  'Если хотите сменить группу — обратитесь в поддержку: /help'
 export const MSG_USE_START = 'Напиши /start для начала работы'
 export const MSG_USE_START_SHORT = 'Используй /start для начала'
 export const MSG_START_CALLBACK = 'Начни с /start'
