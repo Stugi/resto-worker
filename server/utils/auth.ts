@@ -104,8 +104,12 @@ export async function requireAuth(event: H3Event) {
   return user
 }
 
-// Безопасный объект пользователя (без пароля)
+// Безопасный объект пользователя (без пароля, BigInt → string)
 export function safeUserObject(user: any) {
   const { passwordHash, ...safeUser } = user
+  // BigInt (phone) не сериализуется в JSON — конвертируем в string
+  if (safeUser.phone !== undefined && safeUser.phone !== null) {
+    safeUser.phone = safeUser.phone.toString()
+  }
   return safeUser
 }

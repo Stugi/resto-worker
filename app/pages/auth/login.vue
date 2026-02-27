@@ -1,192 +1,202 @@
 <template>
-  <div>
-    <h2 class="text-2xl font-semibold text-text mb-2 text-center">
-      Вход в систему
-    </h2>
-    <p class="text-text-secondary text-center mb-8">
-      Выберите способ входа
-    </p>
+    <div>
+        <h2 class="text-2xl font-semibold text-text mb-2 text-center">
+            Вход в систему
+        </h2>
+        <p class="text-text-secondary text-center mb-8">
+            Выберите способ входа
+        </p>
 
-    <!-- Error Message -->
-    <div
-      v-if="error"
-      class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded mb-6"
-      role="alert"
-    >
-      <p class="text-sm">{{ error }}</p>
-    </div>
+        <!-- Error Message -->
+        <div
+            v-if="error"
+            class="bg-status-red-bg border border-status-red-border text-status-red-text px-4 py-3 rounded mb-6"
+            role="alert"
+        >
+            <p class="text-sm">{{ error }}</p>
+        </div>
 
-    <!-- Auth Method Tabs -->
-    <div class="flex border-b border-border mb-6">
-      <button
-        @click="authMethod = 'login'"
-        :class="[
-          'flex-1 py-3 px-4 text-sm font-medium transition-colors',
-          authMethod === 'login'
-            ? 'border-b-2 border-accent text-accent'
-            : 'text-text-secondary hover:text-text'
-        ]"
-      >
-        Логин / Пароль
-      </button>
-      <button
-        @click="authMethod = 'telegram'"
-        :class="[
-          'flex-1 py-3 px-4 text-sm font-medium transition-colors',
-          authMethod === 'telegram'
-            ? 'border-b-2 border-accent text-accent'
-            : 'text-text-secondary hover:text-text'
-        ]"
-      >
-        Telegram
-      </button>
-    </div>
+        <!-- Auth Method Tabs -->
+        <div class="flex border-b border-border mb-6">
+            <button
+                @click="authMethod = 'login'"
+                :class="[
+                    'flex-1 py-3 px-4 text-sm font-medium transition-colors',
+                    authMethod === 'login'
+                        ? 'border-b-2 border-accent text-accent'
+                        : 'text-text-secondary hover:text-text',
+                ]"
+            >
+                Логин / Пароль
+            </button>
+            <button
+                @click="authMethod = 'telegram'"
+                :class="[
+                    'flex-1 py-3 px-4 text-sm font-medium transition-colors',
+                    authMethod === 'telegram'
+                        ? 'border-b-2 border-accent text-accent'
+                        : 'text-text-secondary hover:text-text',
+                ]"
+            >
+                Telegram
+            </button>
+        </div>
 
-    <!-- Login/Password Form -->
-    <form v-if="authMethod === 'login'" @submit.prevent="handleLoginSubmit" class="space-y-4">
-      <BaseInput
-        id="login"
-        v-model="login"
-        type="text"
-        label="Логин"
-        placeholder="Ваш логин"
-        required
-      />
+        <!-- Login/Password Form -->
+        <form
+            v-if="authMethod === 'login'"
+            @submit.prevent="handleLoginSubmit"
+            class="space-y-4"
+        >
+            <BaseInput
+                id="login"
+                v-model="login"
+                type="text"
+                label="Логин"
+                placeholder="Ваш логин"
+                required
+            />
 
-      <BaseInput
-        id="password"
-        v-model="password"
-        type="password"
-        label="Пароль"
-        placeholder="••••••••"
-        required
-      />
+            <BaseInput
+                id="password"
+                v-model="password"
+                type="password"
+                label="Пароль"
+                placeholder="••••••••"
+                required
+            />
 
-      <BaseButton
-        type="submit"
-        :loading="loading"
-        loading-text="Вход..."
-        gradient
-        full-width
-        size="lg"
-      >
-        Войти
-      </BaseButton>
+            <BaseButton
+                type="submit"
+                :loading="loading"
+                loading-text="Вход..."
+                gradient
+                full-width
+                size="lg"
+            >
+                Войти
+            </BaseButton>
 
-      <p class="text-center text-sm text-text-secondary">
-        Нет аккаунта?
-        <NuxtLink to="/auth/register" class="text-accent hover:underline">
+            <!-- <p class="text-center text-sm text-text-secondary">
+        Нет аккаунта? 
+          <NuxtLink to="/auth/register" class="text-accent hover:underline">
           Зарегистрироваться
-        </NuxtLink>
-      </p>
-    </form>
+        </NuxtLink> 
+        </p> -->
+        </form>
 
-    <!-- Telegram Login -->
-    <div v-else>
-      <!-- Loading State -->
-      <div v-if="loading" class="text-center py-8">
-        <BaseSpinner size="sm" class="inline-block" />
-        <p class="text-text-secondary mt-4">Авторизация...</p>
-      </div>
+        <!-- Telegram Login -->
+        <div v-else>
+            <!-- Loading State -->
+            <div v-if="loading" class="text-center py-8">
+                <BaseSpinner size="sm" class="inline-block" />
+                <p class="text-text-secondary mt-4">Авторизация...</p>
+            </div>
 
-      <!-- Telegram Login Widget Container -->
-      <div v-else class="flex justify-center">
-        <div id="telegram-login-widget"></div>
-      </div>
+            <!-- Telegram Login Widget Container -->
+            <div v-else class="flex justify-center">
+                <div id="telegram-login-widget"></div>
+            </div>
 
-      <p class="text-text-secondary text-xs text-center mt-8">
-        Для входа необходим аккаунт Telegram
-      </p>
+            <p class="text-text-secondary text-xs text-center mt-8">
+                Для входа необходим аккаунт Telegram
+            </p>
+        </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth'
-})
+    layout: "auth",
+});
 
-const authMethod = ref<'login' | 'telegram'>('login')
-const loading = ref(false)
-const error = ref('')
+const authMethod = ref<"login" | "telegram">("login");
+const loading = ref(false);
+const error = ref("");
 
 // Login/Password form
-const login = ref('')
-const password = ref('')
+const login = ref("");
+const password = ref("");
 
 // Telegram Bot Username (from runtime config)
-const config = useRuntimeConfig()
-const TELEGRAM_BOT_USERNAME = config.public.telegramBotUsername || ''
+const config = useRuntimeConfig();
+const TELEGRAM_BOT_USERNAME = config.public.telegramBotUsername || "";
 
 // Login Handler
 const handleLoginSubmit = async () => {
-  loading.value = true
-  error.value = ''
+    loading.value = true;
+    error.value = "";
 
-  try {
-    await $fetch('/api/auth/login', {
-      method: 'POST',
-      body: {
-        login: login.value,
-        password: password.value
-      }
-    })
+    try {
+        await $fetch("/api/auth/login", {
+            method: "POST",
+            body: {
+                login: login.value,
+                password: password.value,
+            },
+        });
 
-    // Успешная авторизация - редирект на dashboard
-    await navigateTo('/', { replace: true })
-  } catch (err: any) {
-    console.error('Login error:', err)
-    error.value = err.data?.message || err.message || 'Ошибка входа'
-    loading.value = false
-  }
-}
+        // Успешная авторизация - редирект на dashboard
+        await navigateTo("/", { replace: true });
+    } catch (err: any) {
+        console.error("Login error:", err);
+        error.value = err.data?.message || err.message || "Ошибка входа";
+        loading.value = false;
+    }
+};
 
 // Callback для Telegram Login Widget
 const handleTelegramAuth = async (user: any) => {
-  loading.value = true
-  error.value = ''
+    loading.value = true;
+    error.value = "";
 
-  try {
-    const response = await $fetch('/api/auth/telegram', {
-      method: 'POST',
-      body: user
-    })
+    try {
+        const response = await $fetch("/api/auth/telegram", {
+            method: "POST",
+            body: user,
+        });
 
-    // Успешная авторизация - редирект на dashboard
-    await navigateTo('/', { replace: true })
-  } catch (err: any) {
-    console.error('Auth error:', err)
-    error.value = err.data?.message || err.message || 'Ошибка авторизации'
-    loading.value = false
-  }
-}
+        // Успешная авторизация - редирект на dashboard
+        await navigateTo("/", { replace: true });
+    } catch (err: any) {
+        console.error("Auth error:", err);
+        error.value = err.data?.message || err.message || "Ошибка авторизации";
+        loading.value = false;
+    }
+};
 
 // Устанавливаем callback для Telegram
 if (process.client) {
-  (window as any).onTelegramAuth = handleTelegramAuth
+    (window as any).onTelegramAuth = handleTelegramAuth;
 }
 
-// Загружаем Telegram Widget script
-onMounted(() => {
-  const script = document.createElement('script')
-  script.src = 'https://telegram.org/js/telegram-widget.js?22'
-  script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME)
-  script.setAttribute('data-size', 'large')
-  script.setAttribute('data-radius', '6')
-  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-  script.setAttribute('data-request-access', 'write')
-  script.async = true
+// Загружаем Telegram Widget при переключении на вкладку
+const loadTelegramWidget = () => {
+    const container = document.getElementById("telegram-login-widget");
+    if (!container) return;
+    container.innerHTML = "";
 
-  const container = document.getElementById('telegram-login-widget')
-  if (container) {
-    container.appendChild(script)
-  }
-})
+    const script = document.createElement("script");
+    script.src = "https://telegram.org/js/telegram-widget.js?22";
+    script.setAttribute("data-telegram-login", TELEGRAM_BOT_USERNAME);
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-radius", "6");
+    script.setAttribute("data-onauth", "onTelegramAuth(user)");
+    script.setAttribute("data-request-access", "write");
+    script.async = true;
+    container.appendChild(script);
+};
+
+watch(authMethod, async (method) => {
+    if (method !== "telegram") return;
+    await nextTick();
+    loadTelegramWidget();
+});
 </script>
 
 <style scoped>
 /* Стили для виджета */
 :deep(iframe) {
-  margin: 0 auto;
+    margin: 0 auto;
 }
 </style>
