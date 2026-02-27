@@ -23,7 +23,7 @@
                         : 'cursor-pointer bg-bg-card',
                 ]"
             >
-                <span :class="selectedLabel ? 'text-text' : 'text-muted'">
+                <span :class="[selectedLabel ? 'text-text' : 'text-muted', 'truncate']">
                     {{ selectedLabel || placeholder }}
                 </span>
                 <svg
