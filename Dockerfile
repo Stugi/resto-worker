@@ -21,12 +21,23 @@ COPY prisma ./prisma/
 RUN npm ci --ignore-scripts
 
 # Явно ставим native bindings для Alpine Linux (musl)
-RUN npm install --no-save \
-    @oxc-parser/binding-linux-x64-musl@0.112.0 \
-    @oxc-transform/binding-linux-x64-musl@0.112.0 \
-    @oxc-minify/binding-linux-x64-musl@0.112.0 \
-    @rollup/rollup-linux-x64-musl@4.57.1 \
-    @esbuild/linux-x64@0.27.3
+# Определяем архитектуру автоматически (x64 или arm64)
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+      npm install --no-save \
+        @oxc-parser/binding-linux-arm64-musl@0.112.0 \
+        @oxc-transform/binding-linux-arm64-musl@0.112.0 \
+        @oxc-minify/binding-linux-arm64-musl@0.112.0 \
+        @rollup/rollup-linux-arm64-musl@4.57.1 \
+        @esbuild/linux-arm64@0.27.3; \
+    else \
+      npm install --no-save \
+        @oxc-parser/binding-linux-x64-musl@0.112.0 \
+        @oxc-transform/binding-linux-x64-musl@0.112.0 \
+        @oxc-minify/binding-linux-x64-musl@0.112.0 \
+        @rollup/rollup-linux-x64-musl@4.57.1 \
+        @esbuild/linux-x64@0.27.3; \
+    fi
 
 # Пересобираем нативные модули (bcrypt и др.) под Alpine
 RUN npm rebuild --ignore-scripts
