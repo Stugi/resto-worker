@@ -128,7 +128,6 @@ export async function createRestaurantGroup(
       ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
       console.log('[userbot] Owner entity resolved:', ownerEntity?.className)
     } catch {
-      // Fallback: если пользователь не в кеше, пробуем через getEntity
       console.log('[userbot] Entity not in cache, trying getEntity...')
       const entity = await client.getEntity(BigInt(ownerTelegramId))
       ownerEntity = await client.getInputEntity(entity)
