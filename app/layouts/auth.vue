@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-bg-secondary flex items-center justify-center p-4" style="min-height: 100vh; min-height: 100dvh;">
-    <div class="w-full max-w-md">
+  <div class="min-h-screen bg-bg-secondary flex items-center justify-center p-4" style="min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center;">
+    <div class="w-full max-w-md mx-auto">
       <!-- Logo and Title -->
       <div class="flex flex-col items-center mb-8">
         <div class="w-16 h-16 bg-gradient-to-br from-accent to-emerald-400 rounded-2xl flex items-center justify-center ring-1 ring-accent/20 mb-4" style="box-shadow: 0 0 20px rgba(0,220,127,0.35), 0 4px 8px rgba(0,220,127,0.25);">
