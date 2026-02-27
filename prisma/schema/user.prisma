@@ -11,9 +11,8 @@ model User {
   phone        BigInt?
   role         Role    @default(MANAGER)
 
-  // Состояние онбординга в боте
+  // Post-onboarding состояние (COMPLETED, WAITING_HELP)
   botState    String?
-  tempOrgName String?
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])

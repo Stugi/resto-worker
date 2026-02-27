@@ -100,16 +100,15 @@ bot.command('start', async (ctx) => {
     return
   }
 
-  // Новый пользователь или без организации — запускаем онбординг
-  await prisma.user.upsert({
+  // Новый пользователь или без организации — запускаем онбординг через Lead
+  await prisma.lead.upsert({
     where: { telegramId: tgId },
     update: { botState: BotState.WAITING_START },
     create: {
-      id: createId(),
       telegramId: tgId,
       botState: BotState.WAITING_START,
-      role: UserRole.OWNER,
-      createdBy: 'telegram_bot'
+      name: ctx.from.first_name || null,
+      username: ctx.from.username || null
     }
   })
 
@@ -194,30 +193,27 @@ bot.command('settings', async (ctx) => {
 // ШАГ 1: Обработка получения контакта
 bot.on('message:contact', async (ctx) => {
   const tgId = ctx.from.id.toString()
-  const user = await prisma.user.findUnique({
-    where: { telegramId: tgId },
-    include: { organization: { select: { name: true } } }
-  })
 
-  // ПЕРВАЯ ПРОВЕРКА: У пользователя уже есть организация — блокируем + убираем клавиатуру
-  if (user?.organizationId) {
+  // Параллельный поиск: Lead (онбординг) и User (уже зарегистрирован)
+  const [lead, existingUser] = await Promise.all([
+    prisma.lead.findUnique({ where: { telegramId: tgId } }),
+    prisma.user.findUnique({
+      where: { telegramId: tgId },
+      include: { organization: { select: { name: true } } }
+    })
+  ])
+
+  // ПЕРВАЯ ПРОВЕРКА: У пользователя уже есть организация — блокируем
+  if (existingUser?.organizationId) {
     await ctx.reply(
-      MSG_ALREADY_REGISTERED(user.organization?.name || 'Без имени'),
+      MSG_ALREADY_REGISTERED(existingUser.organization?.name || 'Без имени'),
       { parse_mode: 'HTML', reply_markup: { remove_keyboard: true } }
     )
-
-    // Сбросить онбординг-состояние если было
-    if (user.botState !== BotState.COMPLETED) {
-      await prisma.user.update({
-        where: { telegramId: tgId },
-        data: { botState: BotState.COMPLETED, tempOrgName: null }
-      })
-    }
-
     return
   }
 
-  if (!user || user.botState !== BotState.WAITING_CONTACT) {
+  // Проверяем что Lead в нужном состоянии
+  if (!lead || lead.botState !== BotState.WAITING_CONTACT) {
     return
   }
 
@@ -226,55 +222,28 @@ bot.on('message:contact', async (ctx) => {
   const phoneDigits = rawPhone.replace(/\D/g, '')
   const phoneBigInt = BigInt(phoneDigits)
 
-  // СРАЗУ сохраняем в Lead (даже если пользователь бросит онбординг)
-  try {
-    await prisma.lead.upsert({
-      where: {
-        telegramId_phone: {
-          telegramId: tgId,
-          phone: phoneBigInt
-        }
-      },
-      update: {
-        name: ctx.from.first_name || null,
-        username: ctx.from.username || null
-      },
-      create: {
-        telegramId: tgId,
-        phone: phoneBigInt,
-        name: ctx.from.first_name || null,
-        username: ctx.from.username || null
-      }
-    })
-  } catch (err) {
-    console.error('[bot] Failed to save lead:', err)
-  }
-
   // ПРОВЕРКА 2: Этот номер телефона уже привязан к другой организации?
-  const existingUser = await prisma.user.findFirst({
+  const phoneUser = await prisma.user.findFirst({
     where: {
       phone: phoneBigInt,
       organizationId: { not: null },
-      telegramId: { not: tgId } // Исключаем самого себя
+      telegramId: { not: tgId }
     }
   })
 
-  if (existingUser) {
+  if (phoneUser) {
     await ctx.reply(MSG_PHONE_ALREADY_USED, { reply_markup: { remove_keyboard: true } })
 
-    await prisma.user.update({
+    await prisma.lead.update({
       where: { telegramId: tgId },
-      data: {
-        botState: BotState.WAITING_CONTACT,
-        tempOrgName: null
-      }
+      data: { botState: BotState.WAITING_CONTACT }
     })
 
     return
   }
 
-  // Сохраняем телефон и переходим к имени организации
-  await prisma.user.update({
+  // Сохраняем телефон в Lead и переходим к имени организации
+  await prisma.lead.update({
     where: { telegramId: tgId },
     data: {
       phone: phoneBigInt,
@@ -292,16 +261,17 @@ bot.on('message:contact', async (ctx) => {
 // ШАГ 2: Обработка текстовых сообщений (имя организации)
 bot.on('message:text', async (ctx) => {
   const tgId = ctx.from.id.toString()
-  const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
   const text = ctx.message.text
 
-  if (!user) {
-    return ctx.reply(MSG_USE_START)
-  }
+  // Параллельный поиск: Lead (онбординг) и User (уже зарегистрирован)
+  const [lead, user] = await Promise.all([
+    prisma.lead.findUnique({ where: { telegramId: tgId } }),
+    prisma.user.findUnique({ where: { telegramId: tgId } })
+  ])
 
-  // Обработка кнопки СТАРТ
-  if (user.botState === BotState.WAITING_START && text === BTN_START) {
-    await prisma.user.update({
+  // Обработка кнопки СТАРТ (Lead-based)
+  if (lead?.botState === BotState.WAITING_START && text === BTN_START) {
+    await prisma.lead.update({
       where: { telegramId: tgId },
       data: { botState: BotState.WAITING_CONTACT }
     })
@@ -317,12 +287,12 @@ bot.on('message:text', async (ctx) => {
     })
   }
 
-  // Ожидаем название ресторана
-  if (user.botState === BotState.WAITING_NAME) {
-    await prisma.user.update({
+  // Ожидаем название ресторана (Lead-based)
+  if (lead?.botState === BotState.WAITING_NAME) {
+    await prisma.lead.update({
       where: { telegramId: tgId },
       data: {
-        tempOrgName: text,
+        orgName: text,
         botState: BotState.WAITING_SCALE
       }
     })
@@ -338,8 +308,8 @@ bot.on('message:text', async (ctx) => {
     })
   }
 
-  // Обработка сообщения в поддержку
-  if (user.botState === 'WAITING_HELP' && ctx.chat.type === 'private') {
+  // Обработка сообщения в поддержку (User-based, post-onboarding)
+  if (user?.botState === 'WAITING_HELP' && ctx.chat.type === 'private') {
     // Пересылаем сообщение администратору
     try {
       const userName = ctx.from.first_name + (ctx.from.last_name ? ` ${ctx.from.last_name}` : '')
@@ -381,6 +351,11 @@ bot.on('message:text', async (ctx) => {
     }
   }
 
+  // Если нет ни Lead, ни User — предлагаем /start
+  if (!lead && !user) {
+    return ctx.reply(MSG_USE_START)
+  }
+
   // Неизвестное состояние
   return ctx.reply(MSG_USE_START_SHORT)
 })
@@ -388,18 +363,25 @@ bot.on('message:text', async (ctx) => {
 // ШАГ 3: Обработка выбора масштаба -> Авто-создание всего
 bot.on('callback_query:data', async (ctx) => {
   const tgId = ctx.from.id.toString()
-  const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
-
-  if (!user) {
-    await ctx.answerCallbackQuery({ text: MSG_START_CALLBACK })
-    return
-  }
-
   const data = ctx.callbackQuery.data
 
-  // Обработка выбора масштаба → показать пример отчёта
-  if (data.startsWith('scale_') && user.botState === BotState.WAITING_SCALE) {
+  // Параллельный поиск: Lead (онбординг) и User (уже зарегистрирован)
+  const [lead, user] = await Promise.all([
+    prisma.lead.findUnique({ where: { telegramId: tgId } }),
+    prisma.user.findUnique({ where: { telegramId: tgId } })
+  ])
+
+  // Обработка выбора масштаба → сохраняем scale в Lead, показываем пример отчёта
+  if (data.startsWith('scale_') && lead?.botState === BotState.WAITING_SCALE) {
     await ctx.answerCallbackQuery()
+
+    const scale = data.replace('scale_', '') // "1", "10", "11"
+
+    // Сохраняем scale в Lead
+    await prisma.lead.update({
+      where: { telegramId: tgId },
+      data: { scale, botState: BotState.WAITING_CONFIRM }
+    })
 
     // Отправляем пример отчёта
     await ctx.reply(MSG_EXAMPLE_REPORT, { parse_mode: 'HTML' })
@@ -412,20 +394,14 @@ bot.on('callback_query:data', async (ctx) => {
       reply_markup: confirmKeyboard
     })
 
-    // Переход в WAITING_CONFIRM
-    await prisma.user.update({
-      where: { telegramId: tgId },
-      data: { botState: BotState.WAITING_CONFIRM }
-    })
-
     return
   }
 
-  // Обработка кнопки "Поехали" → создание орг/ресторана/группы
-  if (data === 'lets_go' && user.botState === BotState.WAITING_CONFIRM) {
+  // Обработка кнопки "Поехали" → создание User + орг/ресторан/группа
+  if (data === 'lets_go' && lead?.botState === BotState.WAITING_CONFIRM) {
     await ctx.answerCallbackQuery()
 
-    const orgName = user.tempOrgName || 'Мой ресторан'
+    const orgName = lead.orgName || 'Мой ресторан'
 
     try {
       await ctx.reply(MSG_CONFIGURING)
@@ -440,13 +416,13 @@ bot.on('callback_query:data', async (ctx) => {
       const trialDays = trialTariff?.period ?? 7
       const trialEndsAt = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000)
 
-      // Создаем организацию + биллинг + ресторан в транзакции
-      const { org, restaurant } = await prisma.$transaction(async (tx) => {
+      // Создаем User + организацию + биллинг + ресторан в транзакции
+      const { newUser, org, restaurant } = await prisma.$transaction(async (tx) => {
         const org = await tx.organization.create({
           data: {
             id: createId(),
             name: orgName,
-            createdBy: user.login || user.telegramId || user.id,
+            createdBy: tgId,
             billing: {
               create: {
                 id: createId(),
@@ -454,7 +430,7 @@ bot.on('callback_query:data', async (ctx) => {
                 trialStartsAt: now,
                 trialEndsAt,
                 tariffId: trialTariff?.id || null,
-                createdBy: user.login || user.telegramId || user.id
+                createdBy: tgId
               }
             }
           }
@@ -465,21 +441,33 @@ bot.on('callback_query:data', async (ctx) => {
             id: createId(),
             name: orgName,
             organizationId: org.id,
-            createdBy: user.login || user.telegramId || user.id
+            createdBy: tgId
           }
         })
 
-        await tx.user.update({
-          where: { telegramId: tgId },
+        // Создаём User только сейчас (после завершения онбординга)
+        const newUser = await tx.user.create({
           data: {
+            id: createId(),
+            telegramId: tgId,
+            phone: lead.phone,
+            name: lead.name || 'Владелец',
+            login: `owner_${tgId.slice(-6)}`,
+            role: UserRole.OWNER,
             organizationId: org.id,
             restaurantId: restaurant.id,
-            login: `owner_${tgId.slice(-6)}`,
-            role: UserRole.OWNER
+            botState: BotState.COMPLETED,
+            createdBy: 'telegram_bot'
           }
         })
 
-        return { org, restaurant }
+        // Помечаем Lead как сконвертированный
+        await tx.lead.update({
+          where: { telegramId: tgId },
+          data: { converted: true, botState: BotState.COMPLETED }
+        })
+
+        return { newUser, org, restaurant }
       })
 
       // Создание группы через userbot
@@ -487,8 +475,8 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.replyWithChatAction('typing')
 
         // Антифрод проверки
-        await checkAndIncrement(user.id, 'create_group')
-        const isSuspicious = await detectSuspiciousActivity(user.id)
+        await checkAndIncrement(newUser.id, 'create_group')
+        const isSuspicious = await detectSuspiciousActivity(newUser.id)
         if (isSuspicious) {
           throw new Error('Обнаружена подозрительная активность')
         }
@@ -521,8 +509,6 @@ bot.on('callback_query:data', async (ctx) => {
         // Отправляем инструкцию в группу и закрепляем
         try {
           const rawChatId = groupResult.chatId.toString()
-          // Для basic group (created via CreateChat) — chatId без минуса, формат Bot API: -chatId
-          // Для supergroup/channel — chatId с минусом или нужен префикс -100
           const botChatId = rawChatId.startsWith('-')
             ? rawChatId
             : `-${rawChatId}`
@@ -540,22 +526,6 @@ bot.on('callback_query:data', async (ctx) => {
           console.warn(`[bot] Failed to send instruction to group: ${instrErr.message}`)
         }
 
-        // COMPLETED
-        await prisma.user.update({
-          where: { telegramId: tgId },
-          data: { botState: BotState.COMPLETED }
-        })
-
-        // Помечаем лид как сконвертированный
-        if (user.phone) {
-          try {
-            await prisma.lead.updateMany({
-              where: { telegramId: tgId, phone: user.phone },
-              data: { converted: true }
-            })
-          } catch { }
-        }
-
         // Формируем инфо о тарифе
         const tariffInfo = trialTariff
           ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} голосовых`
@@ -563,27 +533,13 @@ bot.on('callback_query:data', async (ctx) => {
 
         const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
 
-        // Отправляем в личку владельцу (с invite-ссылкой)
+        // Отправляем в личку владельцу
         await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
 
-        // Дублируем в группу ресторана (без invite-ссылки — участники уже в группе)
-        // try {
-        //   const rawChatId2 = groupResult.chatId.toString()
-        //   const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-${rawChatId2}`
-        //   const groupSetupMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
-        //   await bot.api.sendMessage(botChatId2, groupSetupMsg, { parse_mode: 'HTML' })
-        // } catch (grpErr: any) {
-        //   console.warn(`[bot] Failed to send setup complete to group: ${grpErr.message}`)
-        // }
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
-        // Группа не создалась, но организация готова — ставим COMPLETED
-        await prisma.user.update({
-          where: { telegramId: tgId },
-          data: { botState: BotState.COMPLETED }
-        })
-
+        // Группа не создалась, но организация и User готовы
         await ctx.reply(MSG_SETUP_NO_GROUP(orgName), { parse_mode: 'HTML' })
       }
     } catch (error: any) {
@@ -591,6 +547,12 @@ bot.on('callback_query:data', async (ctx) => {
       await ctx.reply(MSG_SETUP_ERROR)
     }
 
+    return
+  }
+
+  // Для остальных callback (расписание, покупка) — нужен User
+  if (!user) {
+    await ctx.answerCallbackQuery({ text: MSG_START_CALLBACK })
     return
   }
 
