@@ -1,21 +1,28 @@
 // ============================================
-// ЛИДЫ — промежуточная таблица для ранних контактов
-// Сохраняются сразу при получении номера телефона,
-// даже если пользователь не завершил онбординг
+// ЛИДЫ — промежуточная таблица для онбординга
+// Создаётся при /start, хранит состояние онбординга.
+// User НЕ создаётся пока онбординг не завершён.
 // ============================================
 
 model Lead {
-  id         String  @id @default(cuid())
-  telegramId String
-  phone      BigInt
+  id         String   @id @default(cuid())
+  telegramId String   @unique
+  phone      BigInt?
   name       String?
   username   String?
 
+  // Состояние онбординга (WAITING_START, WAITING_CONTACT, ...)
+  botState   String?
+
+  // Данные из онбординга
+  orgName    String?  // Название организации
+  scale      String?  // Количество ресторанов: "1", "10", "11"
+
   // Прошёл ли полный онбординг
-  converted  Boolean @default(false)
+  converted  Boolean  @default(false)
 
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  @@unique([telegramId, phone])
   @@index([phone])
 }

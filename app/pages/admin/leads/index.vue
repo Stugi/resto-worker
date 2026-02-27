@@ -47,7 +47,13 @@
                 Username
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Telegram ID
+                Организация
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                Ресторанов
+              </th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+                Этап
               </th>
               <th class="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                 Статус
@@ -60,7 +66,7 @@
           <tbody class="bg-bg-card divide-y divide-border">
             <tr v-for="lead in leads" :key="lead.id" class="hover:bg-bg-hover">
               <td class="px-4 py-3 text-sm font-mono text-text">
-                {{ formatPhone(lead.phone) }}
+                {{ lead.phone ? formatPhone(lead.phone) : '—' }}
               </td>
               <td class="px-4 py-3 text-sm text-text">
                 {{ lead.name || '—' }}
@@ -69,8 +75,21 @@
                 <template v-if="lead.username">@{{ lead.username }}</template>
                 <template v-else>—</template>
               </td>
-              <td class="px-4 py-3 text-sm text-text-secondary font-mono">
-                {{ lead.telegramId }}
+              <td class="px-4 py-3 text-sm text-text">
+                {{ lead.orgName || '—' }}
+              </td>
+              <td class="px-4 py-3 text-sm text-text-secondary">
+                {{ formatScale(lead.scale) }}
+              </td>
+              <td class="px-4 py-3 text-sm">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                    botStateStyle(lead.botState)
+                  ]"
+                >
+                  {{ formatBotState(lead.botState) }}
+                </span>
               </td>
               <td class="px-4 py-3 text-sm">
                 <span
@@ -102,22 +121,29 @@
       >
         <div class="flex items-center justify-between mb-2">
           <span class="font-mono text-sm font-medium text-text">
-            {{ formatPhone(lead.phone) }}
+            {{ lead.phone ? formatPhone(lead.phone) : lead.name || 'Без телефона' }}
           </span>
-          <span
-            :class="[
-              'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-              lead.converted
-                ? 'bg-status-emerald-bg text-status-emerald-text'
-                : 'bg-status-amber-bg text-status-amber-text'
-            ]"
-          >
-            {{ lead.converted ? 'Конвертирован' : 'Новый' }}
-          </span>
+          <div class="flex gap-1.5">
+            <span
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                botStateStyle(lead.botState)
+              ]"
+            >
+              {{ formatBotState(lead.botState) }}
+            </span>
+            <span
+              v-if="lead.converted"
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-status-emerald-bg text-status-emerald-text"
+            >
+              Конв.
+            </span>
+          </div>
         </div>
         <div class="text-sm text-text-secondary space-y-1">
-          <div v-if="lead.name">{{ lead.name }}</div>
+          <div v-if="lead.name && lead.phone">{{ lead.name }}</div>
           <div v-if="lead.username">@{{ lead.username }}</div>
+          <div v-if="lead.orgName" class="text-text">{{ lead.orgName }} <span v-if="lead.scale" class="text-text-secondary">({{ formatScale(lead.scale) }})</span></div>
           <div class="text-xs">{{ formatDate(lead.createdAt) }}</div>
         </div>
       </div>
@@ -137,9 +163,12 @@
 interface Lead {
   id: string
   telegramId: string
-  phone: string
+  phone: string | null
   name: string | null
   username: string | null
+  orgName: string | null
+  scale: string | null
+  botState: string | null
   converted: boolean
   createdAt: string
 }
@@ -162,7 +191,6 @@ const fetchLeads = async () => {
 }
 
 const formatPhone = (phone: string) => {
-  // Форматируем: 79001234567 → +7 (900) 123-45-67
   if (phone.length === 11 && phone.startsWith('7')) {
     return `+7 (${phone.slice(1, 4)}) ${phone.slice(4, 7)}-${phone.slice(7, 9)}-${phone.slice(9)}`
   }
@@ -177,6 +205,38 @@ const formatDate = (dateStr: string) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const scaleLabels: Record<string, string> = {
+  '1': '1',
+  '10': '2–10',
+  '11': '11+'
+}
+
+const formatScale = (scale: string | null) => {
+  if (!scale) return '—'
+  return scaleLabels[scale] || scale
+}
+
+const botStateLabels: Record<string, string> = {
+  WAITING_START: 'Старт',
+  WAITING_CONTACT: 'Контакт',
+  WAITING_NAME: 'Название',
+  WAITING_SCALE: 'Масштаб',
+  WAITING_CONFIRM: 'Подтверждение',
+  COMPLETED: 'Завершён'
+}
+
+const formatBotState = (state: string | null) => {
+  if (!state) return '—'
+  return botStateLabels[state] || state
+}
+
+const botStateStyle = (state: string | null) => {
+  if (state === 'COMPLETED') return 'bg-status-emerald-bg text-status-emerald-text'
+  if (state === 'WAITING_CONFIRM') return 'bg-status-blue-bg text-status-blue-text'
+  if (state) return 'bg-status-amber-bg text-status-amber-text'
+  return 'bg-bg-secondary text-text-secondary'
 }
 
 onMounted(() => {
