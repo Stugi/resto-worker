@@ -129,7 +129,7 @@ export async function createRestaurantGroup(
       ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
       console.log('[userbot] Owner entity resolved from cache:', ownerEntity?.className)
     } catch {
-      console.log('[userbot] Entity not in cache, importing contact...')
+      console.log(`[userbot] Entity not in cache, importing contact... phone=${ownerPhone}`)
       if (!ownerPhone) {
         throw new GroupCreationError('Телефон владельца не указан, не удалось резолвить пользователя')
       }
@@ -139,7 +139,7 @@ export async function createRestaurantGroup(
           contacts: [
             new Api.InputPhoneContact({
               clientId: BigInt(0),
-              phone: ownerPhone,
+              phone: ownerPhone.startsWith('+') ? ownerPhone : `+${ownerPhone}`,
               firstName: 'Owner',
               lastName: ''
             })
