@@ -122,11 +122,24 @@ export async function createRestaurantGroup(
       chatTitle = `CosmicAI | ${restaurantName}`
     }
 
+    // 0. Резолвим пользователя (gramjs требует InputUser, а не просто ID)
+    let ownerEntity
+    try {
+      ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
+      console.log('[userbot] Owner entity resolved:', ownerEntity?.className)
+    } catch {
+      // Fallback: если пользователь не в кеше, пробуем через getEntity
+      console.log('[userbot] Entity not in cache, trying getEntity...')
+      const entity = await client.getEntity(BigInt(ownerTelegramId))
+      ownerEntity = await client.getInputEntity(entity)
+      console.log('[userbot] Owner entity resolved via getEntity:', ownerEntity?.className)
+    }
+
     // 1. Создаём группу
     const result = await client.invoke(
       new Api.messages.CreateChat({
         title: chatTitle,
-        users: [ownerTelegramId]
+        users: [ownerEntity]
       })
     )
 
