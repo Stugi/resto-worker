@@ -1,10 +1,10 @@
 <template>
   <div class="flex items-center">
-    <div class="flex rounded-lg border border-border bg-bg-card overflow-hidden w-full">
+    <div class="flex rounded-lg border border-border-input bg-bg-card overflow-hidden w-full">
       <button
         v-for="option in periods"
         :key="option.value"
-        class="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap"
+        class="flex-1 sm:flex-none px-2.5 sm:px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap"
         :class="modelValue === option.value
           ? 'bg-accent text-white'
           : 'text-text-secondary hover:text-text hover:bg-bg-secondary'"
