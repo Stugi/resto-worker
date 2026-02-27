@@ -24,11 +24,12 @@
     --action-hover: #333333;
     --action-text: #ffffff;
 
-    /* Accent (неоново-зелёный — минимальные акценты) */
-    --accent: #00dc7f;
-    --accent-hover: #00c472;
-    --accent-light: rgba(0, 220, 127, 0.08);
-    --accent-ring: rgba(0, 220, 127, 0.3);
+    /* Accent (оранжево-золотой → зелёный градиент) */
+    --accent: #F5A623;
+    --accent-hover: #E0911A;
+    --accent-light: rgba(245, 166, 35, 0.08);
+    --accent-ring: rgba(245, 166, 35, 0.3);
+    --accent-end: #00dc7f;
 
     /* Muted / placeholder */
     --muted: #9ca3af;
@@ -74,7 +75,7 @@
     /* Sidebar */
     --sidebar-bg: #111827;
     --sidebar-text: #d1d5db;
-    --sidebar-active: #00dc7f;
+    --sidebar-active: #F5A623;
 }
 
 /* --- Тёмная тема --- */
@@ -96,11 +97,12 @@
     --action-hover: #d4d4d4;
     --action-text: #0f0f0f;
 
-    /* Accent (тот же неоново-зелёный) */
-    --accent: #00dc7f;
-    --accent-hover: #00c472;
-    --accent-light: rgba(0, 220, 127, 0.1);
-    --accent-ring: rgba(0, 220, 127, 0.25);
+    /* Accent (оранжево-золотой → зелёный градиент) */
+    --accent: #F5A623;
+    --accent-hover: #E0911A;
+    --accent-light: rgba(245, 166, 35, 0.12);
+    --accent-ring: rgba(245, 166, 35, 0.25);
+    --accent-end: #00dc7f;
 
     --muted: #6b7280;
 
@@ -142,7 +144,7 @@
 
     --sidebar-bg: #0a0a0a;
     --sidebar-text: #9ca3af;
-    --sidebar-active: #00dc7f;
+    --sidebar-active: #F5A623;
 }
 
 /* --- Сброс и базовые стили --- */

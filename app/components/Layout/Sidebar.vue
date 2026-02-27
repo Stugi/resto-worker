@@ -78,7 +78,7 @@
                 <ClientOnly>
                     <div class="flex items-center gap-3 px-3 py-2">
                         <div
-                            class="w-10 h-10 bg-gradient-to-r from-accent to-emerald-400 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                            class="w-10 h-10 bg-gradient-to-r from-accent to-accent-end rounded-full flex items-center justify-center text-white font-semibold text-sm"
                         >
                             {{ userInitials }}
                         </div>
