@@ -128,14 +128,106 @@ npm run bot:set-webhook -- <URL>  # Установить webhook
 | [Команды](docs/команды.md) | Полный список команд разработки |
 | [План разработки](.claude/plan.md) | Roadmap и текущий статус |
 
-## Деплой
+## Git-ветки
 
-Подробная инструкция: **[Деплой на VPS (Timeweb Cloud)](docs/деплой-timeweb.md)**
+```
+main   — production (VPS: lk.cosmicmind.ru)
+dev    — разработка и тест (Vercel preview)
+```
 
-Кратко:
-1. VPS-сервер на Timeweb Cloud (Ubuntu, ~800₽/мес)
-2. Подключиться по SSH и запустить `./scripts/deploy.sh`
-3. Заполнить `.env` и запустить `./scripts/start.sh`
-4. Настроить DNS + webhook Telegram бота
+### Рабочий процесс
 
-Всё работает на одном сервере: app + PostgreSQL + nginx + SSL.
+```bash
+# 1. Работаешь в dev
+git checkout dev
+# ... пишешь код ...
+git add <файлы>
+git commit -m "описание"
+git push
+
+# 2. Тестируешь на Vercel (автодеплой из dev)
+
+# 3. Всё ок — деплоишь на VPS:
+./deploy.sh
+```
+
+## Деплой на VPS
+
+**Сервер:** Timeweb Cloud (Ubuntu), `root@72.56.112.207`
+**Сайт:** https://lk.cosmicmind.ru
+**Проект на сервере:** `/opt/cosmicmind`
+
+### Одной командой
+
+```bash
+./deploy.sh
+```
+
+Скрипт сам: мержит `dev -> main` -> пушит -> SSH на сервер -> `git pull` -> `docker compose up --build`
+
+### Вручную
+
+```bash
+# Мерж в main
+git checkout main
+git merge dev
+git push origin main
+git checkout dev
+
+# На сервере
+ssh root@72.56.112.207 "cd /opt/cosmicmind && git pull origin main && docker compose -f docker-compose.production.yml up -d --build"
+```
+
+### Полезные команды (сервер)
+
+```bash
+# Логи приложения
+ssh root@72.56.112.207 "cd /opt/cosmicmind && docker compose -f docker-compose.production.yml logs app --tail 50"
+
+# Логи в реальном времени
+ssh root@72.56.112.207 "cd /opt/cosmicmind && docker compose -f docker-compose.production.yml logs app -f"
+
+# Статус контейнеров
+ssh root@72.56.112.207 "cd /opt/cosmicmind && docker compose -f docker-compose.production.yml ps"
+
+# Перезапуск без пересборки
+ssh root@72.56.112.207 "cd /opt/cosmicmind && docker compose -f docker-compose.production.yml restart app"
+
+# Полная пересборка (нужна после изменения .env)
+ssh root@72.56.112.207 "cd /opt/cosmicmind && docker compose -f docker-compose.production.yml up -d --build --force-recreate"
+
+# Редактировать .env на сервере
+ssh root@72.56.112.207 "nano /opt/cosmicmind/.env"
+```
+
+> **Важно:** После изменения `.env` на сервере нужна пересборка (`--build`), т.к. Nuxt вшивает `runtimeConfig.public` при билде.
+
+### Telegram webhook
+
+```bash
+# Установить
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://lk.cosmicmind.ru/api/bot/webhook"
+
+# Проверить
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+```
+
+## Юзербот (создание групп)
+
+Юзербот — Telegram-аккаунт, через который бот автоматически создаёт группы для ресторанов.
+
+### Перерегистрация на новый номер
+
+```bash
+npx tsx scripts/init-userbot.ts
+```
+
+Скрипт спросит API ID, API Hash (берутся с https://my.telegram.org/apps), номер телефона и код из Telegram. На выходе даст переменные для `.env`:
+
+```
+USERBOT_API_ID="..."
+USERBOT_API_HASH="..."
+USERBOT_SESSION_ENCRYPTED='...'
+USERBOT_ENCRYPTION_KEY="..."
+USERBOT_ENABLED="true"
+```
