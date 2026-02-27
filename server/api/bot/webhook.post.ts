@@ -161,7 +161,7 @@ bot.command('settings', async (ctx) => {
       if (settings.reportSchedule) {
         currentSchedule = settings.reportSchedule
       }
-    } catch {}
+    } catch { }
   }
 
   const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -553,12 +553,12 @@ bot.on('callback_query:data', async (ctx) => {
               where: { telegramId: tgId, phone: user.phone },
               data: { converted: true }
             })
-          } catch {}
+          } catch { }
         }
 
         // Формируем инфо о тарифе
         const tariffInfo = trialTariff
-          ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} транскрипций`
+          ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} голосовых`
           : ''
 
         const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
@@ -567,14 +567,14 @@ bot.on('callback_query:data', async (ctx) => {
         await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
 
         // Дублируем в группу ресторана (без invite-ссылки — участники уже в группе)
-        try {
-          const rawChatId2 = groupResult.chatId.toString()
-          const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-${rawChatId2}`
-          const groupSetupMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
-          await bot.api.sendMessage(botChatId2, groupSetupMsg, { parse_mode: 'HTML' })
-        } catch (grpErr: any) {
-          console.warn(`[bot] Failed to send setup complete to group: ${grpErr.message}`)
-        }
+        // try {
+        //   const rawChatId2 = groupResult.chatId.toString()
+        //   const botChatId2 = rawChatId2.startsWith('-') ? rawChatId2 : `-${rawChatId2}`
+        //   const groupSetupMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo)
+        //   await bot.api.sendMessage(botChatId2, groupSetupMsg, { parse_mode: 'HTML' })
+        // } catch (grpErr: any) {
+        //   console.warn(`[bot] Failed to send setup complete to group: ${grpErr.message}`)
+        // }
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)
 
@@ -607,7 +607,7 @@ bot.on('callback_query:data', async (ctx) => {
     // Парсим текущие настройки
     let settings: Record<string, any> = {}
     if (schedRestaurant.settingsComment) {
-      try { settings = JSON.parse(schedRestaurant.settingsComment) } catch {}
+      try { settings = JSON.parse(schedRestaurant.settingsComment) } catch { }
     }
     const schedule = settings.reportSchedule || { days: [], time: '17:00' }
 
@@ -641,7 +641,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     try {
       await ctx.editMessageText(MSG_SCHEDULE(schedRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
-    } catch {}
+    } catch { }
 
     return
   }
@@ -660,7 +660,7 @@ bot.on('callback_query:data', async (ctx) => {
       try {
         const s = JSON.parse(timeRestaurant.settingsComment)
         if (s.reportSchedule?.time) currentTime = s.reportSchedule.time
-      } catch {}
+      } catch { }
     }
 
     // Кнопки времени: по 3 в ряд, чтобы помещались в Telegram
@@ -679,7 +679,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     try {
       await ctx.editMessageText(MSG_SCHEDULE_TIME(currentTime), { parse_mode: 'HTML', reply_markup: kb })
-    } catch {}
+    } catch { }
 
     return
   }
@@ -696,7 +696,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     let settings: Record<string, any> = {}
     if (selTimeRestaurant.settingsComment) {
-      try { settings = JSON.parse(selTimeRestaurant.settingsComment) } catch {}
+      try { settings = JSON.parse(selTimeRestaurant.settingsComment) } catch { }
     }
     const schedule = settings.reportSchedule || { days: [], time: '17:00' }
     schedule.time = selectedTime
@@ -727,7 +727,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     try {
       await ctx.editMessageText(MSG_SCHEDULE(selTimeRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
-    } catch {}
+    } catch { }
 
     return
   }
@@ -746,7 +746,7 @@ bot.on('callback_query:data', async (ctx) => {
       try {
         const s = JSON.parse(backRestaurant.settingsComment)
         if (s.reportSchedule) schedule = s.reportSchedule
-      } catch {}
+      } catch { }
     }
 
     const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -768,7 +768,7 @@ bot.on('callback_query:data', async (ctx) => {
 
     try {
       await ctx.editMessageText(MSG_SCHEDULE(backRestaurant.name, timeInfo), { parse_mode: 'HTML', reply_markup: kb })
-    } catch {}
+    } catch { }
 
     return
   }
@@ -787,7 +787,7 @@ bot.on('callback_query:data', async (ctx) => {
       try {
         const s = JSON.parse(saveRestaurant.settingsComment)
         if (s.reportSchedule) schedule = s.reportSchedule
-      } catch {}
+      } catch { }
     }
 
     const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -798,14 +798,14 @@ bot.on('callback_query:data', async (ctx) => {
           MSG_SCHEDULE_DISABLED(saveRestaurant.name),
           { parse_mode: 'HTML' }
         )
-      } catch {}
+      } catch { }
     } else {
       try {
         await ctx.editMessageText(
           MSG_SCHEDULE_SAVED(saveRestaurant.name, schedule.days.map((d: number) => dayNames[d - 1]).join(', '), schedule.time),
           { parse_mode: 'HTML' }
         )
-      } catch {}
+      } catch { }
     }
 
     return
