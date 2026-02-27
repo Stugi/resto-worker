@@ -102,6 +102,11 @@
                 Для входа необходим аккаунт Telegram
             </p>
         </div>
+
+        <!-- Version -->
+        <p class="text-text-secondary/40 text-xs text-center mt-8">
+            v{{ appVersion }}
+        </p>
     </div>
 </template>
 
@@ -118,9 +123,10 @@ const error = ref("");
 const login = ref("");
 const password = ref("");
 
-// Telegram Bot Username (from runtime config)
+// Runtime config
 const config = useRuntimeConfig();
 const TELEGRAM_BOT_USERNAME = config.public.telegramBotUsername || "";
+const appVersion = config.public.appVersion || "0.0.0";
 
 // Login Handler
 const handleLoginSubmit = async () => {

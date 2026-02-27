@@ -119,7 +119,7 @@
 
                 <!-- Copyright (только на десктопе) -->
                 <div class="hidden lg:block text-xs text-text-secondary px-3">
-                    <p class="font-medium">RESTO WORKER</p>
+                    <p class="font-medium">CosmicMind AI <span class="font-normal opacity-50">v{{ appVersion }}</span></p>
                     <p>© 2026 Все права защищены</p>
                 </div>
             </div>
@@ -143,6 +143,7 @@ defineEmits<{
 
 const route = useRoute();
 const { user, logout } = useAuth();
+const { appVersion } = useRuntimeConfig().public;
 
 const userInitials = computed(() => {
     if (!user.value?.name) return "U";
