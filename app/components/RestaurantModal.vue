@@ -3,7 +3,7 @@
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
     @click.self="$emit('close')"
   >
-    <div class="bg-bg-card rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="bg-bg-card rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
       <!-- Header -->
       <div class="sticky top-0 bg-bg-card border-b border-border px-6 py-4">
         <div class="flex items-center justify-between">
@@ -22,7 +22,7 @@
       </div>
 
       <!-- Form -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
+      <form @submit.prevent="handleSubmit" class="p-6 space-y-4 overflow-y-auto flex-1">
         <!-- Организация (только для SUPER_ADMIN при создании) -->
         <BaseSelect
           v-if="isSuperAdmin && !isEdit"
@@ -79,10 +79,74 @@
           </div>
         </div>
 
-        <!-- Telegram Chat ID (readonly info) -->
-        <div v-if="isEdit && telegramChatId" class="text-sm text-text-secondary">
-          <span class="font-medium text-text">Telegram группа:</span>
-          {{ chatTitle || `ID: ${telegramChatId}` }}
+        <!-- Telegram группа -->
+        <div v-if="isEdit" class="border-t border-border pt-4 space-y-3">
+          <h3 class="text-sm font-medium text-text">Telegram группа</h3>
+
+          <!-- Группа привязана -->
+          <div v-if="telegramChatId" class="space-y-2">
+            <div class="flex items-center gap-2 text-sm">
+              <span class="text-accent">✅</span>
+              <span class="text-text font-medium">{{ chatTitle || 'Группа' }}</span>
+            </div>
+            <div class="text-xs text-text-secondary">
+              Chat ID: <code class="bg-bg-secondary px-1 rounded">{{ telegramChatId }}</code>
+            </div>
+            <div v-if="groupInviteLink" class="text-xs">
+              <a :href="groupInviteLink" target="_blank" class="text-accent hover:underline">
+                🔗 Invite-ссылка
+              </a>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button
+                type="button"
+                @click="unlinkGroup"
+                class="text-xs px-3 py-1.5 rounded-lg border border-border text-text-secondary hover:text-status-red-text hover:border-status-red-border transition-colors"
+              >
+                Отвязать группу
+              </button>
+            </div>
+          </div>
+
+          <!-- Группа НЕ привязана -->
+          <div v-else class="space-y-3">
+            <div class="flex items-center gap-2 text-sm text-text-secondary">
+              <span>⚠️</span>
+              <span>Группа не привязана</span>
+            </div>
+
+            <!-- Ручная привязка -->
+            <div class="flex gap-2">
+              <input
+                v-model="manualChatId"
+                type="text"
+                placeholder="Chat ID (напр. -1001234567890)"
+                class="flex-1 px-3 py-1.5 text-sm border border-border-input rounded-lg focus:border-accent focus:shadow-[0_0_0_2px_var(--accent-ring)] transition-all outline-none"
+              />
+              <button
+                type="button"
+                @click="linkGroup"
+                :disabled="!manualChatId.trim() || linkGroupLoading"
+                class="text-xs px-3 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
+              >
+                {{ linkGroupLoading ? '...' : 'Привязать' }}
+              </button>
+            </div>
+
+            <!-- Авто-создание -->
+            <button
+              type="button"
+              @click="createGroup"
+              :disabled="createGroupLoading"
+              class="w-full text-sm px-4 py-2 rounded-lg border border-accent text-accent hover:bg-accent-light transition-colors disabled:opacity-50"
+            >
+              {{ createGroupLoading ? 'Создание группы...' : '🤖 Создать группу автоматически' }}
+            </button>
+
+            <div v-if="groupMessage" class="text-xs" :class="groupMessageIsError ? 'text-status-red-text' : 'text-accent'">
+              {{ groupMessage }}
+            </div>
+          </div>
         </div>
 
         <!-- Комментарий настроек (для SUPER_ADMIN — raw JSON) -->
@@ -161,6 +225,100 @@ const parsedSettings = computed(() => {
 const hasSettings = computed(() => !!parsedSettings.value)
 const telegramChatId = computed(() => parsedSettings.value?.telegramChatId || '')
 const chatTitle = computed(() => parsedSettings.value?.chatTitle || '')
+const groupInviteLink = computed(() => parsedSettings.value?.inviteLink || '')
+
+// --- Telegram группа ---
+const manualChatId = ref('')
+const createGroupLoading = ref(false)
+const linkGroupLoading = ref(false)
+const groupMessage = ref('')
+const groupMessageIsError = ref(false)
+
+async function createGroup() {
+  if (!props.restaurant) return
+  createGroupLoading.value = true
+  groupMessage.value = ''
+
+  try {
+    const result = await $fetch(`/api/restaurants/${props.restaurant.id}/create-group`, {
+      method: 'POST'
+    }) as any
+
+    groupMessage.value = result.ownerAdded
+      ? `Группа "${result.chatTitle}" создана, владелец добавлен`
+      : `Группа "${result.chatTitle}" создана${result.inviteLink ? '. Invite: ' + result.inviteLink : ''}`
+    groupMessageIsError.value = false
+    emit('saved')
+  } catch (err: any) {
+    groupMessage.value = err.data?.message || err.message || 'Ошибка создания группы'
+    groupMessageIsError.value = true
+  } finally {
+    createGroupLoading.value = false
+  }
+}
+
+async function linkGroup() {
+  if (!props.restaurant || !manualChatId.value.trim()) return
+  linkGroupLoading.value = true
+  groupMessage.value = ''
+
+  try {
+    // Мержим chatId в settingsComment
+    let settings: Record<string, any> = {}
+    if (props.restaurant.settingsComment) {
+      try { settings = JSON.parse(props.restaurant.settingsComment) } catch { }
+    }
+    settings.telegramChatId = manualChatId.value.trim()
+    settings.chatTitle = `Группа ${manualChatId.value.trim()}`
+    settings.createdByUserbot = false
+
+    await $fetch(`/api/restaurants/${props.restaurant.id}`, {
+      method: 'PATCH',
+      body: {
+        name: form.name || props.restaurant.name,
+        settingsComment: JSON.stringify(settings)
+      }
+    })
+
+    groupMessage.value = 'Группа привязана'
+    groupMessageIsError.value = false
+    manualChatId.value = ''
+    emit('saved')
+  } catch (err: any) {
+    groupMessage.value = err.data?.message || err.message || 'Ошибка привязки'
+    groupMessageIsError.value = true
+  } finally {
+    linkGroupLoading.value = false
+  }
+}
+
+async function unlinkGroup() {
+  if (!props.restaurant) return
+  if (!confirm('Отвязать группу от ресторана?')) return
+
+  try {
+    let settings: Record<string, any> = {}
+    if (props.restaurant.settingsComment) {
+      try { settings = JSON.parse(props.restaurant.settingsComment) } catch { }
+    }
+    delete settings.telegramChatId
+    delete settings.chatTitle
+    delete settings.inviteLink
+    delete settings.createdByUserbot
+
+    await $fetch(`/api/restaurants/${props.restaurant.id}`, {
+      method: 'PATCH',
+      body: {
+        name: form.name || props.restaurant.name,
+        settingsComment: Object.keys(settings).length ? JSON.stringify(settings) : null
+      }
+    })
+
+    emit('saved')
+  } catch (err: any) {
+    error.value = err.data?.message || err.message || 'Ошибка'
+  }
+}
 
 // --- Расписание ---
 const weekDays = [

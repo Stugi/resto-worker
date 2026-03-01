@@ -5,7 +5,7 @@ import { UserRole } from '#shared/constants/roles'
 import {
   MSG_WELCOME, MSG_WELCOME_BACK, MSG_ALREADY_REGISTERED, MSG_PHONE_ALREADY_USED,
   MSG_CONTACT_REQUEST, MSG_PHONE_SAVED, MSG_ORG_NAME_CONFIRM, MSG_CONFIGURING,
-  MSG_SETUP_COMPLETE, MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION,
+  MSG_SETUP_COMPLETE, MSG_SETUP_COMPLETE_WITH_LINK, MSG_SETUP_NO_GROUP, MSG_SETUP_ERROR, MSG_GROUP_INSTRUCTION,
   MSG_SETTINGS_PRIVATE, MSG_GROUP_NOT_LINKED, MSG_USE_START,
   MSG_USE_START_SHORT, MSG_START_CALLBACK, MSG_SCHEDULE, MSG_SCHEDULE_TIME,
   MSG_SCHEDULE_SAVED_TOAST, MSG_SCHEDULE_DISABLED, MSG_SCHEDULE_SAVED,
@@ -533,10 +533,20 @@ bot.on('callback_query:data', async (ctx) => {
           ? `\n\nВаш тариф: <b>Триал</b> — ${trialTariff.period} дней, ${trialTariff.maxTranscriptions} голосовых`
           : ''
 
-        const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
-
-        // Отправляем в личку владельцу
-        await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
+        // Отправляем в личку владельцу (разный текст в зависимости от ownerAdded)
+        if (groupResult.ownerAdded) {
+          // Владелец добавлен в группу — стандартное сообщение
+          const setupCompleteMsg = MSG_SETUP_COMPLETE(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
+          await ctx.reply(setupCompleteMsg, { parse_mode: 'HTML' })
+        } else if (groupResult.inviteLink) {
+          // Владелец НЕ добавлен, но есть invite-ссылка
+          const setupWithLinkMsg = MSG_SETUP_COMPLETE_WITH_LINK(orgName, groupResult.chatTitle, tariffInfo, groupResult.inviteLink)
+          await ctx.reply(setupWithLinkMsg, { parse_mode: 'HTML' })
+        } else {
+          // Владелец НЕ добавлен и нет invite-ссылки — fallback
+          const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'CosmicMindBot'
+          await ctx.reply(MSG_SETUP_NO_GROUP(orgName, botUsername), { parse_mode: 'HTML' })
+        }
 
       } catch (error: any) {
         console.error('Ошибка создания группы через userbot:', error)

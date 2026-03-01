@@ -15,6 +15,7 @@ interface GroupResult {
   chatId?: string
   chatTitle?: string
   inviteLink?: string
+  ownerAdded?: boolean
   error?: string
 }
 
@@ -123,43 +124,16 @@ export async function createRestaurantGroup(
       chatTitle = `CosmicAI | ${restaurantName}`
     }
 
-    // 0. Резолвим пользователя (gramjs требует InputUser с access_hash)
-    let ownerEntity
-    try {
-      ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
-      console.log('[userbot] Owner entity resolved from cache:', ownerEntity?.className)
-    } catch {
-      console.log(`[userbot] Entity not in cache, importing contact... phone=${ownerPhone}`)
-      if (!ownerPhone) {
-        throw new GroupCreationError('Телефон владельца не указан, не удалось резолвить пользователя')
-      }
-      // Импортируем контакт чтобы получить access_hash
-      const importResult = await client.invoke(
-        new Api.contacts.ImportContacts({
-          contacts: [
-            new Api.InputPhoneContact({
-              clientId: BigInt(0),
-              phone: ownerPhone.startsWith('+') ? ownerPhone : `+${ownerPhone}`,
-              firstName: 'Owner',
-              lastName: ''
-            })
-          ]
-        })
-      )
-      console.log('[userbot] ImportContacts result: users=', importResult.users?.length)
-      if (importResult.users && importResult.users.length > 0) {
-        ownerEntity = await client.getInputEntity(importResult.users[0])
-        console.log('[userbot] Owner entity resolved via ImportContacts:', ownerEntity?.className)
-      } else {
-        throw new GroupCreationError('Не удалось найти пользователя по номеру телефона')
-      }
-    }
+    // 0. Резолвим бота (нужен для создания группы — Telegram требует хотя бы 1 user)
+    console.log(`[userbot] Resolving bot @${botUsername}...`)
+    const botEntity = await client.getInputEntity(`@${botUsername}`)
+    console.log('[userbot] Bot entity resolved:', botEntity?.className)
 
-    // 1. Создаём группу
+    // 1. Создаём группу с ботом (БЕЗ владельца — его добавим отдельно)
     const result = await client.invoke(
       new Api.messages.CreateChat({
         title: chatTitle,
-        users: [ownerEntity]
+        users: [botEntity]
       })
     )
 
@@ -237,67 +211,7 @@ export async function createRestaurantGroup(
       }
     })
 
-    // 2. Добавляем бота в группу
-    try {
-      console.log(`[userbot] Adding bot @${botUsername} to chat ${chatId}`)
-      const botEntity = await client.getInputEntity(`@${botUsername}`)
-      console.log('[userbot] Bot entity resolved:', botEntity?.className)
-
-      await client.invoke(
-        new Api.messages.AddChatUser({
-          chatId: BigInt(chatId),
-          userId: botEntity
-        })
-      )
-      console.log('[userbot] Bot added to group successfully')
-
-      await logUserbotAction({
-        action: 'ADD_USER',
-        userId: ownerTelegramId,
-        restaurantId,
-        chatId,
-        success: true,
-        metadata: { username: botUsername }
-      })
-    } catch (error: any) {
-      console.error('[userbot] Failed to add bot to group:', error.message || error)
-      await logUserbotAction({
-        action: 'ADD_USER',
-        userId: ownerTelegramId,
-        restaurantId,
-        chatId,
-        success: false,
-        error: error.message || String(error)
-      })
-    }
-
-    // 3. Назначаем владельца админом (отдельно, чтобы ошибка не блокировала бота)
-    try {
-      console.log(`[userbot] Promoting owner ${ownerTelegramId} to admin`)
-      await promoteToAdmin(chatId, ownerTelegramId)
-      console.log('[userbot] Owner promoted successfully')
-      await logUserbotAction({
-        action: 'PROMOTE_ADMIN',
-        userId: ownerTelegramId,
-        restaurantId,
-        chatId,
-        success: true,
-        metadata: { promotedUser: ownerTelegramId, role: 'owner' }
-      })
-    } catch (error: any) {
-      console.error('[userbot] Failed to promote owner:', error.message || error)
-      await logUserbotAction({
-        action: 'PROMOTE_ADMIN',
-        userId: ownerTelegramId,
-        restaurantId,
-        chatId,
-        success: false,
-        error: error.message || String(error),
-        metadata: { promotedUser: ownerTelegramId, role: 'owner' }
-      })
-    }
-
-    // 4. Назначаем бота админом (критично для транскрипции!)
+    // 2. Назначаем бота админом (критично для транскрипции!)
     try {
       console.log(`[userbot] Promoting bot @${botUsername} to admin`)
       await promoteToAdmin(chatId, `@${botUsername}`)
@@ -323,7 +237,7 @@ export async function createRestaurantGroup(
       })
     }
 
-    // 5. Генерируем invite-ссылку для группы
+    // 3. Генерируем invite-ссылку для группы
     let inviteLink: string | undefined
     try {
       console.log(`[userbot] Exporting invite link for chat ${chatId}`)
@@ -355,11 +269,94 @@ export async function createRestaurantGroup(
       })
     }
 
+    // 4. Пытаемся добавить владельца в группу (отдельно, не блокирует создание)
+    let ownerAdded = false
+    try {
+      console.log(`[userbot] Trying to add owner ${ownerTelegramId} to group...`)
+      let ownerEntity
+      // Сначала пробуем из кеша
+      try {
+        ownerEntity = await client.getInputEntity(BigInt(ownerTelegramId))
+        console.log('[userbot] Owner entity resolved from cache')
+      } catch {
+        // Пробуем ImportContacts
+        if (ownerPhone) {
+          console.log(`[userbot] Importing contact phone=${ownerPhone}`)
+          const importResult = await client.invoke(
+            new Api.contacts.ImportContacts({
+              contacts: [
+                new Api.InputPhoneContact({
+                  clientId: BigInt(0),
+                  phone: ownerPhone.startsWith('+') ? ownerPhone : `+${ownerPhone}`,
+                  firstName: 'Owner',
+                  lastName: ''
+                })
+              ]
+            })
+          )
+          console.log('[userbot] ImportContacts result: users=', importResult.users?.length)
+          if (importResult.users && importResult.users.length > 0) {
+            ownerEntity = await client.getInputEntity(importResult.users[0])
+          }
+        }
+      }
+
+      if (ownerEntity) {
+        await client.invoke(
+          new Api.messages.AddChatUser({
+            chatId: BigInt(chatId),
+            userId: ownerEntity
+          })
+        )
+        ownerAdded = true
+        console.log('[userbot] Owner added to group successfully')
+
+        // Делаем владельца админом
+        try {
+          await promoteToAdmin(chatId, ownerTelegramId)
+          console.log('[userbot] Owner promoted to admin')
+        } catch (promoErr: any) {
+          console.warn('[userbot] Failed to promote owner:', promoErr.message)
+        }
+
+        await logUserbotAction({
+          action: 'ADD_USER',
+          userId: ownerTelegramId,
+          restaurantId,
+          chatId,
+          success: true,
+          metadata: { role: 'owner' }
+        })
+      } else {
+        console.log('[userbot] Could not resolve owner entity, skipping invite')
+        await logUserbotAction({
+          action: 'ADD_USER',
+          userId: ownerTelegramId,
+          restaurantId,
+          chatId,
+          success: false,
+          error: 'Could not resolve owner entity'
+        })
+      }
+    } catch (error: any) {
+      console.warn(`[userbot] Failed to add owner to group: ${error.message}`)
+      await logUserbotAction({
+        action: 'ADD_USER',
+        userId: ownerTelegramId,
+        restaurantId,
+        chatId,
+        success: false,
+        error: error.message || String(error),
+        metadata: { role: 'owner' }
+      })
+    }
+
     return {
       success: true,
       chatId,
       chatTitle,
-      inviteLink
+      inviteLink,
+      ownerAdded
     }
   } catch (error: any) {
     // Обработка Telegram Flood Wait
