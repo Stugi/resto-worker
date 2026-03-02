@@ -261,6 +261,9 @@ bot.on('message:contact', async (ctx) => {
 
 // ШАГ 2: Обработка текстовых сообщений (имя организации)
 bot.on('message:text', async (ctx) => {
+  // В группах игнорируем обычные текстовые сообщения (только команды /help, /settings обрабатываются выше)
+  if (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') return
+
   const tgId = ctx.from.id.toString()
   const text = ctx.message.text
 
