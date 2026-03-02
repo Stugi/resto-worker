@@ -99,14 +99,16 @@ export default defineEventHandler(async (event) => {
     }
 
     // Проверяем что подписка активна
+    // Сравниваем по дню: подписка до 2 марта = работает весь день 2 марта
     const billing = restaurant.organization?.billing
     if (billing) {
       const billingNow = new Date()
-      if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < billingNow) {
+      const billingToday = new Date(billingNow.getFullYear(), billingNow.getMonth(), billingNow.getDate())
+      if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < billingToday) {
         results.push({ restaurantId: restaurant.id, restaurantName: restaurant.name, status: 'skipped', error: 'trial expired' })
         continue
       }
-      if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < billingNow) {
+      if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < billingToday) {
         results.push({ restaurantId: restaurant.id, restaurantName: restaurant.name, status: 'skipped', error: 'subscription expired' })
         continue
       }

@@ -41,6 +41,37 @@
                     placeholder="Выберите статус"
                 />
 
+                <!-- Тариф (только при редактировании) -->
+                <BaseSelect
+                    v-if="organization && tariffOptions.length > 0"
+                    v-model="form.tariffId"
+                    :options="tariffOptions"
+                    label="Тариф"
+                    placeholder="Выберите тариф"
+                />
+
+                <!-- Подписка до (только при редактировании) -->
+                <div v-if="organization" class="w-full">
+                    <label class="block text-sm font-medium text-text mb-2">
+                        Подписка до
+                    </label>
+                    <input
+                        v-model="form.activeUntil"
+                        type="date"
+                        class="w-full px-4 py-2 border border-border-input rounded-lg outline-none transition-colors hover:border-border-input-hover focus:border-accent focus:shadow-[0_0_0_2px_var(--accent-ring)] bg-bg-card text-text"
+                    />
+                </div>
+
+                <!-- Сбросить счётчик транскрипций -->
+                <label v-if="organization" class="flex items-center gap-3 cursor-pointer">
+                    <input
+                        v-model="form.resetUsage"
+                        type="checkbox"
+                        class="w-4 h-4 rounded border-border-input accent-accent"
+                    />
+                    <span class="text-sm text-text">Сбросить счётчик транскрипций</span>
+                </label>
+
                 <!-- Error Message -->
                 <div
                     v-if="error"
@@ -83,6 +114,8 @@ interface Props {
         name: string;
         billing?: {
             status: string;
+            tariffId?: string | null;
+            activeUntil?: string | null;
         };
     } | null;
 }
@@ -97,9 +130,31 @@ const emit = defineEmits<{
 const loading = ref(false);
 const error = ref("");
 
+// Загружаем тарифы
+const { data: tariffs } = useFetch('/api/tariffs')
+
+const tariffOptions = computed(() => {
+    if (!tariffs.value) return []
+    return (tariffs.value as any[]).map((t: any) => ({
+        value: t.id,
+        label: `${t.name} — ${t.price}₽/${t.period}д`
+    }))
+})
+
+// Форматируем дату из ISO в YYYY-MM-DD для input[type=date]
+const formatDate = (dateStr?: string | null): string => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 const form = reactive({
     name: props.organization?.name || "",
     billingStatus: props.organization?.billing?.status || "TRIAL",
+    tariffId: props.organization?.billing?.tariffId || "",
+    activeUntil: formatDate(props.organization?.billing?.activeUntil),
+    resetUsage: false,
 });
 
 const handleSubmit = async () => {
@@ -120,6 +175,9 @@ const handleSubmit = async () => {
                 body: {
                     name: form.name,
                     billingStatus: form.billingStatus,
+                    tariffId: form.tariffId || undefined,
+                    activeUntil: form.activeUntil || undefined,
+                    resetUsage: form.resetUsage,
                 },
             });
         } else {

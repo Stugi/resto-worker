@@ -1007,8 +1007,10 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     }
 
     // Проверяем что триал/подписка не истекли
+    // Сравниваем по дню: подписка до 2 марта = работает весь день 2 марта
     const now = new Date()
-    if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < now) {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < today) {
       const buyKeyboard = new InlineKeyboard()
         .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 
@@ -1021,7 +1023,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
       )
       return
     }
-    if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < now) {
+    if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < today) {
       const buyKeyboard = new InlineKeyboard()
         .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 

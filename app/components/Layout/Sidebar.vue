@@ -76,22 +76,38 @@
             <div class="p-4 border-t border-border space-y-3">
                 <!-- User Info -->
                 <ClientOnly>
-                    <div class="flex items-center gap-3 px-3 py-2">
+                    <div class="flex items-center gap-2.5 px-3 py-2">
                         <div
-                            class="w-10 h-10 bg-gradient-to-r from-accent to-accent-end rounded-full flex items-center justify-center text-white font-semibold text-sm"
+                            class="w-8 h-8 bg-gradient-to-r from-accent to-accent-end rounded-full flex items-center justify-center text-white font-semibold text-xs shrink-0"
                         >
                             {{ userInitials }}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="font-medium text-text text-sm truncate">
+                            <p class="font-medium text-text text-sm truncate max-w-[130px]">
                                 {{ user?.name || "Пользователь" }}
                             </p>
                             <p class="text-text-secondary text-xs">
                                 {{ roleLabel }}
                             </p>
                         </div>
+                        <!-- Колокольчик уведомлений -->
+                        <button
+                            @click="showNotifications = true"
+                            class="relative p-1.5 text-text-secondary hover:text-text hover:bg-bg-hover rounded-lg transition-colors shrink-0"
+                            title="Уведомления"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-danger text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                0
+                            </span>
+                        </button>
                     </div>
                 </ClientOnly>
+
+                <!-- Модалка уведомлений -->
+                <NotificationModal v-if="showNotifications" @close="showNotifications = false" />
 
                 <!-- Divider -->
                 <div class="border-t border-border"></div>
@@ -144,6 +160,8 @@ defineEmits<{
 const route = useRoute();
 const { user, logout } = useAuth();
 const { appVersion } = useRuntimeConfig().public;
+
+const showNotifications = ref(false);
 
 const userInitials = computed(() => {
     if (!user.value?.name) return "U";
