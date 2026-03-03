@@ -222,12 +222,12 @@ export default defineEventHandler(async (event) => {
       }
 
       // ---- Формируем текст транскрипций ----
-      const transcriptsText = transcripts.map((t, i) => {
+      const transcriptsText = transcripts.map((t: any, i: number) => {
         const date = t.createdAt.toLocaleDateString('ru-RU')
         const time = t.createdAt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
         const author = t.user?.name || 'Неизвестный'
-        const duration = t.voiceMessage?.duration ? `${t.voiceMessage.duration}с` : ''
-        return `--- Отчёт #${i + 1} (${date} ${time}, ${author}, ${duration}) ---\n${t.text}`
+        const sourceLabel = t.voiceMessage?.duration ? `${t.voiceMessage.duration}с` : 'текст'
+        return `--- Отчёт #${i + 1} (${date} ${time}, ${author}, ${sourceLabel}) ---\n${t.text}`
       }).join('\n\n')
 
       // ---- STEP B: Промпт 1 — основной отчёт (generateReport) ----

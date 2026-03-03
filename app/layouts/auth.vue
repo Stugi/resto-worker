@@ -1,23 +1,14 @@
 <template>
     <div
-        class="h-dvh bg-bg-secondary flex items-center justify-center p-4 overflow-y-auto"
-        style="
-            height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        "
+        class="min-h-screen bg-bg-secondary flex items-center justify-center p-4 overflow-y-auto"
+        style="min-height: 100vh; min-height: 100dvh;"
     >
         <div class="w-full max-w-md mx-auto">
             <!-- Logo and Title -->
             <div class="flex flex-col items-center mb-8">
                 <div
                     class="w-16 h-16 bg-gradient-to-br from-accent to-accent-end rounded-2xl flex items-center justify-center ring-1 ring-accent/20 mb-4"
-                    style="
-                        box-shadow:
-                            0 0 20px rgba(245, 166, 35, 0.35),
-                            0 4px 8px rgba(245, 166, 35, 0.25);
-                    "
+                    style="box-shadow: 0 0 20px var(--accent-ring), 0 4px 8px var(--accent-light);"
                 >
                     <span class="text-4xl">🍽️</span>
                 </div>
@@ -25,7 +16,7 @@
                     class="text-3xl md:text-4xl font-semibold tracking-tight text-text mb-2"
                 >
                     Cosmic<span
-                        class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(245,166,35,0.6)]"
+                        class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent drop-shadow-[0_0_8px_var(--accent-glow)]"
                         >Mind</span
                     >
                     <!-- <span

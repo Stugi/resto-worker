@@ -258,6 +258,11 @@ export const MSG_TRANSCRIPTION_DONE = (duration: number, preview: string) =>
 
 export const MSG_TRANSCRIPTION_ERROR = 'Не удалось обработать голосовое сообщение. Попробуйте ещё раз.'
 
+export const MSG_TEXT_REVIEW_SAVED = (preview: string) =>
+  `Отзыв сохранён:\n\n${preview}`
+
+export const MSG_TEXT_REVIEW_EMPTY = 'Напишите текст отзыва после #отзыв\n\nПример: #отзыв Гость за столиком 5 похвалил пасту карбонара'
+
 // --- ПРИМЕР ОТЧЁТА (онбординг) ---
 
 export const MSG_EXAMPLE_REPORT =
