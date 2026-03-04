@@ -280,16 +280,8 @@ bot.on('message:text', async (ctx) => {
     }
 
     try {
-      // Ищем ресторан по chatId
-      const restaurant = await prisma.restaurant.findFirst({
-        where: {
-          OR: [
-            { telegramChatId: chatId },
-            { telegramChatId: chatId.startsWith('-100') ? chatId.slice(4) : `-100${chatId}` }
-          ],
-          deletedAt: null
-        }
-      })
+      // Ищем ресторан по chatId (через settingsComment JSON)
+      const restaurant = await findRestaurantByChatId(chatId)
 
       if (!restaurant) {
         console.warn(`[bot] #отзыв: restaurant not found for chatId=${chatId}`)
