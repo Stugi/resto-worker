@@ -11,7 +11,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const id = getRouterParam(event, 'id')
-  const body = await readBody<{ name?: string; billingStatus?: string }>(event)
+  const body = await readBody<{
+    name?: string
+    billingStatus?: string
+    tariffId?: string
+    activeUntil?: string
+    resetUsage?: boolean
+  }>(event)
 
   if (!id) {
     throw createError({
@@ -45,13 +51,27 @@ export default defineEventHandler(async (event) => {
   })
 
   // Обновляем биллинг если нужно
-  if (body.billingStatus && organization.billing) {
+  if (organization.billing && (body.billingStatus || body.tariffId || body.activeUntil || body.resetUsage)) {
+    const billingData: Record<string, any> = {
+      updatedBy: user.login || user.id
+    }
+
+    if (body.billingStatus) {
+      billingData.status = body.billingStatus as any
+    }
+    if (body.tariffId) {
+      billingData.tariffId = body.tariffId
+    }
+    if (body.activeUntil) {
+      billingData.activeUntil = new Date(body.activeUntil)
+    }
+    if (body.resetUsage) {
+      billingData.transcriptionsUsed = 0
+    }
+
     await prisma.billing.update({
       where: { id: organization.billing.id },
-      data: {
-        status: body.billingStatus as any,
-        updatedBy: user.login || user.id
-      }
+      data: billingData
     })
   }
 
@@ -59,7 +79,9 @@ export default defineEventHandler(async (event) => {
   const result = await prisma.organization.findUnique({
     where: { id },
     include: {
-      billing: true
+      billing: {
+        include: { tariff: true }
+      }
     }
   })
 

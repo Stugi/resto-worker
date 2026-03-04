@@ -29,6 +29,7 @@
     --accent-hover: #E0911A;
     --accent-light: rgba(245, 166, 35, 0.08);
     --accent-ring: rgba(245, 166, 35, 0.3);
+    --accent-glow: rgba(245, 166, 35, 0.6);
     --accent-end: #00dc7f;
 
     /* Muted / placeholder */
@@ -102,6 +103,7 @@
     --accent-hover: #E0911A;
     --accent-light: rgba(245, 166, 35, 0.12);
     --accent-ring: rgba(245, 166, 35, 0.25);
+    --accent-glow: rgba(245, 166, 35, 0.6);
     --accent-end: #00dc7f;
 
     --muted: #6b7280;

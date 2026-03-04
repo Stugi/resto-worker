@@ -12,6 +12,7 @@ import {
   MSG_ORG_NOT_FOUND, MSG_TARIFF_NOT_FOUND, MSG_PAYMENT_ERROR, MSG_PAYMENT_SENT,
   MSG_PAYMENT_LINK, MSG_TRANSCRIPTION_LIMIT, MSG_SUBSCRIPTION_EXPIRED,
   MSG_BILLING_DISABLED, MSG_TRANSCRIPTION_DONE, MSG_TRANSCRIPTION_ERROR,
+  MSG_TEXT_REVIEW_SAVED, MSG_TEXT_REVIEW_EMPTY,
   MSG_EXAMPLE_REPORT, BTN_START, BTN_LETS_GO, BTN_SHARE_CONTACT,
   BTN_BUY_SUBSCRIPTION, BTN_SELECT_TIME, BTN_SAVE, BTN_BACK_TO_DAYS,
   MSG_HELP, MSG_HELP_SENT, MSG_HELP_FORWARDED,
@@ -261,8 +262,71 @@ bot.on('message:contact', async (ctx) => {
 
 // ШАГ 2: Обработка текстовых сообщений (имя организации)
 bot.on('message:text', async (ctx) => {
-  // В группах игнорируем обычные текстовые сообщения (только команды /help, /settings обрабатываются выше)
-  if (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') return
+  // В группах: обрабатываем только #отзыв, остальное игнорируем
+  if (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') {
+    const msgText = ctx.message.text || ''
+    if (!msgText.toLowerCase().includes('#отзыв')) return
+
+    // --- Обработка текстового отзыва #отзыв ---
+    const chatId = ctx.chat.id.toString()
+    const reviewText = msgText
+      .replace(/#отзыв/gi, '')
+      .trim()
+
+    if (!reviewText) {
+      return ctx.reply(MSG_TEXT_REVIEW_EMPTY, {
+        reply_to_message_id: ctx.message.message_id
+      })
+    }
+
+    try {
+      // Ищем ресторан по chatId
+      const restaurant = await prisma.restaurant.findFirst({
+        where: {
+          OR: [
+            { telegramChatId: chatId },
+            { telegramChatId: chatId.startsWith('-100') ? chatId.slice(4) : `-100${chatId}` }
+          ],
+          deletedAt: null
+        }
+      })
+
+      if (!restaurant) {
+        console.warn(`[bot] #отзыв: restaurant not found for chatId=${chatId}`)
+        return
+      }
+
+      // Ищем пользователя по telegramId
+      const tgId = ctx.from.id.toString()
+      const user = await prisma.user.findUnique({ where: { telegramId: tgId } })
+
+      // Сохраняем как Transcript (source=text, без voiceMessage)
+      const transcript = await prisma.transcript.create({
+        data: {
+          id: createId(),
+          text: reviewText,
+          language: 'ru',
+          source: 'text',
+          restaurantId: restaurant.id,
+          userId: user?.id || null
+        }
+      })
+
+      console.log(`[bot] Text review saved: ${transcript.id}, ${reviewText.length} chars, restaurant=${restaurant.name}`)
+
+      const preview = reviewText.length > 200
+        ? reviewText.substring(0, 200) + '...'
+        : reviewText
+
+      await ctx.reply(MSG_TEXT_REVIEW_SAVED(preview), {
+        reply_to_message_id: ctx.message.message_id
+      })
+    } catch (err: any) {
+      console.error(`[bot] #отзыв error:`, err.message)
+    }
+
+    return
+  }
 
   const tgId = ctx.from.id.toString()
   const text = ctx.message.text
@@ -1007,8 +1071,10 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
     }
 
     // Проверяем что триал/подписка не истекли
+    // Сравниваем по дню: подписка до 2 марта = работает весь день 2 марта
     const now = new Date()
-    if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < now) {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    if (billing.status === 'TRIAL' && billing.trialEndsAt && billing.trialEndsAt < today) {
       const buyKeyboard = new InlineKeyboard()
         .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 
@@ -1021,7 +1087,7 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
       )
       return
     }
-    if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < now) {
+    if (billing.status === 'ACTIVE' && billing.activeUntil && billing.activeUntil < today) {
       const buyKeyboard = new InlineKeyboard()
         .text(BTN_BUY_SUBSCRIPTION, `buy_subscription:${restaurant.organizationId}`)
 
@@ -1124,9 +1190,10 @@ bot.on(['message:voice', 'message:audio'], async (ctx) => {
 
     console.log(`[bot] Transcript saved: ${transcript.id}, length: ${result.text.length} chars`)
 
-    // Отправляем подтверждение с превью текста
-    const preview = result.text.length > 200
-      ? result.text.substring(0, 200) + '...'
+    // Отправляем подтверждение с текстом (Telegram лимит 4096 символов)
+    const maxLen = 4000 - `Транскрипция (${duration}с):\n\n`.length
+    const preview = result.text.length > maxLen
+      ? result.text.substring(0, maxLen) + '...'
       : result.text
 
     await ctx.reply(

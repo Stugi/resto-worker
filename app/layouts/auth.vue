@@ -25,7 +25,7 @@
                     class="text-3xl md:text-4xl font-semibold tracking-tight text-text mb-2"
                 >
                     Cosmic<span
-                        class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(245,166,35,0.6)]"
+                        class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent"
                         >Mind</span
                     >
                     <span
@@ -42,7 +42,7 @@
             </div>
 
             <p class="text-center text-text-secondary text-sm mt-6">
-                &copy; {{ new Date().getFullYear() }} CosmicMind AI
+                &copy; {{ new Date().getFullYear() }} CosmicMind
             </p>
         </div>
     </div>

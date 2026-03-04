@@ -17,9 +17,12 @@ model Transcript {
   problemTypes    String?  @db.Text    // JSON: ["cold_food", "hair_found"]
   classifiedAt    DateTime?            // Когда классифицирован (null = ещё нет)
 
+  // Источник: голосовое или текстовый отзыв (#отзыв)
+  source          String   @default("voice")  // "voice" | "text"
+
   // Связи
-  voiceMessageId  String   @unique
-  voiceMessage    VoiceMessage @relation(fields: [voiceMessageId], references: [id])
+  voiceMessageId  String?  @unique
+  voiceMessage    VoiceMessage? @relation(fields: [voiceMessageId], references: [id])
 
   restaurantId    String
   restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
