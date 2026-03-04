@@ -25,14 +25,24 @@
                 <div class="flex items-center gap-3">
                     <div
                         class="w-10 h-10 bg-gradient-to-br from-accent to-accent-end rounded-2xl flex items-center justify-center ring-1 ring-accent/20"
-                        style="box-shadow: 0 0 15px var(--accent-ring), 0 4px 6px var(--accent-light);"
+                        style="
+                            box-shadow:
+                                0 0 15px var(--accent-ring),
+                                0 4px 6px var(--accent-light);
+                        "
                     >
                         <span class="text-2xl">🍽️</span>
                     </div>
                     <h1
                         class="text-xl md:text-2xl font-semibold tracking-tight text-text"
                     >
-                        Cosmic<span class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent drop-shadow-[0_0_8px_var(--accent-glow)]">Mind</span> <span class="text-text-secondary font-normal text-base">AI</span>
+                        Cosmic<span
+                            class="bg-gradient-to-r from-accent to-accent-end bg-clip-text text-transparent ]"
+                            >Mind</span
+                        >
+                        <span
+                            class="text-text-secondary font-normal text-base"
+                        ></span>
                     </h1>
                 </div>
             </div>
