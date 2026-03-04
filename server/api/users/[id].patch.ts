@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     login?: string
     password?: string
     phone?: string
-    role?: 'SUPER_ADMIN' | 'OWNER' | 'MANAGER'
+    role?: 'SUPER_ADMIN' | 'OWNER' | 'MANAGER' | 'WAITER'
     organizationId?: string
   }>(event)
 

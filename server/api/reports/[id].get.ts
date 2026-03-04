@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
       if (restaurant?.organizationId !== user.organizationId) {
         throw createError({ statusCode: 403, message: 'Нет доступа к этому отчёту' })
       }
-    } else if (user.role === 'MANAGER') {
+    } else if (user.role === 'MANAGER' || user.role === 'WAITER') {
       if (report.restaurantId !== user.restaurantId) {
         throw createError({ statusCode: 403, message: 'Нет доступа к этому отчёту' })
       }

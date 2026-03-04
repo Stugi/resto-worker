@@ -76,6 +76,10 @@ export default defineEventHandler(async (event) => {
   if (restaurantId) {
     baseFilter.restaurantId = restaurantId
   }
+  // MANAGER/WAITER — только свой ресторан
+  if ((user.role === 'MANAGER' || user.role === 'WAITER') && user.restaurantId) {
+    baseFilter.restaurantId = user.restaurantId
+  }
 
   const prevFilter: any = {
     createdAt: { gte: prevPeriodStart, lte: prevPeriodEnd },
@@ -86,6 +90,9 @@ export default defineEventHandler(async (event) => {
   }
   if (restaurantId) {
     prevFilter.restaurantId = restaurantId
+  }
+  if ((user.role === 'MANAGER' || user.role === 'WAITER') && user.restaurantId) {
+    prevFilter.restaurantId = user.restaurantId
   }
 
   // Параллельные запросы

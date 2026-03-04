@@ -18,16 +18,44 @@
             </div>
 
             <!-- Body -->
-            <div class="p-6">
-                <div class="text-center py-8">
-                    <div class="w-16 h-16 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <div class="p-6 space-y-3">
+                <!-- Пустое состояние -->
+                <div v-if="notifications.length === 0" class="text-center py-6">
+                    <div class="w-14 h-14 bg-bg-secondary rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 class="text-base font-medium text-text mb-2">Раздел в разработке</h3>
-                    <p class="text-sm text-text-secondary">
-                        Уведомления скоро появятся. Здесь будут отображаться важные события по вашим ресторанам.
+                    <p class="text-sm text-text-secondary">Нет уведомлений</p>
+                </div>
+
+                <!-- Карточки уведомлений -->
+                <div
+                    v-for="n in notifications"
+                    :key="n.id"
+                    :class="[
+                        'p-4 rounded-lg border',
+                        n.severity === 'danger'
+                            ? 'bg-status-red-bg border-status-red-border'
+                            : n.severity === 'warning'
+                            ? 'bg-status-yellow-bg border-status-yellow-border'
+                            : 'bg-bg-secondary border-border'
+                    ]"
+                >
+                    <h4
+                        :class="[
+                            'text-sm font-medium',
+                            n.severity === 'danger'
+                                ? 'text-status-red-text'
+                                : n.severity === 'warning'
+                                ? 'text-status-yellow-text'
+                                : 'text-text'
+                        ]"
+                    >
+                        {{ n.title }}
+                    </h4>
+                    <p v-if="n.description" class="text-xs text-text-secondary mt-1">
+                        {{ n.description }}
                     </p>
                 </div>
             </div>
@@ -43,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-defineEmits<{
-    close: [];
-}>();
+defineEmits<{ close: [] }>()
+
+const { notifications } = useNotifications()
 </script>

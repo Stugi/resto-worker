@@ -63,7 +63,7 @@ export async function getUserFromSession(event: H3Event) {
     include: {
       organization: {
         include: {
-          billing: true
+          billing: { include: { tariff: true } }
         }
       },
       restaurant: true

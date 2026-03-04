@@ -149,8 +149,8 @@ export const useAuth = () => {
     // SUPER_ADMIN и OWNER имеют доступ ко всем ресторанам организации
     if (user.value.role === 'SUPER_ADMIN') return true
 
-    // MANAGER имеет доступ только к своему ресторану
-    if (user.value.role === 'MANAGER') {
+    // MANAGER и WAITER имеют доступ только к своему ресторану
+    if (user.value.role === 'MANAGER' || user.value.role === 'WAITER') {
       return user.value.restaurantId === restaurantId
     }
 

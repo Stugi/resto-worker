@@ -30,9 +30,14 @@ export default defineEventHandler(async (event) => {
   const weekAgo = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000)
 
   // Условие фильтрации по организации
-  const orgFilter = orgId
+  const orgFilter: any = orgId
     ? { restaurant: { organizationId: orgId, deletedAt: null } }
     : { restaurant: { deletedAt: null } }
+
+  // MANAGER/WAITER — только свой ресторан
+  if ((user.role === 'MANAGER' || user.role === 'WAITER') && user.restaurantId) {
+    orgFilter.restaurantId = user.restaurantId
+  }
 
   // Параллельные запросы
   const [

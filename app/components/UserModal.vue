@@ -62,7 +62,8 @@
                     :options="[
                         { value: UserRole.SUPER_ADMIN, label: 'Супер Админ' },
                         { value: UserRole.OWNER, label: 'Владелец' },
-                        { value: UserRole.MANAGER, label: 'Менеджер' }
+                        { value: UserRole.MANAGER, label: 'Менеджер' },
+                        { value: UserRole.WAITER, label: 'Официант' }
                     ]"
                     label="Роль"
                     placeholder="Выберите роль"
@@ -70,7 +71,7 @@
 
                 <!-- Организация (только для SUPER_ADMIN) -->
                 <BaseSelect
-                    v-if="currentUser?.role === UserRole.SUPER_ADMIN && (form.role === UserRole.OWNER || form.role === UserRole.MANAGER)"
+                    v-if="currentUser?.role === UserRole.SUPER_ADMIN && (form.role === UserRole.OWNER || form.role === UserRole.MANAGER || form.role === UserRole.WAITER)"
                     v-model="form.organizationId"
                     :options="[{ value: '', label: 'Выберите организацию' }, ...organizations.map(o => ({ value: o.id, label: o.name }))]"
                     label="Организация"
@@ -198,7 +199,7 @@ const handleSubmit = async () => {
 
         if (currentUser.value?.role === UserRole.SUPER_ADMIN) {
             body.role = form.role;
-            if (form.role === UserRole.OWNER || form.role === UserRole.MANAGER) {
+            if (form.role === UserRole.OWNER || form.role === UserRole.MANAGER || form.role === UserRole.WAITER) {
                 body.organizationId = form.organizationId;
             }
         }

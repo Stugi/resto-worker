@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     login: string
     password: string
     phone?: string
-    role: 'SUPER_ADMIN' | 'OWNER' | 'MANAGER'
+    role: 'SUPER_ADMIN' | 'OWNER' | 'MANAGER' | 'WAITER'
     organizationId?: string
   }>(event)
 
@@ -38,10 +38,10 @@ export default defineEventHandler(async (event) => {
 
   // OWNER может создавать только MANAGER в своей организации
   if (user.role === UserRole.OWNER) {
-    if (body.role !== UserRole.MANAGER) {
+    if (body.role !== UserRole.MANAGER && body.role !== UserRole.WAITER) {
       throw createError({
         statusCode: 403,
-        message: 'Вы можете создавать только менеджеров'
+        message: 'Вы можете создавать только менеджеров и официантов'
       })
     }
 
@@ -57,10 +57,10 @@ export default defineEventHandler(async (event) => {
 
   // SUPER_ADMIN должен указать организацию для OWNER и MANAGER
   if (user.role === UserRole.SUPER_ADMIN) {
-    if ((body.role === UserRole.OWNER || body.role === UserRole.MANAGER) && !body.organizationId) {
+    if ((body.role === UserRole.OWNER || body.role === UserRole.MANAGER || body.role === UserRole.WAITER) && !body.organizationId) {
       throw createError({
         statusCode: 400,
-        message: 'Для роли OWNER или MANAGER требуется организация'
+        message: 'Для роли OWNER, MANAGER или WAITER требуется организация'
       })
     }
 

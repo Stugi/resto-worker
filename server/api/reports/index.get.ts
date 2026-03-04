@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     where.restaurantId = restaurantId && restaurantIds.includes(restaurantId)
       ? restaurantId
       : { in: restaurantIds }
-  } else if (user.role === 'MANAGER') {
+  } else if (user.role === 'MANAGER' || user.role === 'WAITER') {
     if (!user.restaurantId) {
       throw createError({ statusCode: 400, message: 'У пользователя нет привязки к ресторану' })
     }

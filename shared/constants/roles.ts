@@ -2,7 +2,8 @@
 export const UserRole = {
   SUPER_ADMIN: 'SUPER_ADMIN',
   OWNER: 'OWNER',
-  MANAGER: 'MANAGER'
+  MANAGER: 'MANAGER',
+  WAITER: 'WAITER'
 } as const
 
 export type UserRoleType = typeof UserRole[keyof typeof UserRole]
@@ -18,6 +19,10 @@ export const isOwner = (role: string): boolean => {
 
 export const isManager = (role: string): boolean => {
   return role === UserRole.MANAGER
+}
+
+export const isWaiter = (role: string): boolean => {
+  return role === UserRole.WAITER
 }
 
 export const canManageOrganization = (role: string): boolean => {
@@ -36,5 +41,6 @@ export const canManageUsers = (role: string): boolean => {
 export const RoleLabels: Record<UserRoleType, string> = {
   [UserRole.SUPER_ADMIN]: 'Супер Админ',
   [UserRole.OWNER]: 'Владелец',
-  [UserRole.MANAGER]: 'Менеджер'
+  [UserRole.MANAGER]: 'Менеджер',
+  [UserRole.WAITER]: 'Официант'
 }
