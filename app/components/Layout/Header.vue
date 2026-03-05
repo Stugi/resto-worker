@@ -27,8 +27,8 @@
                         class="w-10 h-10 bg-gradient-to-br from-accent to-accent-end rounded-2xl flex items-center justify-center ring-1 ring-accent/20"
                         style="
                             box-shadow:
-                                0 0 15px rgba(245, 166, 35, 0.3),
-                                0 4px 6px rgba(245, 166, 35, 0.2);
+                                0 0 15px var(--accent-glow),
+                                0 4px 6px var(--accent-ring);
                         "
                     >
                         <span class="text-2xl">🍽️</span>
